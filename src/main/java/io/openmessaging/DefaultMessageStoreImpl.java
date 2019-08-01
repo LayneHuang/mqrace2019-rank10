@@ -1,7 +1,9 @@
 package io.openmessaging;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import io.solution.utils.HeapHolder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 这是一个简单的基于内存的实现，以方便选手理解题意；
@@ -9,30 +11,19 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DefaultMessageStoreImpl extends MessageStore {
 
-    private NavigableMap<Long, List<Message>> msgMap = new TreeMap<Long, List<Message>>();
 
     @Override
-    public synchronized void put(Message message) {
-        if (!msgMap.containsKey(message.getT())) {
-            msgMap.put(message.getT(), new ArrayList<Message>());
-        }
-
-        msgMap.get(message.getT()).add(message);
+    public void put(Message message) {
+        long theadId = Thread.currentThread().getId();
+        // 数据填入优先队列中
+        HeapHolder.getIns().put(theadId, message);
+        // 检查并提交
+        HeapHolder.getIns().checkAndCommit(theadId);
     }
 
-
     @Override
-    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+    public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         ArrayList<Message> res = new ArrayList<Message>();
-        NavigableMap<Long, List<Message>> subMap = msgMap.subMap(tMin, true, tMax, true);
-        for (Map.Entry<Long, List<Message>> mapEntry : subMap.entrySet()) {
-            List<Message> msgQueue = mapEntry.getValue();
-            for (Message msg : msgQueue) {
-                if (msg.getA() >= aMin && msg.getA() <= aMax) {
-                    res.add(msg);
-                }
-            }
-        }
 
         return res;
     }
@@ -40,20 +31,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        long sum = 0;
-        long count = 0;
-        NavigableMap<Long, List<Message>> subMap = msgMap.subMap(tMin, true, tMax, true);
-        for (Map.Entry<Long, List<Message>> mapEntry : subMap.entrySet()) {
-            List<Message> msgQueue = mapEntry.getValue();
-            for (Message msg : msgQueue) {
-                if (msg.getA() >= aMin && msg.getA() <= aMax) {
-                    sum += msg.getA();
-                    count++;
-                }
-            }
-        }
-
-        return count == 0 ? 0 : sum / count;
+        return 0;
     }
 
 }
