@@ -2,7 +2,9 @@ package io.solution.utils;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
+import io.solution.data.MyBlock;
 
+import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,7 +37,17 @@ public class HeapHolder {
     }
 
     public static HeapHolder getIns() {
-        return ins == null ? ins = new HeapHolder() : ins;
+        // double check locking
+        if (ins != null) {
+            return ins;
+        } else {
+            synchronized (HeapHolder.class) {
+                if (ins == null) {
+                    ins = new HeapHolder();
+                }
+            }
+            return ins;
+        }
     }
 
     private int getIndex(long threadId) {
@@ -43,6 +55,9 @@ public class HeapHolder {
             return indexMap.get(threadId);
         } else {
             synchronized (HEAP_CREATE_LOCK) {
+                if (indexMap.containsKey(threadId)) {
+                    return indexMap.get(threadId);
+                }
                 PriorityQueue<Message> queue = new PriorityQueue<>((o1, o2) -> {
                     int res = -Long.compare(o1.getT(), o2.getT());
                     return res == 0 ? -Long.compare(o1.getT(), o2.getT()) : -res;
@@ -63,8 +78,18 @@ public class HeapHolder {
     public void checkAndCommit(long threadId) {
         int index = getIndex(threadId);
         PriorityQueue<Message> queue = heaps.get(index);
+        // 组合成页，然后进行提交到缓冲池当中
         if (queue.size() >= GlobalParams.getQueueLimit()) {
-
+            MyBlock block = null;
+            for (; ; ) {
+                block = BlockHolder.getIns().apply();
+                if (block == null) {
+                    continue;
+                } else {
+                    BlockHolder.getIns().commit(block);
+                    break;
+                }
+            }
         }
     }
 
