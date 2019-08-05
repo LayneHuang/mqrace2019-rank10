@@ -4,7 +4,6 @@ import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
 
-import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,16 +79,8 @@ public class HeapHolder {
         PriorityQueue<Message> queue = heaps.get(index);
         // 组合成页，然后进行提交到缓冲池当中
         if (queue.size() >= GlobalParams.getQueueLimit()) {
-            MyBlock block = null;
-            for (; ; ) {
-                block = BlockHolder.getIns().apply();
-                if (block == null) {
-                    continue;
-                } else {
-                    BlockHolder.getIns().commit(block);
-                    break;
-                }
-            }
+            MyBlock block = new MyBlock();
+            BlockHolder.getIns().commit(block);
         }
     }
 

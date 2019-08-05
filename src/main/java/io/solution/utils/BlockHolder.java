@@ -3,6 +3,8 @@ package io.solution.utils;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,7 +34,7 @@ public class BlockHolder {
         thread.start();
     }
 
-    public static BlockHolder getIns() {
+    static BlockHolder getIns() {
         // double check locking
         if (ins != null) {
             return ins;
@@ -47,26 +49,42 @@ public class BlockHolder {
     }
 
     private void work() {
-
-    }
-
-    public MyBlock apply() {
-        if (totalCount >= GlobalParams.BLOCK_COUNT_LIMIT) {
-            return null;
-        } else {
-            MyBlock block = null;
-            applyLock.lock();
-            if (totalCount < GlobalParams.BLOCK_COUNT_LIMIT) {
-                totalCount++;
-                block = new MyBlock();
+        for (; ; ) {
+            List<MyBlock> blocks = new ArrayList<>();
+            try {
+                synchronized (this) {
+                    while (totalCount < GlobalParams.WRITE_COUNT_LIMIT) {
+                        this.wait();
+                    }
+                    for (int i = 0; i < GlobalParams.WRITE_COUNT_LIMIT; ++i) {
+                        MyBlock block = blockQueue.take();
+                        blocks.add(block);
+                    }
+                    this.notifyAll();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            applyLock.unlock();
-            return block;
+
+            if (!blocks.isEmpty()) {
+                // 归并
+                blocks = SortUtil.myMergeSort(blocks);
+                // Todo: 处理统计 & 维护索引
+                // Todo: 写入缓冲
+            }
         }
     }
 
-    public void commit(MyBlock block) {
-        blockQueue.add(block);
+    synchronized void commit(MyBlock block) {
+        try {
+            while (totalCount >= GlobalParams.BLOCK_COUNT_LIMIT) {
+                this.wait();
+            }
+            blockQueue.add(block);
+            this.notifyAll();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 }
