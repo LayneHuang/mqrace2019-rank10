@@ -5,6 +5,7 @@ import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -78,10 +79,48 @@ public class HeapHolder {
         int index = getIndex(threadId);
         PriorityQueue<Message> queue = heaps.get(index);
         // 组合成页，然后进行提交到缓冲池当中
-        if (queue.size() >= GlobalParams.getQueueLimit()) {
+        int addCount = GlobalParams.getQueueLimit();
+        if (queue.size() >= addCount) {
             MyBlock block = new MyBlock();
+            List<Message> messages = new ArrayList<>();
+            for (int i = 0; i < addCount; ++i) {
+                if (!queue.isEmpty()) {
+                    messages.add(queue.poll());
+                }
+            }
+            block.addMessages(messages);
             BlockHolder.getIns().commit(block);
         }
+    }
+
+    /**
+     * 第二阶段开始前处理未落盘数据
+     */
+    public synchronized void flush() {
+        if (GlobalParams.isStepOneFinished()) {
+            return;
+        }
+
+        List<Message> messages = new ArrayList<>();
+        for (PriorityQueue<Message> queue : heaps) {
+            while (!queue.isEmpty()) {
+                Message message = queue.poll();
+                messages.add(message);
+                if (messages.size() >= GlobalParams.getQueueLimit()) {
+                    MyBlock block = new MyBlock();
+                    block.addMessages(messages);
+                    BlockHolder.getIns().commit(block);
+                    messages.clear();
+                }
+            }
+        }
+
+        if (!messages.isEmpty()) {
+            MyBlock block = new MyBlock();
+            block.addMessages(messages);
+            BlockHolder.getIns().commit(block);
+        }
+        GlobalParams.setStepOneFinished();
     }
 
 }

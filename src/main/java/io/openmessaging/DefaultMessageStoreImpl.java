@@ -1,5 +1,6 @@
 package io.openmessaging;
 
+import io.solution.GlobalParams;
 import io.solution.utils.HeapHolder;
 
 import java.util.ArrayList;
@@ -23,6 +24,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+        if (!GlobalParams.isStepOneFinished()) {
+            HeapHolder.getIns().flush();
+        }
         ArrayList<Message> res = new ArrayList<Message>();
 
         return res;

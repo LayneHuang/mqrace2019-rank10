@@ -5,9 +5,8 @@ import io.solution.data.MyBlock;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: laynehuang
@@ -15,23 +14,17 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class BlockHolder {
 
-    private BlockingQueue<MyBlock> blockQueue;
+    private boolean isFinish = false;
+
+    private LinkedBlockingQueue<MyBlock> blockQueue;
 
     private static BlockHolder ins;
 
-    private Long threadId;
-
-    private ReentrantLock applyLock;
-
-    private int totalCount = 0;
-
     private BlockHolder() {
-        applyLock = new ReentrantLock();
-        blockQueue = new LinkedBlockingQueue<>();
-        Thread thread = new Thread(this::work);
-        thread.setName("BUFFER-THREAD");
-        threadId = thread.getId();
-        thread.start();
+        blockQueue = new LinkedBlockingQueue<>(GlobalParams.BLOCK_COUNT_LIMIT);
+        Thread workThread = new Thread(this::work);
+        workThread.setName("BLOCK-HOLDER-THREAD");
+        workThread.start();
     }
 
     static BlockHolder getIns() {
@@ -50,41 +43,38 @@ public class BlockHolder {
 
     private void work() {
         for (; ; ) {
-            List<MyBlock> blocks = new ArrayList<>();
             try {
-                synchronized (this) {
-                    while (totalCount < GlobalParams.WRITE_COUNT_LIMIT) {
-                        this.wait();
-                    }
-                    for (int i = 0; i < GlobalParams.WRITE_COUNT_LIMIT; ++i) {
-                        MyBlock block = blockQueue.take();
+                List<MyBlock> blocks = new ArrayList<>();
+                for (int i = 0; i < GlobalParams.WRITE_COUNT_LIMIT; ++i) {
+                    MyBlock block = blockQueue.poll(3, TimeUnit.SECONDS);
+                    if (block != null) {
                         blocks.add(block);
                     }
-                    this.notifyAll();
+                }
+                if (!blocks.isEmpty()) {
+                    // 归并
+                    blocks = SortUtil.myMergeSort(blocks);
+                    BufferHolder.getIns().commit(blocks);
+                } else {
+                    // 3s 没有数据直接认为进入下一个阶段
+                    break;
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            if (!blocks.isEmpty()) {
-                // 归并
-                blocks = SortUtil.myMergeSort(blocks);
-                // Todo: 处理统计 & 维护索引
-                // Todo: 写入缓冲
-            }
         }
     }
 
-    synchronized void commit(MyBlock block) {
+    void commit(MyBlock block) {
         try {
-            while (totalCount >= GlobalParams.BLOCK_COUNT_LIMIT) {
-                this.wait();
-            }
-            blockQueue.add(block);
-            this.notifyAll();
+            blockQueue.put(block);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    boolean isFinish() {
+        return this.isFinish;
     }
 
 }

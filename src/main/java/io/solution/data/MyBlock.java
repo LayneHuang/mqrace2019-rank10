@@ -1,5 +1,7 @@
 package io.solution.data;
 
+import io.openmessaging.Message;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,35 +29,12 @@ public class MyBlock {
         return this.pages.size();
     }
 
-    public long getMaxT() {
-        return maxT;
+    public void addMessages(List<Message> messages) {
+
     }
 
-    public void setMaxT(long maxT) {
-        this.maxT = maxT;
+    public void addPage(MyPage page) {
+
     }
 
-    public long getMinA() {
-        return minA;
-    }
-
-    public void setMinA(long minA) {
-        this.minA = minA;
-    }
-
-    public long getMaxA() {
-        return maxA;
-    }
-
-    public void setMaxA(long maxA) {
-        this.maxA = maxA;
-    }
-
-    public long getMinT() {
-        return minT;
-    }
-
-    public void setMinT(long minT) {
-        this.minT = minT;
-    }
 }

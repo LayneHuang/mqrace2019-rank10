@@ -16,7 +16,6 @@ import java.util.List;
 // Todo: 待测试
 public class SortUtil {
 
-
     /**
      * block size 不大
      * 每个block的pages有序
@@ -25,7 +24,7 @@ public class SortUtil {
      * @param blocks
      * @return
      */
-    public static List<MyBlock> myMergeSort(List<MyBlock> blocks) {
+    static List<MyBlock> myMergeSort(List<MyBlock> blocks) {
 
         if (blocks == null || blocks.isEmpty()) {
             return new ArrayList<>();
@@ -49,6 +48,9 @@ public class SortUtil {
         while (nowSize < totalSize) {
             int idx = 0;
             for (MyBlock block : blocks) {
+                if (indexs.get(idx) >= block.getPages().size()) {
+                    continue;
+                }
                 long minA = block.getPages()
                         .get(indexs.get(idx))
                         .getMinA();
@@ -80,9 +82,7 @@ public class SortUtil {
                 MyBlock block = new MyBlock();
                 result.add(block);
             }
-            result.get(result.size() - 1)
-                    .getPages()
-                    .add(page);
+            result.get(result.size() - 1).addPage(page);
             tempSize++;
             if (tempSize == GlobalParams.BLOCK_SIZE_LIMIT) {
                 tempSize = 0;
