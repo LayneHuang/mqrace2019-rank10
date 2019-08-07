@@ -63,6 +63,7 @@ public class HeapHolder {
                     return res == 0 ? -Long.compare(o1.getT(), o2.getT()) : -res;
                 });
                 int index = heaps.size();
+                indexMap.put(threadId, index);
                 heaps.add(queue);
                 return index;
             }
@@ -79,7 +80,7 @@ public class HeapHolder {
         int index = getIndex(threadId);
         PriorityQueue<Message> queue = heaps.get(index);
         // 组合成页，然后进行提交到缓冲池当中
-        int addCount = GlobalParams.getQueueLimit();
+        long addCount = GlobalParams.getQueueLimit();
         if (queue.size() >= addCount) {
             MyBlock block = new MyBlock();
             List<Message> messages = new ArrayList<>();
@@ -90,6 +91,7 @@ public class HeapHolder {
             }
             block.addMessages(messages);
             BlockHolder.getIns().commit(block);
+            System.out.println("commit a block~");
         }
     }
 

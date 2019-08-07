@@ -21,7 +21,7 @@ public class BlockHolder {
     private static BlockHolder ins;
 
     private BlockHolder() {
-        blockQueue = new LinkedBlockingQueue<>(GlobalParams.BLOCK_COUNT_LIMIT);
+        blockQueue = new LinkedBlockingQueue<>((int) GlobalParams.BLOCK_SIZE_LIMIT);
         Thread workThread = new Thread(this::work);
         workThread.setName("BLOCK-HOLDER-THREAD");
         workThread.start();
@@ -42,6 +42,7 @@ public class BlockHolder {
     }
 
     private void work() {
+        System.out.println("Block holder worker 开始工作~");
         for (; ; ) {
             try {
                 List<MyBlock> blocks = new ArrayList<>();

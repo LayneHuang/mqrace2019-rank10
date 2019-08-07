@@ -3,8 +3,17 @@ package io.solution.utils;
 import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
 import io.solution.data.MyBlock;
+import io.solution.data.MyPage;
 import io.solution.map.MyHash;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,8 +33,20 @@ public class BufferHolder {
 
     ExecutorService executor = Executors.newFixedThreadPool(3);
 
+    private FileChannel channel;
+
     private BufferHolder() {
-        blockQueue = new LinkedBlockingQueue<>(GlobalParams.WRITE_COUNT_LIMIT * 4);
+        try {
+            Path path = Paths.get("/alidata1/race2019/data");
+            boolean isDebug = Boolean.valueOf(System.getProperty("debug", "false"));
+            if (isDebug) {
+                path = Paths.get(System.getProperty("user.dir"), "/data");
+            }
+            channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        blockQueue = new LinkedBlockingQueue<>((int) GlobalParams.WRITE_COUNT_LIMIT * 4);
         Thread workThread = new Thread(this::writeFile);
         workThread.setName("BUFFER-HOLDER-THREAD");
         workThread.start();
@@ -52,20 +73,35 @@ public class BufferHolder {
     }
 
     private void writeFile() {
+        System.out.println("BufferHolder write file 开始工作~");
         for (; ; ) {
             try {
                 MyBlock block = blockQueue.take();
-                // Todo : 写文件
                 BlockInfo blockInfo = new BlockInfo();
-                // Todo : 填上索引信息
+                blockInfo.setPosition(channel.position());
+                blockInfo.setSquare(block.getMaxT(), block.getMinT(), block.getMaxA(), block.getMinA());
+                blockInfo.setAvg(block.getAvg());
+                // blockInfo.setAmount(block.getPages().size());
+                // 填上索引信息
+                MyHash.getIns().insert(blockInfo);
+                // 写文件
+                for (MyPage page : block.getPages()) {
+                    System.out.println("正在写入: " + page.getBuffer().get());
+                    channel.write(page.getBuffer());
+                }
                 executor.execute(() -> MyHash.getIns().insert(blockInfo));
                 this.notifyAll();
-            } catch (InterruptedException e) {
+            } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
             if (GlobalParams.isStepOneFinished() && BlockHolder.getIns().isFinish()) {
                 break;
             }
+        }
+        try {
+            channel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
