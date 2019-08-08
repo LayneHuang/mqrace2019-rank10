@@ -1,10 +1,15 @@
 package io.solution;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 /**
  * @Author: laynehuang
  * @CreatedAt: 2019/8/1 0001
  */
 public class GlobalParams {
+
+    public static boolean IS_DEBUG = Boolean.valueOf(System.getProperty("debug", "false"));
 
     public static final int MESSAGE_SIZE = 50;
 
@@ -46,4 +51,23 @@ public class GlobalParams {
         return isStepOneFinished;
     }
 
+    public static long getWriteCountLimit() {
+        return IS_DEBUG ? WRITE_COUNT_LIMIT / 8 : WRITE_COUNT_LIMIT;
+    }
+
+    public static Path getPath() {
+        Path path = Paths.get("/alidata1/race2019/data");
+        if (GlobalParams.IS_DEBUG) {
+            path = Paths.get(System.getProperty("user.dir"), "/data");
+        }
+        return path;
+    }
+
+    public static int getMessageSize() {
+        return IS_DEBUG ? 24 : 50;
+    }
+
+    public static int getBodySize() {
+        return IS_DEBUG ? 8 : 34;
+    }
 }

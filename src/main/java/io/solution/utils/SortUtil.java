@@ -35,7 +35,9 @@ public class SortUtil {
         // 记录每个block处理到的下标
         List<Integer> indexs = new ArrayList<>();
         // 当前选择的block
-        int selectedBlockIndex = 0;
+        int selectedBlockIndex = -1;
+        // 选择到最小的a
+        long sMinA = Long.MAX_VALUE;
         // 插入结果的数量
         int nowSize = 0;
         // 页总数量
@@ -46,32 +48,31 @@ public class SortUtil {
         }
 
         while (nowSize < totalSize) {
-            int idx = 0;
-            for (MyBlock block : blocks) {
-                if (indexs.get(idx) >= block.getPages().size()) {
+            for (int i = 0; i < blocks.size(); ++i) {
+                MyBlock block = blocks.get(i);
+                if (indexs.get(i) >= block.getSize()) {
                     continue;
                 }
                 long minA = block.getPages()
-                        .get(indexs.get(idx))
+                        .get(indexs.get(i))
                         .getMinA();
-                long sMinA = blocks.get(selectedBlockIndex)
-                        .getPages()
-                        .get(indexs.get(selectedBlockIndex))
-                        .getMinA();
-                if (minA < sMinA) {
-                    selectedBlockIndex = idx;
+                if (selectedBlockIndex == -1 || minA < sMinA) {
+                    selectedBlockIndex = i;
+                    sMinA = minA;
                 }
-                idx++;
             }
-
             pageResult.add(
                     blocks.get(selectedBlockIndex)
                             .getPages()
                             .get(indexs.get(selectedBlockIndex))
             );
             // 处理下标 + 1
-            indexs.set(selectedBlockIndex, indexs.get(selectedBlockIndex) + 1);
+            int nIdx = indexs.get(selectedBlockIndex) + 1;
+            indexs.set(selectedBlockIndex, nIdx);
+            selectedBlockIndex = -1;
+            sMinA = Long.MAX_VALUE;
             nowSize++;
+
         }
 
         // 结果集

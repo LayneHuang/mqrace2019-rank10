@@ -46,7 +46,7 @@ public class BlockHolder {
         for (; ; ) {
             try {
                 List<MyBlock> blocks = new ArrayList<>();
-                for (int i = 0; i < GlobalParams.WRITE_COUNT_LIMIT; ++i) {
+                for (int i = 0; i < GlobalParams.getWriteCountLimit(); ++i) {
                     MyBlock block = blockQueue.poll(3, TimeUnit.SECONDS);
                     if (block != null) {
                         blocks.add(block);
@@ -58,6 +58,8 @@ public class BlockHolder {
                     BufferHolder.getIns().commit(blocks);
                 } else {
                     // 3s 没有数据直接认为进入下一个阶段
+                    System.out.println("Block holder worker 结束~");
+                    isFinish = true;
                     break;
                 }
             } catch (InterruptedException e) {

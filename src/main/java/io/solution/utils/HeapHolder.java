@@ -91,7 +91,7 @@ public class HeapHolder {
             }
             block.addMessages(messages);
             BlockHolder.getIns().commit(block);
-            System.out.println("commit a block~");
+            System.out.println("提交块,块大小:" + block.getSize());
         }
     }
 

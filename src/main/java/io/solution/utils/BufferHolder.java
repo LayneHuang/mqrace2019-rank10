@@ -6,9 +6,6 @@ import io.solution.data.MyBlock;
 import io.solution.data.MyPage;
 import io.solution.map.MyHash;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
@@ -37,16 +34,12 @@ public class BufferHolder {
 
     private BufferHolder() {
         try {
-            Path path = Paths.get("/alidata1/race2019/data");
-            boolean isDebug = Boolean.valueOf(System.getProperty("debug", "false"));
-            if (isDebug) {
-                path = Paths.get(System.getProperty("user.dir"), "/data");
-            }
+            Path path = GlobalParams.getPath();
             channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        blockQueue = new LinkedBlockingQueue<>((int) GlobalParams.WRITE_COUNT_LIMIT * 4);
+        blockQueue = new LinkedBlockingQueue<>((int) GlobalParams.getWriteCountLimit() * 4);
         Thread workThread = new Thread(this::writeFile);
         workThread.setName("BUFFER-HOLDER-THREAD");
         workThread.start();
@@ -66,17 +59,25 @@ public class BufferHolder {
         }
     }
 
-    void commit(List<MyBlock> blocks) throws InterruptedException {
-        for (MyBlock block : blocks) {
-            blockQueue.put(block);
+    void commit(List<MyBlock> blocks) {
+        try {
+            for (MyBlock block : blocks) {
+                blockQueue.put(block);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
+
+    private int writeCount = 0;
 
     private void writeFile() {
         System.out.println("BufferHolder write file 开始工作~");
         for (; ; ) {
             try {
                 MyBlock block = blockQueue.take();
+                writeCount++;
+                System.out.println("写入块的个数:" + writeCount + ",块大小:" + block.getSize());
                 BlockInfo blockInfo = new BlockInfo();
                 blockInfo.setPosition(channel.position());
                 blockInfo.setSquare(block.getMaxT(), block.getMinT(), block.getMaxA(), block.getMinA());
@@ -86,15 +87,17 @@ public class BufferHolder {
                 MyHash.getIns().insert(blockInfo);
                 // 写文件
                 for (MyPage page : block.getPages()) {
-                    System.out.println("正在写入: " + page.getBuffer().get());
+//                    System.out.println("正在写入: ");
+//                    page.showPage();
                     channel.write(page.getBuffer());
                 }
                 executor.execute(() -> MyHash.getIns().insert(blockInfo));
-                this.notifyAll();
+                // this.notifyAll();
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
             if (GlobalParams.isStepOneFinished() && BlockHolder.getIns().isFinish()) {
+                System.out.println("BufferHolder write file 结束~");
                 break;
             }
         }

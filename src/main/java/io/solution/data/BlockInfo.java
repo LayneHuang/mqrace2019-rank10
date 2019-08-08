@@ -10,9 +10,16 @@ public class BlockInfo {
     private long minT;
     private long maxA;
     private long minA;
-    private long amount;
+    private int amount;
     private long avg;
     private long position;
+    // 磁盘空间
+    private int dSize;
+
+
+    public int getAmount() {
+        return amount;
+    }
 
     public long getPosition() {
         return position;
@@ -29,12 +36,32 @@ public class BlockInfo {
         this.minT = minT;
     }
 
+    public long getMaxT() {
+        return maxT;
+    }
 
-    public void setAmount(long amount) {
-        this.amount = amount;
+    public long getMinA() {
+        return minA;
+    }
+
+    public long getMaxA() {
+        return maxA;
+    }
+
+    public long getMinT() {
+        return minT;
     }
 
     public void setAvg(long avg) {
         this.avg = avg;
     }
+
+    public void show() {
+        System.out.println("aL:" + minA + ",aR:" + maxA + ",tL:" + minT + ",tR:" + maxT + ",amount:" + amount + ",avg:" + avg + ",pos:" + position);
+    }
+
+    public int getdSize() {
+        return dSize;
+    }
+
 }

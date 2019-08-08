@@ -89,4 +89,5 @@ public class MyBlock {
     public void setAvg(long avg) {
         this.avg = avg;
     }
+
 }
