@@ -20,7 +20,7 @@ public class BlockHolder {
     private static BlockHolder ins = new BlockHolder();
 
     private BlockHolder() {
-        blockQueue = new LinkedBlockingQueue<>((int) GlobalParams.BLOCK_SIZE_LIMIT);
+        blockQueue = new LinkedBlockingQueue<>(GlobalParams.BLOCK_COUNT_LIMIT);
         Thread workThread = new Thread(this::work);
         workThread.setName("BLOCK-HOLDER-THREAD");
         workThread.start();
@@ -28,17 +28,6 @@ public class BlockHolder {
 
     static BlockHolder getIns() {
         return ins;
-        // double check locking
-//        if (ins != null) {
-//            return ins;
-//        } else {
-//            synchronized (BlockHolder.class) {
-//                if (ins == null) {
-//                    ins = new BlockHolder();
-//                }
-//            }
-//            return ins;
-//        }
     }
 
     private int outCount = 0;

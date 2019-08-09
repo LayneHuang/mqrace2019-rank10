@@ -64,7 +64,7 @@ public class HelpUtil {
      */
     public static List<Message> readMessages(long position, int size) {
         FileChannel channel = null;
-        List<Message> res = new ArrayList<>();
+        List<Message> res;
         try {
             channel = FileChannel.open(
                     GlobalParams.getPath(),
@@ -73,9 +73,11 @@ public class HelpUtil {
             ByteBuffer buffer = ByteBuffer.allocateDirect(size);
             channel.read(buffer, position);
             buffer.flip();
-            return transToList(buffer, size / GlobalParams.PAGE_SIZE);
+            res = transToList(buffer, size / GlobalParams.PAGE_SIZE);
+            buffer.clear();
         } catch (IOException e) {
             e.printStackTrace();
+            res = new ArrayList<>();
         } finally {
             try {
                 if (channel != null) {

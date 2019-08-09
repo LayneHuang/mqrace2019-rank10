@@ -8,6 +8,7 @@ import io.solution.data.MyPage;
 import io.solution.map.MyHash;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -148,9 +149,11 @@ public class BufferHolder {
             blockInfo.setAmount(block.getSize());
             // 写文件
             int messageAmount = 0;
+            ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.PAGE_SIZE);
             for (MyPage page : block.getPages()) {
                 messageAmount += page.getSize();
-                channel.write(page.getBuffer());
+                buffer = page.getBuffer(buffer);
+                channel.write(buffer);
             }
             blockInfo.setMessageAmount(messageAmount);
 //            executor.execute(() -> MyHash.getIns().insert(blockInfo));

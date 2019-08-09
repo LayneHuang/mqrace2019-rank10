@@ -19,7 +19,7 @@ public class GlobalParams {
 
     public static final long BLOCK_SIZE = 4 * 1024 * 1024;
 
-    public static final long CIRCLE_BUFFER_SIZE = 128 * 1024 * 1024;
+    public static final long CIRCLE_BUFFER_SIZE = 64 * 1024 * 1024;
 
     public static final int CIRCLE_BUFFER_COUNT = 4;
 
@@ -30,7 +30,7 @@ public class GlobalParams {
     /**
      * 拥塞队列的大小
      */
-    public static final long BLOCK_COUNT_LIMIT = TWO_GB / BLOCK_SIZE;
+    public static final int BLOCK_COUNT_LIMIT = 60;
 
     /**
      * 能够写入缓存时候的合法数量
