@@ -139,6 +139,7 @@ public class BufferHolder {
      */
     private void solve(MyBlock block) {
         writeFileLock.lock();
+        ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.PAGE_SIZE);
         try {
             writeCount++;
             System.out.println("写入块的个数:" + writeCount + ",块大小:" + block.getSize());
@@ -149,13 +150,11 @@ public class BufferHolder {
             blockInfo.setAmount(block.getSize());
             // 写文件
             int messageAmount = 0;
-            ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.PAGE_SIZE);
             for (MyPage page : block.getPages()) {
                 messageAmount += page.getSize();
                 buffer = page.getBuffer(buffer);
                 channel.write(buffer);
             }
-            buffer.clear();
             blockInfo.setMessageAmount(messageAmount);
 //            executor.execute(() -> MyHash.getIns().insert(blockInfo));
             MyHash.getIns().insert(blockInfo);
@@ -165,6 +164,7 @@ public class BufferHolder {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            buffer.clear();
             writeFileLock.unlock();
         }
     }
