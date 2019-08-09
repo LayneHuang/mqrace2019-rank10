@@ -1,10 +1,8 @@
 package io.openmessaging;
 
-import io.solution.GlobalParams;
 import io.solution.map.MyHash;
 import io.solution.utils.HeapHolder;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,6 +14,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public void put(Message message) {
+//        System.out.println(message.getBody().length);
         long theadId = Thread.currentThread().getId();
         // 数据填入优先队列中
         HeapHolder.getIns().put(theadId, message);
@@ -25,16 +24,15 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
-        if (!GlobalParams.isStepOneFinished()) {
-            HeapHolder.getIns().flush();
-        }
+        HeapHolder.getIns().flush();
+        //        System.out.println("step2: " + res.size());
         return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
     }
 
-
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        return 0;
+        //        System.out.println("step3: " + res);
+        return MyHash.getIns().find3(tMin, tMax, aMin, aMax);
     }
 
 }

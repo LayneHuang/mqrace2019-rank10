@@ -37,11 +37,9 @@ public class GlobalParams {
      */
     public static final long WRITE_COUNT_LIMIT = CIRCLE_BUFFER_SIZE / BLOCK_SIZE;
 
-    public static long getQueueLimit() {
-        return Math.floorDiv(BLOCK_SIZE, PAGE_SIZE) * PAGE_MESSAGE_COUNT;
-    }
-
     private static boolean isStepOneFinished = false;
+
+    public static final Object FINISH_LOCK = new Object();
 
     public static void setStepOneFinished() {
         isStepOneFinished = true;
@@ -69,5 +67,13 @@ public class GlobalParams {
 
     public static int getBodySize() {
         return IS_DEBUG ? 8 : 34;
+    }
+
+    public static int getPageMessageCount() {
+        return Math.floorDiv(PAGE_SIZE - 2, getMessageSize());
+    }
+
+    public static int getBlockMessageCount() {
+        return getPageMessageCount() * (int) (BLOCK_SIZE / PAGE_SIZE);
     }
 }

@@ -29,6 +29,9 @@ public class SortUtil {
         if (blocks == null || blocks.isEmpty()) {
             return new ArrayList<>();
         }
+        if (blocks.size() == 1) {
+            return blocks;
+        }
 
         // 页结果集
         List<MyPage> pageResult = new ArrayList<>();

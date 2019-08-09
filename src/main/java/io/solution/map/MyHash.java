@@ -5,12 +5,8 @@ import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
 import io.solution.utils.HelpUtil;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -20,79 +16,100 @@ import java.util.List;
  */
 public class MyHash {
 
-    private static MyHash ins;
+    private int limit = 2000;
 
-    private List<BlockInfo> all;
+    private static MyHash ins = new MyHash();
+
+    private BlockInfo[] all;
+
+    private int size = 0;
 
     public int getSize() {
-        return this.all.size();
+        return size;
     }
 
     private MyHash() {
-        all = new ArrayList<>();
+        all = new BlockInfo[limit];
     }
 
-    static public MyHash getIns() {
-        // double check locking
-        if (ins != null) {
-            return ins;
-        } else {
-            synchronized (MyHash.class) {
-                if (ins == null) {
-                    ins = new MyHash();
-                }
-            }
-            return ins;
+    public static MyHash getIns() {
+        return ins;
+    }
+
+    public void insert(BlockInfo info) {
+        all[size] = info;
+        size++;
+        if (size == limit) {
+            limit += (size >> 1);
+            all = Arrays.copyOf(all, limit);
         }
     }
 
-    public synchronized void insert(BlockInfo info) {
-        all.add(info);
-    }
-
-    public void showMyHash() {
-        for (BlockInfo info : all) {
-            info.show();
-        }
-    }
-
-    public List<Message>
-    find2(long minT, long maxT, long minA, long maxA) {
-        FileChannel channel = null;
-        Path path = GlobalParams.getPath();
-        try {
-            channel = FileChannel.open(path, StandardOpenOption.READ);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public List<Message> find2(long minT, long maxT, long minA, long maxA) {
+//        System.out.println("hash list size: " + size);
         List<Message> res = new ArrayList<>();
-        for (BlockInfo info : all) {
+        for (int i = 0; i < size; ++i) {
+            BlockInfo info = all[i];
             if (HelpUtil.intersect(
                     minT, maxT, minA, maxA,
                     info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
             )) {
-                ByteBuffer buffer = ByteBuffer.allocateDirect((GlobalParams.PAGE_SIZE * info.getAmount()));
-                try {
-                    channel.read(buffer);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                // Todo : buffer -> myBlock
-                List<Message> messages = HelpUtil.transToList(buffer, info.getAmount());
+                List<Message> messages = HelpUtil.readMessages(
+                        info.getPosition(),
+                        info.getAmount() * GlobalParams.PAGE_SIZE
+                );
                 for (Message message : messages) {
-                    if (HelpUtil.inSide(
-                            message.getT(), message.getA(),
-                            minT, maxT, minA, maxA
-                    )) {
+                    if (
+                            HelpUtil.inSide(
+                                    message.getT(), message.getA(),
+                                    minT, maxT, minA, maxA
+                            )
+                    ) {
                         res.add(message);
                     }
                 }
-                buffer.clear();
             }
         }
+
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
     }
 
+    public long find3(long minT, long maxT, long minA, long maxA) {
+        long res = 0;
+        long messageAmount = 0;
+        for (int i = 0; i < size; ++i) {
+            BlockInfo info = all[i];
+            if (
+                    HelpUtil.matrixInside(
+                            minT, maxT, minA, maxA,
+                            info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
+                    )
+            ) {
+                res += info.getSum();
+                messageAmount += info.getMessageAmount();
+            } else if (HelpUtil.intersect(
+                    minT, maxT, minA, maxA,
+                    info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
+            )) {
+                List<Message> messages = HelpUtil.readMessages(
+                        info.getPosition(),
+                        info.getAmount() * GlobalParams.PAGE_SIZE
+                );
+                for (Message message : messages) {
+                    if (
+                            HelpUtil.inSide(
+                                    message.getT(), message.getA(),
+                                    minT, maxT, minA, maxA
+                            )
+                    ) {
+                        res += message.getA();
+                        messageAmount++;
+                    }
+                }
+            }
+        }
 
+        return Math.floorDiv(res, messageAmount);
+    }
 }

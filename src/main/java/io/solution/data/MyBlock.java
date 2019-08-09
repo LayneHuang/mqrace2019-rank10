@@ -16,7 +16,7 @@ public class MyBlock {
     private long maxA;
     private long minT;
     private long maxT;
-    private long avg;
+    private long sum;
 
     private List<MyPage> pages;
 
@@ -33,10 +33,11 @@ public class MyBlock {
     }
 
     public void addMessages(List<Message> messages) {
+        sum = 0;
         List<Message> tempMsgs = new ArrayList<>();
         for (Message message : messages) {
             tempMsgs.add(message);
-            if (tempMsgs.size() == GlobalParams.PAGE_MESSAGE_COUNT) {
+            if (tempMsgs.size() == GlobalParams.getPageMessageCount()) {
                 MyPage page = new MyPage();
                 page.addMessages(tempMsgs);
                 addPage(page);
@@ -52,6 +53,7 @@ public class MyBlock {
     }
 
     public void addPage(MyPage page) {
+        sum += page.getSum();
         if (pages.isEmpty()) {
             minA = page.getMinA();
             maxA = page.getMaxA();
@@ -82,12 +84,15 @@ public class MyBlock {
         return maxT;
     }
 
-    public long getAvg() {
-        return avg;
+    public long getSum() {
+        return sum;
     }
 
-    public void setAvg(long avg) {
-        this.avg = avg;
+    public void setSum(long sum) {
+        this.sum = sum;
     }
 
+    public void showSquare() {
+        System.out.println(minA + " " + maxA + " " + minT + " " + maxT);
+    }
 }

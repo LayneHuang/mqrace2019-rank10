@@ -80,7 +80,7 @@ public class HeapHolder {
         int index = getIndex(threadId);
         PriorityQueue<Message> queue = heaps.get(index);
         // 组合成页，然后进行提交到缓冲池当中
-        long addCount = GlobalParams.getQueueLimit();
+        long addCount = GlobalParams.getBlockMessageCount();
         if (queue.size() >= addCount) {
             MyBlock block = new MyBlock();
             List<Message> messages = new ArrayList<>();
@@ -91,38 +91,42 @@ public class HeapHolder {
             }
             block.addMessages(messages);
             BlockHolder.getIns().commit(block);
-            System.out.println("提交块,块大小:" + block.getSize());
         }
     }
 
     /**
      * 第二阶段开始前处理未落盘数据
      */
-    public synchronized void flush() {
+    public void flush() {
         if (GlobalParams.isStepOneFinished()) {
             return;
         }
-
-        List<Message> messages = new ArrayList<>();
-        for (PriorityQueue<Message> queue : heaps) {
-            while (!queue.isEmpty()) {
-                Message message = queue.poll();
-                messages.add(message);
-                if (messages.size() >= GlobalParams.getQueueLimit()) {
+        synchronized (this) {
+            if (!GlobalParams.isStepOneFinished()) {
+                System.out.println("heap holder flush");
+                List<Message> messages = new ArrayList<>();
+                for (PriorityQueue<Message> queue : heaps) {
+                    while (!queue.isEmpty()) {
+                        Message message = queue.poll();
+                        messages.add(message);
+                        if (messages.size() >= GlobalParams.getBlockMessageCount()) {
+                            MyBlock block = new MyBlock();
+                            block.addMessages(messages);
+                            BlockHolder.getIns().commit(block);
+                            messages.clear();
+                        }
+                    }
+                }
+                if (!messages.isEmpty()) {
                     MyBlock block = new MyBlock();
                     block.addMessages(messages);
                     BlockHolder.getIns().commit(block);
-                    messages.clear();
                 }
+                BlockHolder.getIns().flush();
+                BufferHolder.getIns().flush();
+                GlobalParams.setStepOneFinished();
             }
         }
-
-        if (!messages.isEmpty()) {
-            MyBlock block = new MyBlock();
-            block.addMessages(messages);
-            BlockHolder.getIns().commit(block);
-        }
-        GlobalParams.setStepOneFinished();
     }
 
 }

@@ -4,6 +4,7 @@ import io.openmessaging.Message;
 import io.solution.GlobalParams;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -12,18 +13,33 @@ import java.util.List;
  */
 public class MyPage {
 
-    private ByteBuffer buffer;
+    //    private ByteBuffer buffer;
     private long minA;
     private long maxA;
     private long minT;
     private long maxT;
+    private long sum;
+
+    List<Message> messages;
 
     public MyPage() {
         // 4k页 , 规定不能使用DIO
-        buffer = ByteBuffer.allocateDirect(GlobalParams.PAGE_SIZE);
+        messages = new ArrayList<>();
+    }
+
+    public List<Message> getMessages() {
+        return messages;
     }
 
     public ByteBuffer getBuffer() {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.PAGE_SIZE);
+        buffer.putInt(messages.size());
+        for (Message message : messages) {
+            buffer.putLong(message.getT());
+            buffer.putLong(message.getA());
+            buffer.put(message.getBody());
+        }
+        buffer.flip();
         return buffer;
     }
 
@@ -48,24 +64,17 @@ public class MyPage {
             System.out.println("error: message list is empty");
             return;
         }
+        sum = 0;
         minA = maxA = messages.get(0).getA();
         minT = maxT = messages.get(0).getT();
         for (Message message : messages) {
+            sum += message.getA();
             minT = Math.min(minT, message.getT());
             maxT = Math.max(maxT, message.getT());
             minA = Math.min(minA, message.getA());
             maxA = Math.max(maxA, message.getA());
         }
-        buffer.putInt(messages.size());
-        buffer.putLong(minT);
-        buffer.putLong(maxT);
-        buffer.putLong(minA);
-        buffer.putLong(maxA);
-        for (Message message : messages) {
-            buffer.putLong(message.getT());
-            buffer.putLong(message.getA());
-            buffer.put(message.getBody());
-        }
+        this.messages.addAll(messages);
 //        System.out.println("origin:");
 //        System.out.print(minT + " ");
 //        System.out.print(maxT + " ");
@@ -79,19 +88,15 @@ public class MyPage {
 //        showPage();
     }
 
-    public void showPage() {
-        System.out.println("page:");
-        System.out.print(buffer.getInt(0) + " ");
-        System.out.print(buffer.getLong(4) + " ");
-        System.out.print(buffer.getLong(12) + " ");
-        System.out.print(buffer.getLong(20) + " ");
-        System.out.print(buffer.getLong(28) + " ");
-        for (int i = 0; i < GlobalParams.PAGE_MESSAGE_COUNT; ++i) {
-            int idx = i * GlobalParams.getMessageSize() + 36;
-            System.out.print(buffer.getLong(idx) + " ");
-            System.out.print(buffer.getLong(idx + 8) + " ");
-            System.out.println();
-        }
+    public int getSize() {
+        return this.messages.size();
     }
 
+    public long getSum() {
+        return sum;
+    }
+
+    public void setSum(long sum) {
+        this.sum = sum;
+    }
 }

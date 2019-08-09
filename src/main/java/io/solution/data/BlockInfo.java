@@ -11,11 +11,13 @@ public class BlockInfo {
     private long maxA;
     private long minA;
     private int amount;
-    private long avg;
+    private long sum;
     private long position;
-    // 磁盘空间
-    private int dSize;
+    private long messageAmount;
 
+    public long getSum() {
+        return sum;
+    }
 
     public int getAmount() {
         return amount;
@@ -52,16 +54,23 @@ public class BlockInfo {
         return minT;
     }
 
-    public void setAvg(long avg) {
-        this.avg = avg;
+    public void setSum(long sum) {
+        this.sum = sum;
     }
 
     public void show() {
-        System.out.println("aL:" + minA + ",aR:" + maxA + ",tL:" + minT + ",tR:" + maxT + ",amount:" + amount + ",avg:" + avg + ",pos:" + position);
+        System.out.println("aL:" + minA + ",aR:" + maxA + ",tL:" + minT + ",tR:" + maxT + ",amount:" + amount + ",sum:" + sum + ",pos:" + position);
     }
 
-    public int getdSize() {
-        return dSize;
+    public void setAmount(int amount) {
+        this.amount = amount;
     }
 
+    public long getMessageAmount() {
+        return messageAmount;
+    }
+
+    public void setMessageAmount(long messageAmount) {
+        this.messageAmount = messageAmount;
+    }
 }
