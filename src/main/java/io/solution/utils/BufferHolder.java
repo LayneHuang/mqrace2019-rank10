@@ -28,7 +28,7 @@ public class BufferHolder {
 
 //    private ReentrantReadWriteLock bufferRWLock;
 
-//    private boolean isFinish = false;
+    private boolean isFinish = false;
 
     private static BufferHolder ins = new BufferHolder();
 
@@ -79,7 +79,7 @@ public class BufferHolder {
             for (MyBlock block : blocks) {
                 inCount++;
                 blockQueue.put(block);
-                System.out.println("buffer holder提交块个数:" + inCount + ",size:" + block.getSize());
+                System.out.println("buffer holder提交块个数:" + inCount);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -90,12 +90,12 @@ public class BufferHolder {
 
     private void writeFile() {
         System.out.println("BufferHolder write file 开始工作~");
-        for (; ; ) {
+        while (!isFinish) {
             try {
-                MyBlock block = blockQueue.poll(500, TimeUnit.MILLISECONDS);
+                MyBlock block = blockQueue.poll(1, TimeUnit.SECONDS);
                 if (block == null) {
                     // 结束
-//                    isFinish = true;
+                    isFinish = true;
                     System.out.println("BufferHolder write file 结束~");
 //                    bufferRWLock.writeLock().unlock();
                     break;
@@ -155,6 +155,7 @@ public class BufferHolder {
                 buffer = page.getBuffer(buffer);
                 channel.write(buffer);
             }
+            buffer.clear();
             blockInfo.setMessageAmount(messageAmount);
 //            executor.execute(() -> MyHash.getIns().insert(blockInfo));
             MyHash.getIns().insert(blockInfo);
@@ -163,8 +164,9 @@ public class BufferHolder {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            writeFileLock.unlock();
         }
-        writeFileLock.unlock();
     }
 
     private void errorCheck(MyBlock block, BlockInfo blockInfo) {
