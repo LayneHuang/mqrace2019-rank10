@@ -37,8 +37,14 @@ public class MyHash {
         return ins;
     }
 
+    private long maxADiff = 0;
+    private long maxTDiff = 0;
+
     public void insert(BlockInfo info) {
         System.out.println("插入块的信息:");
+        maxADiff = Math.max(info.getMaxA() - info.getMinA(), maxADiff);
+        maxTDiff = Math.max(info.getMaxA() - info.getMinA(), maxTDiff);
+        System.out.println("最大差值: " + maxADiff + "(a) " + maxTDiff + "(t)");
         info.show();
         all[size] = info;
         size++;
