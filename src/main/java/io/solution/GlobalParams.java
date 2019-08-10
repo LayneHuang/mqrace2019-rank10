@@ -54,7 +54,7 @@ public class GlobalParams {
     }
 
     public static Path getPath() {
-        Path path = Paths.get("/alidata1/race2019/data");
+        Path path = Paths.get("/alidata1/race2019/data/mydata.in");
         if (GlobalParams.IS_DEBUG) {
             path = Paths.get(System.getProperty("user.dir"), "/data");
         }
