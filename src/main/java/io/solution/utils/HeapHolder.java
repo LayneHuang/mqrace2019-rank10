@@ -49,8 +49,8 @@ public class HeapHolder {
                     return indexMap.get(threadId);
                 }
                 PriorityQueue<Message> queue = new PriorityQueue<>((o1, o2) -> {
-                    int res = -Long.compare(o1.getT(), o2.getT());
-                    return res == 0 ? -Long.compare(o1.getT(), o2.getT()) : -res;
+                    int res = -Long.compare(o1.getA(), o2.getA());
+                    return res == 0 ? -Long.compare(o1.getT(), o2.getT()) : res;
                 });
                 int index = heaps.size();
                 indexMap.put(threadId, index);

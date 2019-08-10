@@ -73,17 +73,7 @@ public class MyPage {
             maxA = Math.max(maxA, message.getA());
         }
         this.messages.addAll(messages);
-//        System.out.println("origin:");
-//        System.out.print(minT + " ");
-//        System.out.print(maxT + " ");
-//        System.out.print(minA + " ");
-//        System.out.print(maxA + " ");
-//        for (Message message : messages) {
-//            System.out.print(message.getT() + " ");
-//            System.out.print(message.getA() + " ");
-//        }
-//        System.out.println();
-//        showPage();
+
     }
 
     public int getSize() {
