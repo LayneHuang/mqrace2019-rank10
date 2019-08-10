@@ -14,20 +14,20 @@ public class DemoTester {
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可
-        int msgNum  = 20000000;
+        int msgNum = 6346321;
         //发送阶段的最大持续时间，也即在该时间内，如果消息依然没有发送完毕，则退出评测
         int sendTime = 10 * 60 * 1000;
         //查询阶段的最大持续时间，也即在该时间内，如果消息依然没有消费完毕，则退出评测
         int checkTime = 10 * 60 * 1000;
 
         //正确性检测的次数
-        int checkTimes = 100;
+        int checkTimes = 5472;
         //发送的线程数量
         int sendTsNum = 10;
         //查询的线程数量
         int checkTsNum = 10;
         // 每次查询消息的最大跨度
-        int maxMsgCheckSize = 100000;
+        int maxMsgCheckSize = 423455;
         // 每次查询求平均的最大跨度
         int maxValueCheckSize = 100000;
 
@@ -35,7 +35,7 @@ public class DemoTester {
 
         try {
             Class queueStoreClass = Class.forName("io.openmessaging.DefaultMessageStoreImpl");
-            messageStore = (MessageStore)queueStoreClass.newInstance();
+            messageStore = (MessageStore) queueStoreClass.newInstance();
         } catch (Throwable t) {
             t.printStackTrace();
             System.exit(-1);
@@ -94,25 +94,27 @@ public class DemoTester {
         System.out.printf("Value Check: %d ms Num: %d\n", checkEnd - checkStart, valueCheckNum.get());
 
         //评测结果
-        System.out.printf("Total Score:%d\n", (msgNum / (sendSend- sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
+        System.out.printf("Total Score:%d\n", (msgNum / (sendSend - sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
     }
+
     static class Producer implements Runnable {
 
         private AtomicLong counter;
         private long maxMsgNum;
         private MessageStore messageStore;
         private long maxTimeStamp;
+
         public Producer(MessageStore messageStore, long maxTimeStamp, int maxMsgNum, AtomicLong counter) {
             this.counter = counter;
             this.maxMsgNum = maxMsgNum;
             this.messageStore = messageStore;
-            this.maxTimeStamp =  maxTimeStamp;
+            this.maxTimeStamp = maxTimeStamp;
         }
 
         @Override
         public void run() {
             long count;
-            while ( (count = counter.getAndIncrement()) < maxMsgNum && System.currentTimeMillis() <= maxTimeStamp) {
+            while ((count = counter.getAndIncrement()) < maxMsgNum && System.currentTimeMillis() <= maxTimeStamp) {
                 try {
                     ByteBuffer buffer = ByteBuffer.allocate(8);
                     buffer.putLong(0, count);
@@ -141,12 +143,12 @@ public class DemoTester {
         private int maxCheckSize;
 
         public MessageChecker(MessageStore messageStore, long maxTimeStamp, int checkTimes, int maxIndex, int maxCheckSize,
-                AtomicLong timesCounter, AtomicLong numCounter) {
+                              AtomicLong timesCounter, AtomicLong numCounter) {
             this.timesCounter = timesCounter;
             this.numCounter = numCounter;
             this.checkTimes = checkTimes;
             this.messageStore = messageStore;
-            this.maxTimeStamp =  maxTimeStamp;
+            this.maxTimeStamp = maxTimeStamp;
             this.maxIndex = maxIndex;
             this.maxCheckSize = maxCheckSize;
         }
@@ -228,12 +230,12 @@ public class DemoTester {
         private int maxCheckSize;
 
         public ValueChecker(MessageStore messageStore, long maxTimeStamp, int checkTimes, int maxIndex, int maxCheckSize,
-                AtomicLong timesCounter, AtomicLong numCounter) {
+                            AtomicLong timesCounter, AtomicLong numCounter) {
             this.timesCounter = timesCounter;
             this.numCounter = numCounter;
             this.checkTimes = checkTimes;
             this.messageStore = messageStore;
-            this.maxTimeStamp =  maxTimeStamp;
+            this.maxTimeStamp = maxTimeStamp;
             this.maxIndex = maxIndex;
             this.maxCheckSize = maxCheckSize;
         }
@@ -273,9 +275,9 @@ public class DemoTester {
                     long count = 0;
                     if (evenIndex1 <= evenIndex2) {
                         //顺序数之和
-                        long sum1 = ((long)(index2 + index1) * (index2 - index1 + 1)) >>> 1;
+                        long sum1 = ((long) (index2 + index1) * (index2 - index1 + 1)) >>> 1;
                         //重复的偶数之和
-                        long sum2 = ((long)(evenIndex1 + evenIndex2) * ((evenIndex2 - evenIndex1 >>> 1) + 1)) >>> 1;
+                        long sum2 = ((long) (evenIndex1 + evenIndex2) * ((evenIndex2 - evenIndex1 >>> 1) + 1)) >>> 1;
                         long sum = sum1 + sum2;
                         count = index2 - index1 + 1 + (evenIndex2 - evenIndex1 >>> 1) + 1;
                         res = sum / count;

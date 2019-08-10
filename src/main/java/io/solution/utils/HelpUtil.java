@@ -42,7 +42,7 @@ public class HelpUtil {
         return a <= maxA && a >= minA && t <= maxT && t >= minT;
     }
 
-    public static List<Message> transToList(ByteBuffer buffer, int size) {
+    private static List<Message> transToList(ByteBuffer buffer, int size) {
         List<Message> messages = new ArrayList<>();
         for (int i = 0; i < size; ++i) {
             int pSize = buffer.getInt();
@@ -57,7 +57,6 @@ public class HelpUtil {
         }
         return messages;
     }
-
 
     /**
      * 读取Block 中整个 message 列表
