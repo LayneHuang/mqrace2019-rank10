@@ -38,6 +38,8 @@ public class MyHash {
     }
 
     public void insert(BlockInfo info) {
+        System.out.println("插入块的信息:");
+        info.show();
         all[size] = info;
         size++;
         if (size == limit) {

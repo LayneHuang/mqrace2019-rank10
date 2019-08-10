@@ -59,7 +59,17 @@ public class BlockInfo {
     }
 
     public void show() {
-        System.out.println("aL:" + minA + ",aR:" + maxA + ",tL:" + minT + ",tR:" + maxT + ",amount:" + amount + ",sum:" + sum + ",pos:" + position);
+        System.out.println(
+                "aL:" + minA +
+                        ",aR:" + maxA +
+                        ",tL:" + minT +
+                        ",tR:" + maxT +
+                        ",amount:" + amount +
+                        ",sum:" + sum +
+                        ",pos:" + position +
+                        ",aDiff: " + (maxA - minA) +
+                        ",tDiff: " + (maxT - minT)
+        );
     }
 
     public void setAmount(int amount) {
