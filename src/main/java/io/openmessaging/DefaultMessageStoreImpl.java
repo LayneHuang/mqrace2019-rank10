@@ -27,7 +27,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         HeapHolder.getIns().flush();
         //        System.out.println("step2: " + res.size());
         List<Message> res = MyHash.getIns().find2(tMin, tMax, aMin, aMax);
-//        System.out.println("step2~");
+        System.out.println("step2~");
         return res;
     }
 
