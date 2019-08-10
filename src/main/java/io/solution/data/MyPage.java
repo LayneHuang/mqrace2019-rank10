@@ -31,8 +31,7 @@ public class MyPage {
         return messages;
     }
 
-    public ByteBuffer getBuffer(ByteBuffer buffer) {
-        buffer.position(0);
+    public void writeBuffer(ByteBuffer buffer) {
         buffer.putInt(messages.size());
         for (Message message : messages) {
             buffer.putLong(message.getT());
@@ -40,7 +39,6 @@ public class MyPage {
             buffer.put(message.getBody());
         }
         buffer.flip();
-        return buffer;
     }
 
     public long getMaxT() {

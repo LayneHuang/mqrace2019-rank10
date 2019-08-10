@@ -110,7 +110,10 @@ public class BufferHolder {
 //            }
         }
         try {
-            channel.close();
+            if (channel != null) {
+                channel.close();
+                channel = null;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -144,7 +147,9 @@ public class BufferHolder {
             writeCount++;
             System.out.println("写入块的个数:" + writeCount + ",块大小:" + block.getSize());
             BlockInfo blockInfo = new BlockInfo();
-            blockInfo.setPosition(channel.position());
+            long pos = channel.position();
+            System.out.println("当前文件位置:" + pos);
+            blockInfo.setPosition(pos);
             blockInfo.setSquare(block.getMaxT(), block.getMinT(), block.getMaxA(), block.getMinA());
             blockInfo.setSum(block.getSum());
             blockInfo.setAmount(block.getSize());
@@ -152,19 +157,19 @@ public class BufferHolder {
             int messageAmount = 0;
             for (MyPage page : block.getPages()) {
                 messageAmount += page.getSize();
-                buffer = page.getBuffer(buffer);
+                page.writeBuffer(buffer);
                 channel.write(buffer);
+                buffer.clear();
             }
+            totalWriteMessage += messageAmount;
+            System.out.println("写入Message个数: " + totalWriteMessage + "(总) " + messageAmount + "(本次)");
             blockInfo.setMessageAmount(messageAmount);
 //            executor.execute(() -> MyHash.getIns().insert(blockInfo));
             MyHash.getIns().insert(blockInfo);
-            totalWriteMessage += messageAmount;
-            System.out.println("写入Message个数: " + totalWriteMessage);
 
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            buffer.clear();
             writeFileLock.unlock();
         }
     }
