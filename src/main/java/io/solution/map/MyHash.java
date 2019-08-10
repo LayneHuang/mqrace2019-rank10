@@ -110,7 +110,6 @@ public class MyHash {
                 }
             }
         }
-
-        return Math.floorDiv(res, messageAmount);
+        return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
 }
