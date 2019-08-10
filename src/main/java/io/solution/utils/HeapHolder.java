@@ -29,7 +29,7 @@ public class HeapHolder {
      */
     private ArrayList<PriorityQueue<Message>> heaps;
 
-    private static HeapHolder ins;
+    private static HeapHolder ins = new HeapHolder();
 
     private HeapHolder() {
         indexMap = new ConcurrentHashMap<>();
@@ -37,17 +37,7 @@ public class HeapHolder {
     }
 
     public static HeapHolder getIns() {
-        // double check locking
-        if (ins != null) {
-            return ins;
-        } else {
-            synchronized (HeapHolder.class) {
-                if (ins == null) {
-                    ins = new HeapHolder();
-                }
-            }
-            return ins;
-        }
+        return ins;
     }
 
     private int getIndex(long threadId) {

@@ -31,7 +31,7 @@ public class BlockInfo {
         this.position = position;
     }
 
-    public void setSquare(long maxT, long minT, long maxA, long minA) {
+    public void setSquare(long minT, long maxT, long minA, long maxA) {
         this.maxA = maxA;
         this.maxT = maxT;
         this.minA = minA;

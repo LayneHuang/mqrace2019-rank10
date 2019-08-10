@@ -150,7 +150,7 @@ public class BufferHolder {
             long pos = channel.position();
             System.out.println("当前文件位置:" + pos);
             blockInfo.setPosition(pos);
-            blockInfo.setSquare(block.getMaxT(), block.getMinT(), block.getMaxA(), block.getMinA());
+            blockInfo.setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
             blockInfo.setSum(block.getSum());
             blockInfo.setAmount(block.getSize());
             // 写文件
@@ -166,7 +166,7 @@ public class BufferHolder {
             blockInfo.setMessageAmount(messageAmount);
 //            executor.execute(() -> MyHash.getIns().insert(blockInfo));
             MyHash.getIns().insert(blockInfo);
-
+            errorCheck(block, blockInfo);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -204,7 +204,7 @@ public class BufferHolder {
                                 "原:" + originMessage.get(i).getT() + "(t) " + originMessage.get(i).getA() + "(a) " +
                                 "读:" + messages.get(i).getT() + "(t) " + messages.get(i).getA() + "(a) "
                 );
-                // break;
+                 break;
             }
         }
 
