@@ -51,7 +51,7 @@ public class HelpUtil {
                 long a = buffer.getLong();
                 byte[] bd = new byte[GlobalParams.getBodySize()];
                 buffer.get(bd);
-                Message message = new Message(t, a, bd);
+                Message message = new Message(a, t, bd);
                 messages.add(message);
             }
         }

@@ -166,7 +166,7 @@ public class BufferHolder {
             blockInfo.setMessageAmount(messageAmount);
 //            executor.execute(() -> MyHash.getIns().insert(blockInfo));
             MyHash.getIns().insert(blockInfo);
-            errorCheck(block, blockInfo);
+            // errorCheck(block, blockInfo);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -204,7 +204,7 @@ public class BufferHolder {
                                 "原:" + originMessage.get(i).getT() + "(t) " + originMessage.get(i).getA() + "(a) " +
                                 "读:" + messages.get(i).getT() + "(t) " + messages.get(i).getA() + "(a) "
                 );
-                 break;
+                break;
             }
         }
 
