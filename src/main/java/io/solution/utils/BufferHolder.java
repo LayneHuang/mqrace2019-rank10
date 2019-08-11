@@ -26,21 +26,17 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class BufferHolder {
 
-//    private ReentrantReadWriteLock bufferRWLock;
-
     private boolean isFinish = false;
 
     private static BufferHolder ins = new BufferHolder();
 
     private LinkedBlockingQueue<MyBlock> blockQueue;
 
-//    private ExecutorService executor = Executors.newFixedThreadPool(3);
 
     private FileChannel channel;
 
 
     private BufferHolder() {
-//        bufferRWLock = new ReentrantReadWriteLock();
         try {
             Path path = GlobalParams.getPath();
             channel = FileChannel.open(
@@ -59,34 +55,23 @@ public class BufferHolder {
 
     static BufferHolder getIns() {
         return ins;
-        // double check locking
-//        if (ins != null) {
-//            return ins;
-//        } else {
-//            synchronized (BufferHolder.class) {
-//                if (ins == null) {
-//                    ins = new BufferHolder();
-//                }
-//            }
-//            return ins;
-//        }
     }
 
-    private int inCount = 0;
+//    private int inCount = 0;
 
     void commit(List<MyBlock> blocks) {
         try {
             for (MyBlock block : blocks) {
-                inCount++;
+//                inCount++;
                 blockQueue.put(block);
-                System.out.println("buffer holder提交块个数:" + inCount);
+//                System.out.println("buffer holder提交块个数:" + inCount);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private int writeCount = 0;
+//    private int writeCount = 0;
 
     private void writeFile() {
         System.out.println("BufferHolder write file 开始工作~");
@@ -97,17 +82,12 @@ public class BufferHolder {
                     // 结束
                     isFinish = true;
                     System.out.println("BufferHolder write file 结束~");
-//                    bufferRWLock.writeLock().unlock();
                     break;
                 }
                 solve(block);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-//            if (blockQueue.isEmpty() && GlobalParams.isStepOneFinished() && BlockHolder.getIns().isFinish()) {
-//                System.out.println("BufferHolder write file 结束~");
-//                break;
-//            }
         }
         try {
             if (channel != null) {
@@ -119,7 +99,7 @@ public class BufferHolder {
         }
     }
 
-    private long totalWriteMessage = 0;
+//    private long totalWriteMessage = 0;
 
     void flush() {
         System.out.println("BufferHolder flush");
@@ -143,30 +123,29 @@ public class BufferHolder {
     private void solve(MyBlock block) {
         writeFileLock.lock();
         ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.PAGE_SIZE);
+//        ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.getBodySize());
         try {
-            writeCount++;
-            System.out.println("写入块的个数:" + writeCount + ",块大小:" + block.getSize());
+//            writeCount++;
+//            System.out.println("写入块的个数:" + writeCount + ",块大小:" + block.getSize());
             BlockInfo blockInfo = new BlockInfo();
+            blockInfo.initBlockInfo(block);
             long pos = channel.position();
-            System.out.println("当前文件位置:" + pos);
+//            System.out.println("当前文件位置:" + pos);
             blockInfo.setPosition(pos);
-            blockInfo.setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
-            blockInfo.setSum(block.getSum());
-            blockInfo.setAmount(block.getSize());
             // 写文件
             int messageAmount = 0;
             for (MyPage page : block.getPages()) {
                 messageAmount += page.getSize();
-                page.writeBuffer(buffer);
+//                page.writeBuffer(buffer);
+                page.writeBufferOnlyBody(buffer);
                 channel.write(buffer);
                 buffer.clear();
             }
-            totalWriteMessage += messageAmount;
-            System.out.println("写入Message个数: " + totalWriteMessage + "(总) " + messageAmount + "(本次)");
             blockInfo.setMessageAmount(messageAmount);
-//            executor.execute(() -> MyHash.getIns().insert(blockInfo));
+//            totalWriteMessage += messageAmount;
+//            System.out.println("写入Message个数: " + totalWriteMessage + "(总) " + messageAmount + "(本次)");
             MyHash.getIns().insert(blockInfo);
-            // errorCheck(block, blockInfo);
+            // checkError(block, blockInfo);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -174,12 +153,11 @@ public class BufferHolder {
         }
     }
 
-    private void errorCheck(MyBlock block, BlockInfo blockInfo) {
-        List<Message> messages =
-                HelpUtil.readMessages(
-                        blockInfo.getPosition(),
-                        block.getSize() * GlobalParams.PAGE_SIZE
-                );
+
+    /**
+     * 对比写进的元数据及读出的数据是否一致
+     */
+    private void checkError(MyBlock block, BlockInfo blockInfo) {
 
         List<Message> originMessage = new ArrayList<>();
         long originSum = 0;
@@ -190,19 +168,22 @@ public class BufferHolder {
             }
         }
 
-        if (messages.size() != originMessage.size()) {
-            System.out.println("写后读不一致:" + messages.size() + "," + originMessage.size());
-        }
+        byte[][] bodys = HelpUtil.readBody(blockInfo.getPosition(), blockInfo.getMessageAmount());
 
-        for (int i = 0; i < messages.size(); ++i) {
+        long[] aList = blockInfo.readBlockA();
+        long[] tList = blockInfo.readBlockT();
+
+        for (int i = 0; i < blockInfo.getMessageAmount(); ++i) {
             if (
-                    messages.get(i).getT() != originMessage.get(i).getT()
-                            || messages.get(i).getA() != originMessage.get(i).getA()
+                    tList[i] != originMessage.get(i).getT()
+                            || aList[i] != originMessage.get(i).getA()
+                            || (!checkBody(bodys[i], originMessage.get(i).getBody()))
+
             ) {
                 System.out.println(
                         "Message内容不一致:" + i + "(下标) " +
                                 "原:" + originMessage.get(i).getT() + "(t) " + originMessage.get(i).getA() + "(a) " +
-                                "读:" + messages.get(i).getT() + "(t) " + messages.get(i).getA() + "(a) "
+                                "读:" + tList[i] + "(t) " + aList[i] + "(a) "
                 );
                 break;
             }
@@ -211,6 +192,13 @@ public class BufferHolder {
         if (originSum != blockInfo.getSum()) {
             System.out.println("写后块内和不一致:" + originSum + " " + blockInfo.getSum());
         }
+    }
+
+    boolean checkBody(byte[] a, byte[] b) {
+        for (int i = 0; i < GlobalParams.getBodySize(); ++i) {
+            if (a[i] != b[i]) return false;
+        }
+        return true;
     }
 
 }

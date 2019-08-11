@@ -30,7 +30,7 @@ public class BlockHolder {
         return ins;
     }
 
-    private int outCount = 0;
+//    private int outCount = 0;
 
 
     private void work() {
@@ -40,9 +40,9 @@ public class BlockHolder {
             for (int i = 0; i < GlobalParams.getWriteCountLimit(); ++i) {
                 MyBlock block = blockQueue.poll();
                 if (block != null) {
-                    outCount++;
+//                    outCount++;
                     blocks.add(block);
-                    System.out.println("取出块个数:" + outCount);
+//                    System.out.println("取出块个数:" + outCount);
                 }
             }
 
@@ -57,7 +57,7 @@ public class BlockHolder {
 
     void commit(MyBlock block) {
         try {
-            System.out.println("提交块,块大小:" + block.getSize());
+//            System.out.println("提交块,块大小:" + block.getSize());
             // block.showSquare();
             blockQueue.put(block);
         } catch (InterruptedException e) {
@@ -76,8 +76,8 @@ public class BlockHolder {
                 e.printStackTrace();
             }
             if (block != null) {
-                outCount++;
-                System.out.println("block holder flush 取出块个数:" + outCount);
+//                outCount++;
+//                System.out.println("block holder flush 取出块个数:" + outCount);
                 blocks.add(block);
             }
         }

@@ -44,7 +44,7 @@ public class MyHash {
 //        maxADiff = Math.max(info.getMaxA() - info.getMinA(), maxADiff);
 //        maxTDiff = Math.max(info.getMaxT() - info.getMinT(), maxTDiff);
 //        System.out.println("最大差值: " + maxADiff + "(a) " + maxTDiff + "(t)");
-        info.show();
+//        info.show();
         all[size] = info;
         size++;
         if (size == limit) {
@@ -62,17 +62,21 @@ public class MyHash {
                     minT, maxT, minA, maxA,
                     info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
             )) {
-                List<Message> messages = HelpUtil.readMessages(
-                        info.getPosition(),
-                        info.getAmount() * GlobalParams.PAGE_SIZE
-                );
-                for (Message message : messages) {
+//                List<Message> messages = HelpUtil.readMessages(
+//                        info.getPosition(),
+//                        info.getAmount() * GlobalParams.PAGE_SIZE
+//                );
+                byte[][] bodys = HelpUtil.readBody(info.getPosition(), info.getMessageAmount());
+                long[] aList = info.readBlockA();
+                long[] tList = info.readBlockT();
+                for (int j = 0; j < info.getMessageAmount(); ++j) {
                     if (
                             HelpUtil.inSide(
-                                    message.getT(), message.getA(),
+                                    tList[j], aList[j],
                                     minT, maxT, minA, maxA
                             )
                     ) {
+                        Message message = new Message(aList[j], tList[j], bodys[j]);
                         res.add(message);
                     }
                 }
@@ -88,7 +92,7 @@ public class MyHash {
         long messageAmount = 0;
         for (int i = 0; i < size; ++i) {
             BlockInfo info = all[i];
-            if (
+            if (            // 完全包含
                     HelpUtil.matrixInside(
                             minT, maxT, minA, maxA,
                             info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
@@ -96,22 +100,19 @@ public class MyHash {
             ) {
                 res += info.getSum();
                 messageAmount += info.getMessageAmount();
-            } else if (HelpUtil.intersect(
-                    minT, maxT, minA, maxA,
-                    info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
-            )) {
-                List<Message> messages = HelpUtil.readMessages(
-                        info.getPosition(),
-                        info.getAmount() * GlobalParams.PAGE_SIZE
-                );
-                for (Message message : messages) {
-                    if (
-                            HelpUtil.inSide(
-                                    message.getT(), message.getA(),
-                                    minT, maxT, minA, maxA
-                            )
-                    ) {
-                        res += message.getA();
+            } else if (    // 部分包含
+                    HelpUtil.intersect(
+                            minT, maxT, minA, maxA,
+                            info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
+                    )
+            ) {
+                long[] tList = info.readBlockT();
+                long[] aList = info.readBlockA();
+                for (int j = 0; j < info.getMessageAmount(); ++j) {
+                    long a = aList[j];
+                    long t = tList[j];
+                    if (HelpUtil.inSide(t, a, minT, maxT, minA, maxA)) {
+                        res += aList[j];
                         messageAmount++;
                     }
                 }
@@ -119,4 +120,24 @@ public class MyHash {
         }
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
+
+    /**
+     * 输出各块的情况
+     *
+     * @return
+     */
+    public void showEachInfo() {
+        for (int i = 0; i < size; ++i) {
+            BlockInfo info = all[i];
+            System.out.println(
+                    "第" + i + "块信息个数: " + info.getMessageAmount() +
+                            " 占用内存:" + (info.getSizeT() + info.getSizeA()) + "(byte), " +
+                            ((double) (info.getSizeT() + info.getSizeA()) / GlobalParams.ONE_MB) + "(MB) " +
+                            " a 字节: " + (info.getSizeA()) +
+                            " t 字节: " + (info.getSizeT())
+            );
+
+        }
+    }
+
 }

@@ -1,19 +1,145 @@
 package io.solution.data;
 
+import io.openmessaging.Message;
+import io.solution.utils.HashUtil;
+
+import java.io.IOException;
+import java.util.List;
+
 /**
  * @Author: laynehuang
  * @CreatedAt: 2019/8/6 0006
  */
 public class BlockInfo {
 
+    private int limitA = 85000;
+    private int limitT = 85000;
+
     private long maxT;
     private long minT;
     private long maxA;
     private long minA;
     private int amount;
+
+    // 偏移值的和
     private long sum;
+
     private long position;
-    private long messageAmount;
+    private int messageAmount;
+
+    // 块内A是递增的
+    private long beginA;        // 第一个a值
+    private byte[] dataA;       // a的压缩数据
+    private int posA;           // a的压缩数据游标位置   Todo:注意线程安全
+    private int sizeA;          // a的压缩数据占用的位
+
+    private long beginT;        // 第一个t值
+    private byte[] dataT;       // t的压缩数据
+    private int posT;           // t的压缩数据游标位置
+    private int sizeT;          // t的压缩数据占用的位
+
+    public BlockInfo() {
+        dataA = new byte[limitA];
+        dataT = new byte[limitT];
+    }
+
+    // block info 赋值
+    public void initBlockInfo(MyBlock block) {
+        setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
+        sum = block.getSum();
+        amount = block.getSize();
+
+        // 初始化
+        sizeA = sizeT = 0;
+        flip();
+        boolean isFirst = true;
+        long lastA = 0;
+        long lastT = 0;
+        for (MyPage page : block.getPages()) {
+            for (Message message : page.getMessages()) {
+                if (isFirst) {
+                    lastA = beginA = message.getA();
+                    lastT = beginT = message.getT();
+                    isFirst = false;
+                } else {
+                    long nowA = message.getA();
+                    long nowT = message.getT();
+                    int aDiff = (int) (nowA - lastA);
+                    // a
+                    HashUtil.encodeInt(aDiff, this, false);
+                    // t
+                    int tDiff = (int) (nowT - lastT);
+                    HashUtil.encodeInt(tDiff, this, true);
+                    lastA = nowA;
+                    lastT = nowT;
+                }
+            }
+        }
+    }
+
+    /**
+     * 获取所有Message a的值
+     */
+    public long[] readBlockA() {
+        long[] res = new long[messageAmount];
+        long pre = beginA;
+        res[0] = pre;
+        posA = 0;
+        for (int i = 1; i < messageAmount; ++i) {
+            try {
+                long aDiff = HashUtil.readInt(this, false);
+                pre += aDiff;
+                res[i] = pre;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ArrayIndexOutOfBoundsException e) {
+                System.out.println("当前i : " + i + "," + "sizeA:" + sizeA + " limitA:" + limitA);
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
+
+    /**
+     * 获取所有Message t的值
+     */
+    public long[] readBlockT() {
+        long[] res = new long[messageAmount];
+        long pre = beginT;
+        res[0] = pre;
+        posT = 0;
+        for (int i = 1; i < messageAmount; ++i) {
+            try {
+                int tDiff = HashUtil.readInt(this, true);
+                pre += tDiff;
+                res[i] = pre;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ArrayIndexOutOfBoundsException e) {
+                System.out.println("当前i : " + i + "," + "sizeT:" + sizeT + " limitT:" + limitT);
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
+
+    // Todo : 获取block的所有内容
+    public List<Message> readBlock() {
+        return null;
+    }
+
+    public void flip() {
+        posA = 0;
+        posT = 0;
+    }
+
+    public void flipA() {
+        posA = 0;
+    }
+
+    public void flipT() {
+        posA = 0;
+    }
 
     public long getSum() {
         return sum;
@@ -31,7 +157,7 @@ public class BlockInfo {
         this.position = position;
     }
 
-    public void setSquare(long minT, long maxT, long minA, long maxA) {
+    private void setSquare(long minT, long maxT, long minA, long maxA) {
         this.maxA = maxA;
         this.maxT = maxT;
         this.minA = minA;
@@ -54,7 +180,7 @@ public class BlockInfo {
         return minT;
     }
 
-    public void setSum(long sum) {
+    private void setSum(long sum) {
         this.sum = sum;
     }
 
@@ -72,15 +198,81 @@ public class BlockInfo {
         );
     }
 
-    public void setAmount(int amount) {
+    private void setAmount(int amount) {
         this.amount = amount;
     }
 
-    public long getMessageAmount() {
+    public int getMessageAmount() {
         return messageAmount;
     }
 
-    public void setMessageAmount(long messageAmount) {
+    public void setMessageAmount(int messageAmount) {
         this.messageAmount = messageAmount;
     }
+
+    public byte[] getDataA() {
+        return dataA;
+    }
+
+    public void setDataA(byte[] dataA) {
+        this.dataA = dataA;
+    }
+
+    public byte[] getDataT() {
+        return dataT;
+    }
+
+    public void setDataT(byte[] dataT) {
+        this.dataT = dataT;
+    }
+
+    public int getPosA() {
+        return posA;
+    }
+
+    public void setPosA(int posA) {
+        this.posA = posA;
+    }
+
+    public int getSizeA() {
+        return sizeA;
+    }
+
+    public void setSizeA(int sizeA) {
+        this.sizeA = sizeA;
+    }
+
+    public int getPosT() {
+        return posT;
+    }
+
+    public void setPosT(int posT) {
+        this.posT = posT;
+    }
+
+    public int getSizeT() {
+        return sizeT;
+    }
+
+    public void setSizeT(int sizeT) {
+        this.sizeT = sizeT;
+    }
+
+    public int getLimitT() {
+        return limitT;
+    }
+
+    public void setLimitT(int limit) {
+        this.limitT = limit;
+    }
+
+    public int getLimitA() {
+        return limitA;
+    }
+
+    public void setLimitA(int limit) {
+        this.limitA = limit;
+    }
+
+
 }

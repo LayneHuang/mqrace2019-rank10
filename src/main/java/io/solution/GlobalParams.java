@@ -9,7 +9,7 @@ import java.nio.file.Paths;
  */
 public class GlobalParams {
 
-    public static boolean IS_DEBUG = Boolean.valueOf(System.getProperty("debug", "false"));
+    private static boolean IS_DEBUG = Boolean.valueOf(System.getProperty("debug", "false"));
 
     public static final int MESSAGE_SIZE = 50;
 
@@ -17,13 +17,13 @@ public class GlobalParams {
 
     public static final int PAGE_MESSAGE_COUNT = 80;
 
-    public static final long BLOCK_SIZE = 4 * 1024 * 1024;
+    private static final long BLOCK_SIZE = 2 * 1024 * 1024;
 
-    public static final long CIRCLE_BUFFER_SIZE = 64 * 1024 * 1024;
+    private static final long CIRCLE_BUFFER_SIZE = 64 * 1024 * 1024;
 
     public static final int CIRCLE_BUFFER_COUNT = 4;
 
-    public static final long TWO_GB = 2L * 1024 * 1024 * 1024;
+    public static final long ONE_MB = 1L * 1024 * 1024;
 
     public static final long BLOCK_SIZE_LIMIT = BLOCK_SIZE / PAGE_SIZE;
 
@@ -38,8 +38,6 @@ public class GlobalParams {
     public static final long WRITE_COUNT_LIMIT = CIRCLE_BUFFER_SIZE / BLOCK_SIZE;
 
     private static boolean isStepOneFinished = false;
-
-    public static final Object FINISH_LOCK = new Object();
 
     public static void setStepOneFinished() {
         isStepOneFinished = true;
@@ -70,7 +68,9 @@ public class GlobalParams {
     }
 
     public static int getPageMessageCount() {
-        return Math.floorDiv(PAGE_SIZE - 2, getMessageSize());
+//        return Math.floorDiv(PAGE_SIZE - 2, getMessageSize());
+        // 只写body
+        return Math.floorDiv(PAGE_SIZE, getBodySize());
     }
 
     public static int getBlockMessageCount() {

@@ -3,6 +3,7 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
+import io.solution.map.MyHash;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,6 +115,8 @@ public class HeapHolder {
                 }
                 BlockHolder.getIns().flush();
                 BufferHolder.getIns().flush();
+                // 打印个块的信息
+                // MyHash.getIns().showEachInfo();
                 GlobalParams.setStepOneFinished();
             }
         }

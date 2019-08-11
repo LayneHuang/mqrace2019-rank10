@@ -20,10 +20,10 @@ public class HelpUtil {
      * 判矩阵相交
      */
     public static boolean intersect(
-            long minT, long maxT, long minA, long maxA,
-            long minT2, long maxT2, long minA2, long maxA2
+            long queryT1, long queryT2, long queryA1, long queryA2,
+            long blockT1, long blockT2, long blockA1, long blockA2
     ) {
-        return !(maxT < minT2 || maxT2 < minT || maxA < minA2 || maxA2 < minA);
+        return !(queryT2 < blockT1 || blockT2 < queryT1 || queryA2 < blockA1 || blockA2 < queryA1);
     }
 
     /**
@@ -89,4 +89,42 @@ public class HelpUtil {
         return res;
     }
 
+
+    /**
+     * 只写入body的情况
+     * 读取Block 中 message 列表
+     */
+    public static byte[][] readBody(long position, int messageCount) {
+        int size = messageCount * GlobalParams.getBodySize();
+        FileChannel channel = null;
+        byte[][] res = new byte[messageCount][GlobalParams.getBodySize()];
+
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getPath(),
+                    StandardOpenOption.READ
+            );
+            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            channel.read(buffer, position);
+            buffer.flip();
+
+            // trans
+            for (int i = 0; i < messageCount; ++i) {
+                buffer.get(res[i], 0, GlobalParams.getBodySize());
+            }
+
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
 }

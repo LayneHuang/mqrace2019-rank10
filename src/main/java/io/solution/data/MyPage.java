@@ -41,6 +41,13 @@ public class MyPage {
         buffer.flip();
     }
 
+    public void writeBufferOnlyBody(ByteBuffer buffer) {
+        for (Message message : messages) {
+            buffer.put(message.getBody());
+        }
+        buffer.flip();
+    }
+
     public long getMaxT() {
         return maxT;
     }
