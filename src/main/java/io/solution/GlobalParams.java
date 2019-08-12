@@ -17,7 +17,7 @@ public class GlobalParams {
 
     public static final int PAGE_MESSAGE_COUNT = 80;
 
-    private static final long BLOCK_SIZE = 256 * 1024;
+    private static final long BLOCK_SIZE = 256 * 1024 * (IS_DEBUG ? 1 : 6);
 
     private static final long CIRCLE_BUFFER_SIZE = 64 * 1024 * 1024;
 

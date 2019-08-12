@@ -1,6 +1,7 @@
 package io.solution.data;
 
 import io.openmessaging.Message;
+import io.solution.GlobalParams;
 import io.solution.utils.HashUtil;
 
 import java.io.IOException;
@@ -12,8 +13,8 @@ import java.util.List;
  */
 public class BlockInfo {
 
-    private int limitA = 33000;
-    private int limitT = 33000;
+    private int limitA = GlobalParams.getBlockMessageCount();
+    private int limitT = GlobalParams.getBlockMessageCount();
 
     private long maxT;
     private long minT;

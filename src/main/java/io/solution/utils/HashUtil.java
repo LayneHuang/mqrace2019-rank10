@@ -60,7 +60,7 @@ public class HashUtil {
 
         // 越界扩容
         if (pos + 4 >= limit) {
-            limit += 1500;
+            limit += 1000;
             buf = Arrays.copyOf(buf, limit);
             if (isHashT) {
                 blockInfo.setLimitT(limit);
