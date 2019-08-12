@@ -135,6 +135,7 @@ class BufferHolder {
                 blockInfo.initBlockInfo(block);
                 blockInfo.setPosition(pos);
                 MyHash.getIns().insert(blockInfo);
+//                checkError(block, blockInfo);
             });
 
             for (int i = 0; i < block.getPageAmount(); ++i) {
@@ -151,7 +152,6 @@ class BufferHolder {
 //            totalWriteMessage += messageAmount;
 //            System.out.println("写入Message个数: " + totalWriteMessage + "(总) " + messageAmount + "(本次)");
 //            MyHash.getIns().insert(blockInfo);
-//            checkError(block, blockInfo);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -163,50 +163,50 @@ class BufferHolder {
     /**
      * 对比写进的元数据及读出的数据是否一致
      */
-    private void checkError(MyBlock block, BlockInfo blockInfo) {
-
-        List<Message> originMessage = new ArrayList<>();
-        long originSum = 0;
-        for (int i = 0; i < block.getPageAmount(); ++i) {
-            MyPage page = block.getPages()[i];
-            for (int j = 0; j < page.getMessageAmount(); ++j) {
-                Message message = page.getMessages()[j];
-                originMessage.add(message);
-                originSum += message.getA();
-            }
-        }
-
-        byte[][] bodys = HelpUtil.readBody(blockInfo.getPosition(), blockInfo.getMessageAmount());
-
-        long[] aList = blockInfo.readBlockA();
-        long[] tList = blockInfo.readBlockT();
-
-        for (int i = 0; i < blockInfo.getMessageAmount(); ++i) {
-            if (
-                    tList[i] != originMessage.get(i).getT()
-                            || aList[i] != originMessage.get(i).getA()
-                            || (!checkBody(bodys[i], originMessage.get(i).getBody()))
-
-            ) {
-                System.out.println(
-                        "Message内容不一致:" + i + "(下标) " +
-                                "原:" + originMessage.get(i).getT() + "(t) " + originMessage.get(i).getA() + "(a) " +
-                                "读:" + tList[i] + "(t) " + aList[i] + "(a) "
-                );
-                break;
-            }
-        }
-
-        if (originSum != blockInfo.getSum()) {
-            System.out.println("写后块内和不一致:" + originSum + " " + blockInfo.getSum());
-        }
-    }
-
-    boolean checkBody(byte[] a, byte[] b) {
-        for (int i = 0; i < GlobalParams.getBodySize(); ++i) {
-            if (a[i] != b[i]) return false;
-        }
-        return true;
-    }
+//    private void checkError(MyBlock block, BlockInfo blockInfo) {
+//
+//        List<Message> originMessage = new ArrayList<>();
+//        long originSum = 0;
+//        for (int i = 0; i < block.getPageAmount(); ++i) {
+//            MyPage page = block.getPages()[i];
+//            for (int j = 0; j < page.getMessageAmount(); ++j) {
+//                Message message = page.getMessages()[j];
+//                originMessage.add(message);
+//                originSum += message.getA();
+//            }
+//        }
+//
+//        byte[][] bodys = HelpUtil.readBody(blockInfo.getPosition(), blockInfo.getMessageAmount());
+//
+//        long[] aList = blockInfo.readBlockA();
+//        long[] tList = blockInfo.readBlockT();
+//
+//        for (int i = 0; i < blockInfo.getMessageAmount(); ++i) {
+//            if (
+//                    tList[i] != originMessage.get(i).getT()
+//                            || aList[i] != originMessage.get(i).getA()
+//                            || (!checkBody(bodys[i], originMessage.get(i).getBody()))
+//
+//            ) {
+//                System.out.println(
+//                        "Message内容不一致:" + i + "(下标) " +
+//                                "原:" + originMessage.get(i).getT() + "(t) " + originMessage.get(i).getA() + "(a) " +
+//                                "读:" + tList[i] + "(t) " + aList[i] + "(a) "
+//                );
+//                break;
+//            }
+//        }
+//
+//        if (originSum != blockInfo.getSum()) {
+//            System.out.println("写后块内和不一致:" + originSum + " " + blockInfo.getSum());
+//        }
+//    }
+//
+//    boolean checkBody(byte[] a, byte[] b) {
+//        for (int i = 0; i < GlobalParams.getBodySize(); ++i) {
+//            if (a[i] != b[i]) return false;
+//        }
+//        return true;
+//    }
 
 }

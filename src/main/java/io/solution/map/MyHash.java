@@ -50,10 +50,11 @@ public class MyHash {
         useByteSum += (info.getSizeA() + info.getSizeT());
         System.out.println(
                 "插入" + (size + 1) + "块 " +
-                        "使用内存:" + String.format("%.6f", useByteSum / 1024 / 1024 / 1024) + "(GB) " +
-                        "message数量:" + info.getMessageAmount() + " " +
-                        " size:" + info.getSizeA() + "," + info.getSizeT() + " (byte) " +
-                        " limit:" + info.getLimitA() + "," + info.getLimitT() + " (byte) "
+                        "使用内存:" + String.format("%.6f", useByteSum / 1024 / 1024 / 1024) + "(GB) "
+                        + "message数量:" + info.getMessageAmount() + " "
+                        + " size:" + info.getSizeA() + "," + info.getSizeT() + " (byte) "
+//                        + " limit:" + info.getLimitA() + "," + info.getLimitT() + " (byte) "
+//                        " mem:" + Runtime.getRuntime().freeMemory() + " (byte) "
         );
 
         all[size] = info;
@@ -67,6 +68,9 @@ public class MyHash {
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
 //        System.out.println("hash list size: " + size);
         List<Message> res = new ArrayList<>();
+        long[] aList = new long[GlobalParams.getBlockMessageLimit()];
+        long[] tList = new long[GlobalParams.getBlockMessageLimit()];
+        byte[][] bodys = new byte[GlobalParams.getBlockMessageLimit()][GlobalParams.getBodySize()];
         for (int i = 0; i < size; ++i) {
             BlockInfo info = all[i];
             if (HelpUtil.intersect(
@@ -77,9 +81,9 @@ public class MyHash {
 //                        info.getPosition(),
 //                        info.getAmount() * GlobalParams.PAGE_SIZE
 //                );
-                byte[][] bodys = HelpUtil.readBody(info.getPosition(), info.getMessageAmount());
-                long[] aList = info.readBlockA();
-                long[] tList = info.readBlockT();
+                bodys = HelpUtil.readBody(bodys , info.getPosition(), info.getMessageAmount());
+                aList = info.readBlockA(aList);
+                tList = info.readBlockT(tList);
                 for (int j = 0; j < info.getMessageAmount(); ++j) {
                     if (
                             HelpUtil.inSide(
@@ -101,6 +105,8 @@ public class MyHash {
     public long find3(long minT, long maxT, long minA, long maxA) {
         long res = 0;
         long messageAmount = 0;
+        long[] aList = new long[GlobalParams.getBlockMessageLimit()];
+        long[] tList = new long[GlobalParams.getBlockMessageLimit()];
         for (int i = 0; i < size; ++i) {
             BlockInfo info = all[i];
             if (            // 完全包含
@@ -117,8 +123,8 @@ public class MyHash {
                             info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
                     )
             ) {
-                long[] tList = info.readBlockT();
-                long[] aList = info.readBlockA();
+                tList = info.readBlockT(tList);
+                aList = info.readBlockA(aList);
                 for (int j = 0; j < info.getMessageAmount(); ++j) {
                     long a = aList[j];
                     long t = tList[j];

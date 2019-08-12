@@ -24,7 +24,15 @@ public class HashUtil {
     public static int readInt(BlockInfo blockInfo, boolean isReadT, MyCursor cursor) throws IOException {
 
         int pos = cursor.getPos();
-        byte[] buf = (isReadT ? blockInfo.getDataT() : blockInfo.getDataA());
+        byte[] buf;
+        if (!blockInfo.isDirect()) {
+            buf = (isReadT ? blockInfo.getDataT() : blockInfo.getDataT());
+        } else {
+            buf = cursor.getBytes();
+        }
+        if (buf == null) {
+            System.out.println("fuck~~~    " + blockInfo.isDirect());
+        }
         int len = 1;
         int b = buf[pos] & 0xff;
         int n = b & 0x7f;

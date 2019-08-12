@@ -5,13 +5,19 @@ import io.solution.GlobalParams;
 import io.solution.utils.HashUtil;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @Author: laynehuang
  * @CreatedAt: 2019/8/6 0006
  */
 public class BlockInfo {
+
+    // 是否使用栈外内存
+    private boolean isDirect = false;
 
     private int limitA = GlobalParams.getBlockMessageLimit() + 200;
     private int limitT = GlobalParams.getBlockMessageLimit() + 200;
@@ -31,15 +37,20 @@ public class BlockInfo {
     // 块内A是递增的
     private long beginA;        // 第一个a值
     private byte[] dataA;       // a的压缩数据
-    // private int posA;           // a的压缩数据游标位置   Todo:注意线程安全
+    private ByteBuffer bDataA;  // a的栈外压缩数据
     private int sizeA;          // a的压缩数据占用的位
 
     private long beginT;        // 第一个t值
     private byte[] dataT;       // t的压缩数据
-    // private int posT;           // t的压缩数据游标位置
+    private ByteBuffer bDataT;  // t的栈外压缩数据
     private int sizeT;          // t的压缩数据占用的位
 
     public BlockInfo() {
+        // 3分之1放到栈外内存
+        int rnk = ThreadLocalRandom.current().nextInt(100);
+        if (rnk % 3 == 0) {
+            isDirect = true;
+        }
         dataA = new byte[limitA];
         dataT = new byte[limitT];
     }
@@ -86,16 +97,37 @@ public class BlockInfo {
                 }
             }
         }
+
+        if (isDirect) {
+            bDataA = ByteBuffer.allocateDirect(sizeA);
+            bDataT = ByteBuffer.allocateDirect(sizeT);
+            bDataA.put(dataA, 0, sizeA);
+            bDataT.put(dataT, 0, sizeT);
+            dataA = dataT = null;
+        }
     }
 
     /**
      * 获取所有Message a的值
      */
-    public long[] readBlockA() {
-        long[] res = new long[messageAmount];
+
+    private static final String lockA = "set_bytes_lock_a";
+    private static final String lockT = "set_bytes_lock_t";
+
+    public long[] readBlockA(long[] res) {
         long pre = beginA;
         res[0] = pre;
         MyCursor cursor = new MyCursor();
+
+        if (isDirect) {
+            synchronized (lockA) {
+                byte[] bytes = new byte[sizeA];
+                bDataA.flip();
+                bDataA.get(bytes);
+                cursor.setBytes(bytes);
+            }
+        }
+
         for (int i = 1; i < messageAmount; ++i) {
             try {
                 long aDiff = HashUtil.readInt(this, false, cursor);
@@ -108,18 +140,25 @@ public class BlockInfo {
                 e.printStackTrace();
             }
         }
+        dataA = null;
         return res;
     }
 
     /**
      * 获取所有Message t的值
      */
-    public long[] readBlockT() {
-        long[] res = new long[messageAmount];
+    public long[] readBlockT(long[] res) {
         long pre = beginT;
         res[0] = pre;
-//        posT = 0;
         MyCursor cursor = new MyCursor();
+        if (isDirect) {
+            synchronized (lockT) {
+                bDataT.flip();
+                byte[] bytes = new byte[sizeT];
+                bDataT.get(bytes);
+                cursor.setBytes(bytes);
+            }
+        }
         for (int i = 1; i < messageAmount; ++i) {
             try {
                 int tDiff = HashUtil.readInt(this, true, cursor);
@@ -270,5 +309,7 @@ public class BlockInfo {
         this.limitA = limit;
     }
 
-
+    public boolean isDirect() {
+        return this.isDirect;
+    }
 }

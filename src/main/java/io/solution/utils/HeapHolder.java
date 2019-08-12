@@ -123,6 +123,8 @@ public class HeapHolder {
                 heaps = null;
                 indexMap.clear();
                 indexMap = null;
+                System.gc();
+                System.out.println("jvm GC~~");
 
                 GlobalParams.setStepOneFinished();
             }

@@ -1,5 +1,8 @@
 package io.solution.data;
 
+import java.nio.ByteBuffer;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * 游标,多线程读块使用
  *
@@ -7,7 +10,10 @@ package io.solution.data;
  * @CreatedAt: 2019/8/12 0012
  */
 public class MyCursor {
+
     private int pos;
+
+    private byte[] bytes;
 
     public int getPos() {
         return pos;
@@ -16,4 +22,13 @@ public class MyCursor {
     public void setPos(int pos) {
         this.pos = pos;
     }
+
+    public byte[] getBytes() {
+        return bytes;
+    }
+
+    public void setBytes(byte[] bytes) {
+        this.bytes = bytes;
+    }
+
 }
