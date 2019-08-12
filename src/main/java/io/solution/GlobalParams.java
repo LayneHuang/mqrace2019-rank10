@@ -17,7 +17,7 @@ public class GlobalParams {
 
     public static final int PAGE_MESSAGE_COUNT = 80;
 
-    public static final long BLOCK_SIZE = 256 * 1024 * (IS_DEBUG ? 1 : 8);
+    public static final int BLOCK_SIZE = 256 * 1024 * (IS_DEBUG ? 1 : 8);
 
     private static final long CIRCLE_BUFFER_SIZE = 64 * 1024 * 1024;
 
@@ -73,7 +73,11 @@ public class GlobalParams {
         return Math.floorDiv(PAGE_SIZE, getBodySize());
     }
 
-    public static int getBlockMessageCount() {
+    public static int getBlockPageLimit() {
+        return Math.floorDiv(BLOCK_SIZE, PAGE_SIZE);
+    }
+
+    public static int getBlockMessageLimit() {
         return getPageMessageCount() * (int) (BLOCK_SIZE / PAGE_SIZE);
     }
 }

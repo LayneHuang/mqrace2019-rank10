@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,8 +34,9 @@ class BufferHolder {
 
     private LinkedBlockingQueue<MyBlock> blockQueue;
 
-
     private FileChannel channel;
+
+    private ExecutorService executor = Executors.newFixedThreadPool(3);
 
 
     private BufferHolder() {
@@ -117,35 +120,38 @@ class BufferHolder {
 
     /**
      * 写操作
-     *
-     * @param block
      */
     private void solve(MyBlock block) {
         writeFileLock.lock();
-        ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.PAGE_SIZE);
+        ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.BLOCK_SIZE);
 //        ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.getBodySize());
         try {
 //            writeCount++;
-//            System.out.println("写入块的个数:" + writeCount + ",块大小:" + block.getSize());
-            BlockInfo blockInfo = new BlockInfo();
-            blockInfo.initBlockInfo(block);
+//            System.out.println("写入块的个数:" + writeCount + ",块大小:" + block.getPageAmount());
             long pos = channel.position();
 //            System.out.println("当前文件位置:" + pos);
-            blockInfo.setPosition(pos);
-            // 写文件
-            int messageAmount = 0;
-            for (MyPage page : block.getPages()) {
-                messageAmount += page.getSize();
-//                page.writeBuffer(buffer);
-                page.writeBufferOnlyBody(buffer);
-                channel.write(buffer);
-                buffer.clear();
+            executor.execute(() -> {
+                BlockInfo blockInfo = new BlockInfo();
+                blockInfo.initBlockInfo(block);
+                blockInfo.setPosition(pos);
+                MyHash.getIns().insert(blockInfo);
+            });
+
+            for (int i = 0; i < block.getPageAmount(); ++i) {
+                MyPage page = block.getPages()[i];
+                for (int j = 0; j < page.getMessageAmount(); ++j) {
+                    buffer.put(page.getMessages()[j].getBody());
+                }
             }
-            blockInfo.setMessageAmount(messageAmount);
+
+            // 写文件
+            buffer.flip();
+            channel.write(buffer);
+            buffer.clear();
 //            totalWriteMessage += messageAmount;
 //            System.out.println("写入Message个数: " + totalWriteMessage + "(总) " + messageAmount + "(本次)");
-            MyHash.getIns().insert(blockInfo);
-            // checkError(block, blockInfo);
+//            MyHash.getIns().insert(blockInfo);
+//            checkError(block, blockInfo);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -161,9 +167,11 @@ class BufferHolder {
 
         List<Message> originMessage = new ArrayList<>();
         long originSum = 0;
-        for (MyPage page : block.getPages()) {
-            originMessage.addAll(page.getMessages());
-            for (Message message : page.getMessages()) {
+        for (int i = 0; i < block.getPageAmount(); ++i) {
+            MyPage page = block.getPages()[i];
+            for (int j = 0; j < page.getMessageAmount(); ++j) {
+                Message message = page.getMessages()[j];
+                originMessage.add(message);
                 originSum += message.getA();
             }
         }

@@ -46,28 +46,25 @@ public class SortUtil {
         // 页总数量
         int totalSize = 0;
         for (MyBlock block : blocks) {
-            totalSize += block.getSize();
+            totalSize += block.getPageAmount();
             indexs.add(0);
         }
 
         while (nowSize < totalSize) {
             for (int i = 0; i < blocks.size(); ++i) {
                 MyBlock block = blocks.get(i);
-                if (indexs.get(i) >= block.getSize()) {
+                if (indexs.get(i) >= block.getPageAmount()) {
                     continue;
                 }
-                long minA = block.getPages()
-                        .get(indexs.get(i))
-                        .getMinA();
+                long minA = block.getPages()[indexs.get(i)].getMinA();
+
                 if (selectedBlockIndex == -1 || minA < sMinA) {
                     selectedBlockIndex = i;
                     sMinA = minA;
                 }
             }
             pageResult.add(
-                    blocks.get(selectedBlockIndex)
-                            .getPages()
-                            .get(indexs.get(selectedBlockIndex))
+                    blocks.get(selectedBlockIndex).getPages()[indexs.get(selectedBlockIndex)]
             );
             // 处理下标 + 1
             int nIdx = indexs.get(selectedBlockIndex) + 1;

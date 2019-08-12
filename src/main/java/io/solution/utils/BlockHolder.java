@@ -56,7 +56,7 @@ public class BlockHolder {
 
     void commit(MyBlock block) {
         try {
-//            System.out.println("提交块,块大小:" + block.getSize());
+//            System.out.println("提交块,块大小:" + block.getPageAmount());
             // block.showSquare();
             blockQueue.put(block);
         } catch (InterruptedException e) {

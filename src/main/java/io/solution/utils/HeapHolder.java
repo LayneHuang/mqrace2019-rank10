@@ -3,10 +3,8 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
-import io.solution.map.MyHash;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -71,16 +69,18 @@ public class HeapHolder {
         int index = getIndex(threadId);
         PriorityQueue<Message> queue = heaps.get(index);
         // 组合成页，然后进行提交到缓冲池当中
-        long addCount = GlobalParams.getBlockMessageCount();
+        long addCount = GlobalParams.getBlockMessageLimit();
         if (queue.size() >= addCount) {
             MyBlock block = new MyBlock();
-            List<Message> messages = new ArrayList<>();
+            Message[] messages = new Message[GlobalParams.getBlockMessageLimit()];
+            int messageAmount = 0;
             for (int i = 0; i < addCount; ++i) {
                 if (!queue.isEmpty()) {
-                    messages.add(queue.poll());
+                    Message message = queue.poll();
+                    messages[messageAmount++] = message;
                 }
             }
-            block.addMessages(messages);
+            block.addMessages(messages, messageAmount);
             BlockHolder.getIns().commit(block);
         }
     }
@@ -95,22 +95,23 @@ public class HeapHolder {
         synchronized (this) {
             if (!GlobalParams.isStepOneFinished()) {
                 System.out.println("heap holder flush");
-                List<Message> messages = new ArrayList<>();
+                Message[] messages = new Message[GlobalParams.getBlockMessageLimit()];
+                int messageAmount = 0;
                 for (PriorityQueue<Message> queue : heaps) {
                     while (!queue.isEmpty()) {
                         Message message = queue.poll();
-                        messages.add(message);
-                        if (messages.size() >= GlobalParams.getBlockMessageCount()) {
+                        messages[messageAmount++] = message;
+                        if (messageAmount >= GlobalParams.getBlockMessageLimit()) {
                             MyBlock block = new MyBlock();
-                            block.addMessages(messages);
+                            block.addMessages(messages, messageAmount);
                             BlockHolder.getIns().commit(block);
-                            messages.clear();
+                            messageAmount = 0;
                         }
                     }
                 }
-                if (!messages.isEmpty()) {
+                if (messageAmount > 0) {
                     MyBlock block = new MyBlock();
-                    block.addMessages(messages);
+                    block.addMessages(messages, messageAmount);
                     BlockHolder.getIns().commit(block);
                 }
                 BlockHolder.getIns().flush();

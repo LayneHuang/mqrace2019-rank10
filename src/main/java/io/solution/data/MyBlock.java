@@ -18,43 +18,49 @@ public class MyBlock {
     private long maxT;
     private long sum;
 
-    private List<MyPage> pages;
+    private MyPage[] pages;
+
+    private int pageAmount;
+
+    private int messageAmount;
 
     public MyBlock() {
-        pages = new ArrayList<>();
+        pages = new MyPage[GlobalParams.getBlockPageLimit()];
     }
 
-    public List<MyPage> getPages() {
+    public MyPage[] getPages() {
         return this.pages;
     }
 
-    public int getSize() {
-        return this.pages.size();
+    public int getPageAmount() {
+        return pageAmount;
     }
 
-    public void addMessages(List<Message> messages) {
+    public void addMessages(Message[] messages, int size) {
         sum = 0;
-        List<Message> tempMsgs = new ArrayList<>();
-        for (Message message : messages) {
-            tempMsgs.add(message);
-            if (tempMsgs.size() == GlobalParams.getPageMessageCount()) {
+        Message[] tempMsgs = new Message[GlobalParams.getPageMessageCount()];
+        int pageMessageAmount = 0;
+        for (int i = 0; i < size; ++i) {
+            Message message = messages[i];
+            tempMsgs[pageMessageAmount++] = message;
+            if (pageMessageAmount == GlobalParams.getPageMessageCount()) {
                 MyPage page = new MyPage();
-                page.addMessages(tempMsgs);
+                page.addMessages(tempMsgs, pageMessageAmount);
                 addPage(page);
-                tempMsgs.clear();
+                pageMessageAmount = 0;
             }
         }
-        if (!tempMsgs.isEmpty()) {
+        if (pageMessageAmount > 0) {
             MyPage page = new MyPage();
-            page.addMessages(tempMsgs);
+            page.addMessages(tempMsgs, pageMessageAmount);
             addPage(page);
-            tempMsgs.clear();
         }
+        this.messageAmount = size;
     }
 
     public void addPage(MyPage page) {
         sum += page.getSum();
-        if (pages.isEmpty()) {
+        if (pageAmount == 0) {
             minA = page.getMinA();
             maxA = page.getMaxA();
             minT = page.getMinT();
@@ -65,7 +71,7 @@ public class MyBlock {
             minT = Math.min(minT, page.getMinT());
             maxT = Math.max(maxT, page.getMaxT());
         }
-        this.pages.add(page);
+        pages[pageAmount++] = page;
     }
 
     public long getMinA() {
@@ -94,5 +100,9 @@ public class MyBlock {
 
     public void showSquare() {
         System.out.println(minA + " " + maxA + " " + minT + " " + maxT);
+    }
+
+    public int getMessageAmount() {
+        return messageAmount;
     }
 }

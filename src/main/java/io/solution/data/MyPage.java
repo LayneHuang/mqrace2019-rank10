@@ -1,9 +1,9 @@
 package io.solution.data;
 
 import io.openmessaging.Message;
+import io.solution.GlobalParams;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,19 +19,21 @@ public class MyPage {
     private long maxT;
     private long sum;
 
-    List<Message> messages;
+    private Message[] messages;
 
-    public MyPage() {
+    private int messageAmount;
+
+    MyPage() {
         // 4k页 , 规定不能使用DIO
-        messages = new ArrayList<>();
+        messages = new Message[GlobalParams.getPageMessageCount()];
     }
 
-    public List<Message> getMessages() {
+    public Message[] getMessages() {
         return messages;
     }
 
     public void writeBuffer(ByteBuffer buffer) {
-        buffer.putInt(messages.size());
+        buffer.putInt(messageAmount);
         for (Message message : messages) {
             buffer.putLong(message.getT());
             buffer.putLong(message.getA());
@@ -41,10 +43,10 @@ public class MyPage {
     }
 
     public void writeBufferOnlyBody(ByteBuffer buffer) {
-        for (Message message : messages) {
-            buffer.put(message.getBody());
+        for (int i = 0; i < messageAmount; ++i) {
+            buffer.put(messages[i].getBody());
         }
-        buffer.flip();
+//        buffer.flip();
     }
 
     public long getMaxT() {
@@ -63,27 +65,26 @@ public class MyPage {
         return minT;
     }
 
-    public void addMessages(List<Message> messages) {
-        if (messages == null || messages.isEmpty()) {
+    public void addMessages(Message[] messages, int size) {
+        if (size == 0) {
             System.out.println("error: message list is empty");
             return;
         }
         sum = 0;
-        minA = maxA = messages.get(0).getA();
-        minT = maxT = messages.get(0).getT();
-        for (Message message : messages) {
+        minA = maxA = messages[0].getA();
+        minT = maxT = messages[0].getT();
+        messageAmount = 0;
+        for (int i = 0; i < size; ++i) {
+            Message message = messages[i];
             sum += message.getA();
             minT = Math.min(minT, message.getT());
             maxT = Math.max(maxT, message.getT());
             minA = Math.min(minA, message.getA());
             maxA = Math.max(maxA, message.getA());
+            this.messages[messageAmount++] = message;
         }
-        this.messages.addAll(messages);
+//        this.messages.addAll(messages);
 
-    }
-
-    public int getSize() {
-        return this.messages.size();
     }
 
     public long getSum() {
@@ -92,5 +93,13 @@ public class MyPage {
 
     public void setSum(long sum) {
         this.sum = sum;
+    }
+
+    public int getMessageAmount() {
+        return messageAmount;
+    }
+
+    public void setMessageAmount(int messageAmount) {
+        this.messageAmount = messageAmount;
     }
 }

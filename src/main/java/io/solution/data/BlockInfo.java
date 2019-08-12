@@ -13,8 +13,8 @@ import java.util.List;
  */
 public class BlockInfo {
 
-    private int limitA = GlobalParams.getBlockMessageCount() + 200;
-    private int limitT = GlobalParams.getBlockMessageCount() + 200;
+    private int limitA = GlobalParams.getBlockMessageLimit() + 200;
+    private int limitT = GlobalParams.getBlockMessageLimit() + 200;
 
     private long maxT;
     private long minT;
@@ -51,8 +51,9 @@ public class BlockInfo {
     public void initBlockInfo(MyBlock block) {
 
         setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
+        messageAmount = block.getMessageAmount();
         sum = block.getSum();
-        amount = block.getSize();
+        amount = block.getPageAmount();
 
         // 初始化
         sizeA = sizeT = 0;
@@ -62,8 +63,11 @@ public class BlockInfo {
         long lastT = 0;
         int posA = 0;
         int posT = 0;
-        for (MyPage page : block.getPages()) {
-            for (Message message : page.getMessages()) {
+
+        for (int i = 0; i < block.getPageAmount(); ++i) {
+            MyPage page = block.getPages()[i];
+            for (int j = 0; j < page.getMessageAmount(); ++j) {
+                Message message = page.getMessages()[j];
                 if (isFirst) {
                     lastA = beginA = message.getA();
                     lastT = beginT = message.getT();

@@ -40,7 +40,7 @@ public class MyHash {
     //    private long maxTDiff = 0;
     private double useByteSum = 0;
 
-    public void insert(BlockInfo info) {
+    public synchronized void insert(BlockInfo info) {
 //        System.out.println("插入块的信息:");
 //        maxADiff = Math.max(info.getMaxA() - info.getMinA(), maxADiff);
 //        maxTDiff = Math.max(info.getMaxT() - info.getMinT(), maxTDiff);
