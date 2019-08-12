@@ -32,7 +32,6 @@ public class BlockHolder {
 
 //    private int outCount = 0;
 
-
     private void work() {
         System.out.println("Block holder worker 开始工作~");
         while (!isFinish) {
@@ -48,8 +47,8 @@ public class BlockHolder {
 
             if (!blocks.isEmpty()) {
                 // 归并
-                System.out.println("归并块个数:" + blocks.size());
-                blocks = SortUtil.myMergeSort(blocks);
+                // System.out.println("归并块个数:" + blocks.size());
+                // blocks = SortUtil.myMergeSort(blocks);
                 BufferHolder.getIns().commit(blocks);
             }
         }
@@ -83,8 +82,8 @@ public class BlockHolder {
         }
         if (!blocks.isEmpty()) {
             // 归并
-            System.out.println("归并块个数:" + blocks.size());
-            blocks = SortUtil.myMergeSort(blocks);
+//            System.out.println("归并块个数:" + blocks.size());
+//            blocks = SortUtil.myMergeSort(blocks);
             BufferHolder.getIns().commit(blocks);
         }
         isFinish = true;

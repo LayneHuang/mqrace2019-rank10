@@ -117,6 +117,12 @@ public class HeapHolder {
                 BufferHolder.getIns().flush();
                 // 打印个块的信息
                 // MyHash.getIns().showEachInfo();
+
+                // 清空
+                heaps = null;
+                indexMap.clear();
+                indexMap = null;
+
                 GlobalParams.setStepOneFinished();
             }
         }

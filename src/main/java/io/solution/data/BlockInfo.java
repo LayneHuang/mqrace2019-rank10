@@ -13,8 +13,8 @@ import java.util.List;
  */
 public class BlockInfo {
 
-    private int limitA = GlobalParams.getBlockMessageCount();
-    private int limitT = GlobalParams.getBlockMessageCount();
+    private int limitA = GlobalParams.getBlockMessageCount() + 200;
+    private int limitT = GlobalParams.getBlockMessageCount() + 200;
 
     private long maxT;
     private long minT;

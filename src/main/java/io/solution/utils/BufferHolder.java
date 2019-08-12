@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @Author: laynehuang
  * @CreatedAt: 2019/8/5 0005
  */
-public class BufferHolder {
+class BufferHolder {
 
     private boolean isFinish = false;
 
