@@ -68,9 +68,9 @@ public class MyHash {
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
 //        System.out.println("hash list size: " + size);
         List<Message> res = new ArrayList<>();
-        long[] aList = new long[GlobalParams.getBlockMessageLimit()];
-        long[] tList = new long[GlobalParams.getBlockMessageLimit()];
-        byte[][] bodys = new byte[GlobalParams.getBlockMessageLimit()][GlobalParams.getBodySize()];
+//        long[] aList = new long[GlobalParams.getBlockMessageLimit()];
+//        long[] tList = new long[GlobalParams.getBlockMessageLimit()];
+//        byte[][] bodys = new byte[GlobalParams.getBlockMessageLimit()][GlobalParams.getBodySize()];
         for (int i = 0; i < size; ++i) {
             BlockInfo info = all[i];
             if (HelpUtil.intersect(
@@ -81,9 +81,9 @@ public class MyHash {
 //                        info.getPosition(),
 //                        info.getAmount() * GlobalParams.PAGE_SIZE
 //                );
-                bodys = HelpUtil.readBody(bodys , info.getPosition(), info.getMessageAmount());
-                aList = info.readBlockA(aList);
-                tList = info.readBlockT(tList);
+                byte[][] bodys = HelpUtil.readBody(info.getPosition(), info.getMessageAmount());
+                long[] aList = info.readBlockA();
+                long[] tList = info.readBlockT();
                 for (int j = 0; j < info.getMessageAmount(); ++j) {
                     if (
                             HelpUtil.inSide(
@@ -105,8 +105,8 @@ public class MyHash {
     public long find3(long minT, long maxT, long minA, long maxA) {
         long res = 0;
         long messageAmount = 0;
-        long[] aList = new long[GlobalParams.getBlockMessageLimit()];
-        long[] tList = new long[GlobalParams.getBlockMessageLimit()];
+//        long[] aList = new long[GlobalParams.getBlockMessageLimit()];
+//        long[] tList = new long[GlobalParams.getBlockMessageLimit()];
         for (int i = 0; i < size; ++i) {
             BlockInfo info = all[i];
             if (            // 完全包含
@@ -123,8 +123,10 @@ public class MyHash {
                             info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
                     )
             ) {
-                tList = info.readBlockT(tList);
-                aList = info.readBlockA(aList);
+//                tList = info.readBlockT(tList);
+                long[] tList = info.readBlockT();
+//                aList = info.readBlockA(aList);
+                long[] aList = info.readBlockA();
                 for (int j = 0; j < info.getMessageAmount(); ++j) {
                     long a = aList[j];
                     long t = tList[j];

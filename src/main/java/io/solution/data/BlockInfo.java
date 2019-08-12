@@ -114,7 +114,8 @@ public class BlockInfo {
     private static final String lockA = "set_bytes_lock_a";
     private static final String lockT = "set_bytes_lock_t";
 
-    public long[] readBlockA(long[] res) {
+    public long[] readBlockA() {
+        long[] res = new long[messageAmount];
         long pre = beginA;
         res[0] = pre;
         MyCursor cursor = new MyCursor();
@@ -147,7 +148,8 @@ public class BlockInfo {
     /**
      * 获取所有Message t的值
      */
-    public long[] readBlockT(long[] res) {
+    public long[] readBlockT() {
+        long[] res = new long[messageAmount];
         long pre = beginT;
         res[0] = pre;
         MyCursor cursor = new MyCursor();

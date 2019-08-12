@@ -94,10 +94,10 @@ public class HelpUtil {
      * 只写入body的情况
      * 读取Block 中 message 列表
      */
-    public static byte[][] readBody(byte[][] res, long position, int messageCount) {
+    public static byte[][] readBody( long position, int messageCount) {
         int size = messageCount * GlobalParams.getBodySize();
         FileChannel channel = null;
-//        byte[][] res = new byte[messageCount][GlobalParams.getBodySize()];
+        byte[][] res = new byte[messageCount][GlobalParams.getBodySize()];
 
         try {
             channel = FileChannel.open(
