@@ -12,8 +12,8 @@ import java.util.List;
  */
 public class BlockInfo {
 
-    private int limitA = 85000;
-    private int limitT = 85000;
+    private int limitA = 33000;
+    private int limitT = 33000;
 
     private long maxT;
     private long minT;
@@ -30,12 +30,12 @@ public class BlockInfo {
     // 块内A是递增的
     private long beginA;        // 第一个a值
     private byte[] dataA;       // a的压缩数据
-    private int posA;           // a的压缩数据游标位置   Todo:注意线程安全
+    // private int posA;           // a的压缩数据游标位置   Todo:注意线程安全
     private int sizeA;          // a的压缩数据占用的位
 
     private long beginT;        // 第一个t值
     private byte[] dataT;       // t的压缩数据
-    private int posT;           // t的压缩数据游标位置
+    // private int posT;           // t的压缩数据游标位置
     private int sizeT;          // t的压缩数据占用的位
 
     public BlockInfo() {
@@ -43,18 +43,24 @@ public class BlockInfo {
         dataT = new byte[limitT];
     }
 
-    // block info 赋值
+    /**
+     * block info 赋值
+     * 调用前必须先设置 消息数量
+     */
     public void initBlockInfo(MyBlock block) {
+
         setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
         sum = block.getSum();
         amount = block.getSize();
 
         // 初始化
         sizeA = sizeT = 0;
-        flip();
+        // flip();
         boolean isFirst = true;
         long lastA = 0;
         long lastT = 0;
+        int posA = 0;
+        int posT = 0;
         for (MyPage page : block.getPages()) {
             for (Message message : page.getMessages()) {
                 if (isFirst) {
@@ -66,10 +72,10 @@ public class BlockInfo {
                     long nowT = message.getT();
                     int aDiff = (int) (nowA - lastA);
                     // a
-                    HashUtil.encodeInt(aDiff, this, false);
+                    posA += HashUtil.encodeInt(aDiff, this, false, posA);
                     // t
                     int tDiff = (int) (nowT - lastT);
-                    HashUtil.encodeInt(tDiff, this, true);
+                    posT += HashUtil.encodeInt(tDiff, this, true, posT);
                     lastA = nowA;
                     lastT = nowT;
                 }
@@ -84,10 +90,10 @@ public class BlockInfo {
         long[] res = new long[messageAmount];
         long pre = beginA;
         res[0] = pre;
-        posA = 0;
+        MyCursor cursor = new MyCursor();
         for (int i = 1; i < messageAmount; ++i) {
             try {
-                long aDiff = HashUtil.readInt(this, false);
+                long aDiff = HashUtil.readInt(this, false, cursor);
                 pre += aDiff;
                 res[i] = pre;
             } catch (IOException e) {
@@ -107,10 +113,11 @@ public class BlockInfo {
         long[] res = new long[messageAmount];
         long pre = beginT;
         res[0] = pre;
-        posT = 0;
+//        posT = 0;
+        MyCursor cursor = new MyCursor();
         for (int i = 1; i < messageAmount; ++i) {
             try {
-                int tDiff = HashUtil.readInt(this, true);
+                int tDiff = HashUtil.readInt(this, true, cursor);
                 pre += tDiff;
                 res[i] = pre;
             } catch (IOException e) {
@@ -128,18 +135,18 @@ public class BlockInfo {
         return null;
     }
 
-    public void flip() {
-        posA = 0;
-        posT = 0;
-    }
-
-    public void flipA() {
-        posA = 0;
-    }
-
-    public void flipT() {
-        posA = 0;
-    }
+//    public void flip() {
+//        posA = 0;
+//        posT = 0;
+//    }
+//
+//    public void flipA() {
+//        posA = 0;
+//    }
+//
+//    public void flipT() {
+//        posA = 0;
+//    }
 
     public long getSum() {
         return sum;
@@ -226,28 +233,12 @@ public class BlockInfo {
         this.dataT = dataT;
     }
 
-    public int getPosA() {
-        return posA;
-    }
-
-    public void setPosA(int posA) {
-        this.posA = posA;
-    }
-
     public int getSizeA() {
         return sizeA;
     }
 
     public void setSizeA(int sizeA) {
         this.sizeA = sizeA;
-    }
-
-    public int getPosT() {
-        return posT;
-    }
-
-    public void setPosT(int posT) {
-        this.posT = posT;
     }
 
     public int getSizeT() {

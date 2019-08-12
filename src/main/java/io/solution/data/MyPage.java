@@ -1,7 +1,6 @@
 package io.solution.data;
 
 import io.openmessaging.Message;
-import io.solution.GlobalParams;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

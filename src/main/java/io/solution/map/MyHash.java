@@ -36,8 +36,9 @@ public class MyHash {
         return ins;
     }
 
-//    private long maxADiff = 0;
-//    private long maxTDiff = 0;
+    //private long maxADiff = 0;
+    //    private long maxTDiff = 0;
+    private double useByteSum = 0;
 
     public void insert(BlockInfo info) {
 //        System.out.println("插入块的信息:");
@@ -45,6 +46,16 @@ public class MyHash {
 //        maxTDiff = Math.max(info.getMaxT() - info.getMinT(), maxTDiff);
 //        System.out.println("最大差值: " + maxADiff + "(a) " + maxTDiff + "(t)");
 //        info.show();
+
+        useByteSum += (info.getSizeA() + info.getSizeT());
+        System.out.println(
+                "插入" + (size + 1) + "块 " +
+                        "使用内存:" + String.format("%.6f", useByteSum / 1024 / 1024 / 1024) + "(GB) " +
+                        "message数量:" + info.getMessageAmount() + " " +
+                        " size:" + info.getSizeA() + "," + info.getSizeT() + " (byte) " +
+                        " limit:" + info.getLimitA() + "," + info.getLimitT() + " (byte) "
+        );
+
         all[size] = info;
         size++;
         if (size == limit) {

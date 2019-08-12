@@ -1,22 +1,30 @@
 package io.solution.utils;
 
 import io.solution.data.BlockInfo;
+import io.solution.data.MyCursor;
 
 import java.io.IOException;
 import java.util.Arrays;
 
 /**
+ * zig zag (tested)
+ *
  * @Author: laynehuang
  * @CreatedAt: 2019/8/10 0010
  */
 public class HashUtil {
 
-    // zig zag (tested)
-    public static int readInt(BlockInfo blockInfo, boolean isReadT) throws IOException {
 
-        int pos = (isReadT ? blockInfo.getPosT() : blockInfo.getPosA());
+    /**
+     * @param blockInfo
+     * @param isReadT
+     * @param cursor
+     * @return 偏移量
+     */
+    public static int readInt(BlockInfo blockInfo, boolean isReadT, MyCursor cursor) throws IOException {
+
+        int pos = cursor.getPos();
         byte[] buf = (isReadT ? blockInfo.getDataT() : blockInfo.getDataA());
-
         int len = 1;
         int b = buf[pos] & 0xff;
         int n = b & 0x7f;
@@ -40,25 +48,19 @@ public class HashUtil {
             }
         }
         pos += len;
-        if (isReadT) {
-            blockInfo.setPosT(pos);
-            blockInfo.setDataT(buf);
-        } else {
-            blockInfo.setPosA(pos);
-            blockInfo.setDataA(buf);
-        }
+        cursor.setPos(pos);
         return (n >>> 1) ^ -(n & 1); // back to two's-complement
     }
 
-    public static int encodeInt(int n, BlockInfo blockInfo, boolean isHashT) {
-// move sign to low-order bit, and flip others if negative
-        int pos = (isHashT ? blockInfo.getSizeT() : blockInfo.getSizeA());
+    public static int encodeInt(int n, BlockInfo blockInfo, boolean isHashT, int pos) {
+
+//        int pos = (isHashT ? blockInfo.getSizeT() : blockInfo.getSizeA());
         byte[] buf = (isHashT ? blockInfo.getDataT() : blockInfo.getDataA());
         int limit = (isHashT ? blockInfo.getLimitT() : blockInfo.getLimitA());
 
         // 越界扩容
         if (pos + 4 >= limit) {
-            limit += (limit >> 1);
+            limit += 1500;
             buf = Arrays.copyOf(buf, limit);
             if (isHashT) {
                 blockInfo.setLimitT(limit);

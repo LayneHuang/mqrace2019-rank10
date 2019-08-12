@@ -14,14 +14,15 @@ public class DemoTester {
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可
-        int msgNum = 6342173;
+        int msgNum = 100_000_000;
         //发送阶段的最大持续时间，也即在该时间内，如果消息依然没有发送完毕，则退出评测
         int sendTime = 10 * 60 * 1000;
         //查询阶段的最大持续时间，也即在该时间内，如果消息依然没有消费完毕，则退出评测
         int checkTime = 10 * 60 * 1000;
 
         //正确性检测的次数
-        int checkTimes = 150;
+        int checkTimes2 = 10;
+        int checkTimes3 = 50000;
         //发送的线程数量
         int sendTsNum = 10;
         //查询的线程数量
@@ -65,7 +66,7 @@ public class DemoTester {
         AtomicLong msgCheckNum = new AtomicLong(0);
         Thread[] msgChecks = new Thread[checkTsNum];
         for (int i = 0; i < checkTsNum; i++) {
-            msgChecks[i] = new Thread(new MessageChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxMsgCheckSize, msgCheckTimes, msgCheckNum));
+            msgChecks[i] = new Thread(new MessageChecker(messageStore, maxCheckTime, checkTimes2, msgNum, maxMsgCheckSize, msgCheckTimes, msgCheckNum));
         }
         for (int i = 0; i < checkTsNum; i++) {
             msgChecks[i].start();
@@ -82,7 +83,7 @@ public class DemoTester {
         AtomicLong valueCheckNum = new AtomicLong(0);
         Thread[] checks = new Thread[checkTsNum];
         for (int i = 0; i < checkTsNum; i++) {
-            checks[i] = new Thread(new ValueChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxValueCheckSize, valueCheckTimes, valueCheckNum));
+            checks[i] = new Thread(new ValueChecker(messageStore, maxCheckTime, checkTimes3, msgNum, maxValueCheckSize, valueCheckTimes, valueCheckNum));
         }
         for (int i = 0; i < checkTsNum; i++) {
             checks[i].start();
