@@ -1,11 +1,6 @@
 package io.solution.map.rtree;
 
-import com.sun.org.apache.xerces.internal.impl.dv.dtd.ENTITYDatatypeValidator;
-import javafx.util.Pair;
-
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 
 public class Node {
     private boolean leaf;

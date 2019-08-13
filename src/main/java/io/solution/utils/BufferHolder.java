@@ -1,6 +1,5 @@
 package io.solution.utils;
 
-import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
 import io.solution.data.MyBlock;
@@ -12,7 +11,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,7 +36,6 @@ class BufferHolder {
 
     private ExecutorService executor = Executors.newFixedThreadPool(3);
 
-
     private BufferHolder() {
         try {
             Path path = GlobalParams.getPath();
@@ -50,7 +47,7 @@ class BufferHolder {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        blockQueue = new LinkedBlockingQueue<>((int) GlobalParams.getWriteCountLimit() * 4);
+        blockQueue = new LinkedBlockingQueue<>(GlobalParams.WRITE_COUNT_LIMIT);
         Thread workThread = new Thread(this::writeFile);
         workThread.setName("BUFFER-HOLDER-THREAD");
         workThread.start();
@@ -75,7 +72,7 @@ class BufferHolder {
     }
 
     //    private int writeCount = 0;
-    private boolean isFirst = true;
+//    private boolean isFirst = true;
 
     private void writeFile() {
         System.out.println("BufferHolder write file 开始工作~");
@@ -124,7 +121,10 @@ class BufferHolder {
      */
     private void solve(MyBlock block) {
         writeFileLock.lock();
-        ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.BLOCK_SIZE);
+        ByteBuffer buffer = ByteBuffer.allocateDirect(
+                GlobalParams.BLOCK_SIZE
+
+        );
 //        ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.getBodySize());
         try {
 //            writeCount++;
@@ -136,10 +136,6 @@ class BufferHolder {
                 blockInfo.initBlockInfo(block);
                 blockInfo.setPosition(pos);
                 MyHash.getIns().insert(blockInfo);
-//                if (isFirst) {
-//                    isFirst = false;
-//                    checkError(block, blockInfo);
-//                }
             });
 
             for (int i = 0; i < block.getPageAmount(); ++i) {
@@ -161,56 +157,6 @@ class BufferHolder {
         } finally {
             writeFileLock.unlock();
         }
-    }
-
-
-    /**
-     * 对比写进的元数据及读出的数据是否一致
-     */
-    private void checkError(MyBlock block, BlockInfo blockInfo) {
-
-        List<Message> originMessage = new ArrayList<>();
-        long originSum = 0;
-        for (int i = 0; i < block.getPageAmount(); ++i) {
-            MyPage page = block.getPages()[i];
-            for (int j = 0; j < page.getMessageAmount(); ++j) {
-                Message message = page.getMessages()[j];
-                originMessage.add(message);
-                originSum += message.getA();
-            }
-        }
-
-        byte[][] bodys = HelpUtil.readBody(blockInfo.getPosition(), blockInfo.getMessageAmount());
-
-        long[] aList = blockInfo.readBlockA();
-        long[] tList = blockInfo.readBlockT();
-
-        for (int i = 0; i < blockInfo.getMessageAmount(); ++i) {
-            if (
-                    tList[i] != originMessage.get(i).getT()
-                            || aList[i] != originMessage.get(i).getA()
-                            || (!checkBody(bodys[i], originMessage.get(i).getBody()))
-
-            ) {
-                System.out.println(
-                        "Message内容不一致:" + i + "(下标) " +
-                                "原:" + originMessage.get(i).getT() + "(t) " + originMessage.get(i).getA() + "(a) " +
-                                "读:" + tList[i] + "(t) " + aList[i] + "(a) "
-                );
-//                break;
-            }
-        }
-
-        if (originSum != blockInfo.getSum()) {
-            System.out.println("写后块内和不一致:" + originSum + " " + blockInfo.getSum());
-        }
-    }
-
-    boolean checkBody(byte[] a, byte[] b) {
-        for (int i = 0; i < GlobalParams.getBodySize(); ++i) {
-            if (a[i] != b[i]) return false;
-        }
-        return true;
     }
 
 }

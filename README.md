@@ -130,9 +130,47 @@ file locks                      (-x) unlimited
 ## 11.Result
 ```$xslt
 params : 1E , 1W , 5W
-暴力查询:
-Send: 5313 ms Num:100000000
-Message Check: 96570 ms Num:2120349096
-Value Check: 19316 ms Num: 2495535971
+
+8.13加了Rtree:
+块大小2M
+Send: 5356 ms Num:100000000
+Message Check: 95794 ms Num:2103176046
+Value Check: 19194 ms Num: 2494901393
+Total Score:66669
+
+块大小64K:
+Send: 4988 ms Num:100000000
+Message Check: 82875 ms Num:2109292865
+Value Check: 4671 ms Num: 2505077512
+Total Score:75726
+
+块大小32K:
+Send: 5496 ms Num:100000000
+Message Check: 77234 ms Num:2109058223
+Value Check: 2487 ms Num: 2515194432
+Total Score:78067
+
+```
+
+```$xslt
+params : 1E , 10 , 5W
+
+块大小4M:
+Send: 11502 ms Num:67000000
+Message Check: 1091 ms Num:2057470
+Value Check: 395555 ms Num: 2488394026
+Total Score:2288547
+
+块大小1M:
+Send: 4558 ms Num:67000000
+Message Check: 730 ms Num:2110326
+Value Check: 91523 ms Num: 2496545172
+Total Score:3437513
+
+块大小256M:
+Send: 3996 ms Num:67000000
+Message Check: 649 ms Num:1764195
+Value Check: 20036 ms Num: 2503661866
+Total Score:3877206
 
 ```

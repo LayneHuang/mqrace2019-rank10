@@ -1,9 +1,9 @@
 package io.solution.map.rtree;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class RTree {
+
     private Node root;
 
     public Node getRoot() {

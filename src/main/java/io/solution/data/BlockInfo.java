@@ -44,9 +44,9 @@ public class BlockInfo {
     private int sizeT;          // t的压缩数据占用的位
 
     public BlockInfo() {
-        // 3分之1放到栈外内存
+        // 2分之1放到栈外内存
         int rnk = ThreadLocalRandom.current().nextInt(100);
-        if (rnk % 3 == 0) {
+        if (rnk % 2 == 0) {
             isDirect = true;
         }
         dataA = new byte[limitA];

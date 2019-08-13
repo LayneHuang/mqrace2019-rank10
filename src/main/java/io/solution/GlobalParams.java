@@ -17,7 +17,7 @@ public class GlobalParams {
 
     public static final int PAGE_MESSAGE_COUNT = 80;
 
-    public static final int BLOCK_SIZE = 256 * 1024 * (IS_DEBUG ? 1 : 8);
+    public static final int BLOCK_SIZE = 256 * 1024;
 
     private static final long CIRCLE_BUFFER_SIZE = 64 * 1024 * 1024;
 
@@ -30,12 +30,12 @@ public class GlobalParams {
     /**
      * 拥塞队列的大小
      */
-    public static final int BLOCK_COUNT_LIMIT = 60;
+    public static final int BLOCK_COUNT_LIMIT = 20;
 
     /**
      * 能够写入缓存时候的合法数量
      */
-    public static final long WRITE_COUNT_LIMIT = CIRCLE_BUFFER_SIZE / BLOCK_SIZE;
+    public static final int WRITE_COUNT_LIMIT = (int) (CIRCLE_BUFFER_SIZE / BLOCK_SIZE);
 
     private static boolean isStepOneFinished = false;
 
@@ -45,10 +45,6 @@ public class GlobalParams {
 
     public static boolean isStepOneFinished() {
         return isStepOneFinished;
-    }
-
-    public static long getWriteCountLimit() {
-        return IS_DEBUG ? WRITE_COUNT_LIMIT / 8 : WRITE_COUNT_LIMIT;
     }
 
     public static Path getPath() {
