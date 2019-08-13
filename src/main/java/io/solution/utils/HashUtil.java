@@ -19,7 +19,7 @@ public class HashUtil {
 
     public static int readInt(BlockInfo blockInfo, boolean isReadT, MyCursor cursor) throws IOException {
         if (!isReadT) {
-            return readIntA(blockInfo, cursor);
+            return readIntA(cursor);
         }
         int pos = cursor.getPos();
         byte[] buf = blockInfo.getDataT();
@@ -50,7 +50,7 @@ public class HashUtil {
         return (n >>> 1) ^ -(n & 1); // back to two's-complement
     }
 
-    private static int readIntA(BlockInfo blockInfo, MyCursor cursor) throws IOException {
+    private static int readIntA(MyCursor cursor) throws IOException {
         int pos = cursor.getPos();
         ByteBuffer buffer = MyHash.getIns().getaBuffer();
         int len = 1;

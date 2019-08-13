@@ -11,6 +11,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,6 +39,9 @@ class BufferHolder {
 
     private ExecutorService executor = Executors.newFixedThreadPool(3);
 
+    // 线程安全
+    private List<MyBlock> blocks = Collections.synchronizedList(new LinkedList<>());
+
     private BufferHolder() {
         try {
             Path path = GlobalParams.getPath();
@@ -57,9 +63,12 @@ class BufferHolder {
         return ins;
     }
 
+//    private int inCount = 0;
+
     void commit(List<MyBlock> blocks) {
         try {
             for (MyBlock block : blocks) {
+//                inCount++;
                 blockQueue.put(block);
             }
         } catch (InterruptedException e) {
@@ -71,14 +80,20 @@ class BufferHolder {
         System.out.println("BufferHolder write file 开始工作~");
         while (!isFinish) {
             try {
-                MyBlock block = blockQueue.poll(1, TimeUnit.SECONDS);
-                if (block == null) {
+                for (int i = 0; i < GlobalParams.WRITE_COUNT_LIMIT; ++i) {
+                    MyBlock block = blockQueue.poll(1, TimeUnit.SECONDS);
+                    if (block != null) {
+                        blocks.add(block);
+                    }
+                }
+                if (blocks.isEmpty() || isFinish) {
                     // 结束
                     isFinish = true;
                     System.out.println("BufferHolder write file 结束~");
                     break;
+                } else {
+                    solve();
                 }
-                solve(block);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -96,12 +111,13 @@ class BufferHolder {
     void flush() {
         System.out.println("BufferHolder flush");
         while (!blockQueue.isEmpty()) {
-            try {
-                MyBlock block = blockQueue.take();
-                solve(block);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            MyBlock block = blockQueue.poll();
+            if (block != null) {
+                blocks.add(block);
             }
+        }
+        if (!blocks.isEmpty()) {
+            solve();
         }
     }
 
@@ -110,27 +126,36 @@ class BufferHolder {
     /**
      * 写操作
      */
-    private void solve(MyBlock block) {
+
+//    private int outCount = 0;
+
+    private void solve() {
         writeFileLock.lock();
         ByteBuffer buffer = ByteBuffer.allocate(
-                GlobalParams.BLOCK_SIZE
-
+                GlobalParams.BLOCK_SIZE * blocks.size()
         );
-
+//        outCount += blocks.size();
+//        System.out.println(inCount + ", " + outCount);
+//        System.out.println(blocks.size());
         try {
-
             long pos = channel.position();
-            executor.execute(() -> {
-                BlockInfo blockInfo = new BlockInfo();
-                blockInfo.initBlockInfo(block);
-                blockInfo.setPosition(pos);
-                MyHash.getIns().insert(blockInfo);
-            });
+            // 第几块
+            for (MyBlock block : blocks) {
+                long nPos = pos;
 
-            for (int i = 0; i < block.getPageAmount(); ++i) {
-                MyPage page = block.getPages()[i];
-                for (int j = 0; j < page.getMessageAmount(); ++j) {
-                    buffer.put(page.getMessages()[j].getBody());
+                executor.execute(() -> {
+                    BlockInfo blockInfo = new BlockInfo();
+                    blockInfo.setPosition(nPos);
+                    blockInfo.initBlockInfo(block);
+                    MyHash.getIns().insert(blockInfo);
+                });
+
+                for (int i = 0; i < block.getPageAmount(); ++i) {
+                    MyPage page = block.getPages()[i];
+                    for (int j = 0; j < page.getMessageAmount(); ++j) {
+                        buffer.put(page.getMessages()[j].getBody());
+                        pos += GlobalParams.getBodySize();
+                    }
                 }
             }
 
@@ -138,7 +163,7 @@ class BufferHolder {
             buffer.flip();
             channel.write(buffer);
             buffer.clear();
-
+            blocks.clear();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
