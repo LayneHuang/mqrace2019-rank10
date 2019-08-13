@@ -65,7 +65,7 @@ public class MyHash {
 
         // RTree 插入
         Rect rect = new Rect(info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA());
-        rTree.Insert(rect, info.getSum(), info.getMessageAmount(), size);
+        rTree.Insert(rect, size);
 //        System.out.println("rtree节点数:" + rTree.getSize());
 
         // a放到buffer中
@@ -132,8 +132,9 @@ public class MyHash {
                             entry.getRect().x1, entry.getRect().x2, entry.getRect().y1, entry.getRect().y2
                     )
             ) {
-                res += entry.getSum();
-                messageAmount += entry.getCount();
+                BlockInfo info = all[entry.getIdx()];
+                res += info.getSum();
+                messageAmount += info.getMessageAmount();
             } else {
                 BlockInfo info = all[entry.getIdx()];
                 long[] tList = info.readBlockT();

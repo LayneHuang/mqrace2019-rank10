@@ -66,22 +66,6 @@ public class Node {
         return rect;
     }
 
-    public long getSum() {
-        long sum = 0;
-        for(int i = 0; i < entries.size(); i++) {
-            sum += entries.get(i).getSum();
-        }
-        return sum;
-    }
-
-    public long getCount() {
-        long cnt = 0;
-        for(int i = 0; i < entries.size(); i++) {
-            cnt += entries.get(i).getCount();
-        }
-        return cnt;
-    }
-
     public Node spiltNode(int maxChild) {
         int l = 0,r = 1;
         long maxWasted = -1;

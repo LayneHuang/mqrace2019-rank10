@@ -49,8 +49,8 @@ public class RTree {
         this.height = 1;
     }
 
-    public void Insert(Rect rect, long sum, long count, int idx) {
-        Entry entry = new Entry(rect, sum, count, idx);
+    public void Insert(Rect rect, int idx) {
+        Entry entry = new Entry(rect, idx);
         this.insert(entry, 1);
         this.size++;
     }
@@ -77,8 +77,8 @@ public class RTree {
         if (res.size() == 2 && res.get(1) != null) {
             height++;
             ArrayList<Entry> list = new ArrayList<Entry>();
-            list.add(new Entry(res.get(0).getRect(), res.get(0).getSum(), res.get(0).getCount(), res.get(0)));
-            list.add(new Entry(res.get(1).getRect(), res.get(1).getSum(), res.get(1).getCount(), res.get(1)));
+            list.add(new Entry(res.get(0).getRect(), res.get(0)));
+            list.add(new Entry(res.get(1).getRect(), res.get(1)));
             root = new Node(false, height, null, list);
             res.get(0).setParent(root);
             res.get(1).setParent(root);
@@ -117,9 +117,6 @@ public class RTree {
 
         //调整该节点的数据
         n.getEntry().setRect(n.getRect());
-        n.getEntry().setSum(n.getSum());
-        n.getEntry().setCount(n.getCount());
-
         //没发生分裂
         if (nn == null) {
             return adjustTree(n.getParent(), null);
@@ -127,7 +124,7 @@ public class RTree {
 
 
         //发生分裂
-        Entry entryNN = new Entry(nn.getRect(), nn.getSum(), nn.getCount(), nn);
+        Entry entryNN = new Entry(nn.getRect(),  nn);
         n.getParent().getEntries().add(entryNN);
         Node parent = n.getParent();
         if (parent.getEntries().size() > maxChild) {
@@ -135,32 +132,6 @@ public class RTree {
             return adjustTree(parent, split);
         }
         return adjustTree(n.getParent(), null);
-    }
-
-    public AverageResult SearchAverage(Rect searchRange) {
-        AverageResult result = new AverageResult();
-        searchAverage(this.root, searchRange, result);
-        return result;
-    }
-
-    private void searchAverage(Node n, Rect searchRange, AverageResult result) {
-        for (int i = 0; i < n.getEntries().size(); i++) {
-            Entry e = n.getEntries().get(i);
-            if (searchRange.disjoint(e.getRect())) {
-                continue;
-            }
-
-            if (searchRange.contain(e.getRect())) {
-                result.addSumAndCnt(e.getSum(), e.getCount());
-                continue;
-            }
-
-            if (!n.getLeaf()) {
-                searchAverage(e.getChild(), searchRange, result);
-                continue;
-            }
-            result.addEntry(e);
-        }
     }
 
     public ArrayList<Entry> Search(Rect searchRange) {
