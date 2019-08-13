@@ -125,3 +125,14 @@ file locks                      (-x) unlimited
 
 所有消息都应该进行按实际发送的信息进行存储，可以压缩，但不能伪造。
 如果发现有作弊行为，比如通过hack评测程序，绕过了必须的评测逻辑，则程序无效，且取消参赛资格。
+
+
+## 11.Result
+```$xslt
+params : 1E , 1W , 5W
+暴力查询:
+Send: 5313 ms Num:100000000
+Message Check: 96570 ms Num:2120349096
+Value Check: 19316 ms Num: 2495535971
+
+```

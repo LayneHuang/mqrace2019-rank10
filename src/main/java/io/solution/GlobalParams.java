@@ -80,4 +80,15 @@ public class GlobalParams {
     public static int getBlockMessageLimit() {
         return getPageMessageCount() * (int) (BLOCK_SIZE / PAGE_SIZE);
     }
+
+    /**
+     * 块的数量
+     */
+    public static int getBlockInfoLimit() {
+        return (int) (110L * 1024 * 1024 * 1024 / BLOCK_SIZE) / (IS_DEBUG ? 8 : 1);
+    }
+
+    public static final int MAX_R_TREE_CHILDEN_AMOUNT = 4;
+
+
 }

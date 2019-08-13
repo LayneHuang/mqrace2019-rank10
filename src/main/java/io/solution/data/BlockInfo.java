@@ -218,6 +218,20 @@ public class BlockInfo {
 
     public void show() {
         System.out.println(
+                "tL:" + minT +
+                        ",tR:" + maxT +
+                        ",aL:" + minA +
+                        ",aR:" + maxA +
+                        ",amount:" + amount +
+                        ",sum:" + sum +
+                        ",pos:" + position +
+                        ",aDiff: " + (maxA - minA) +
+                        ",tDiff: " + (maxT - minT)
+        );
+    }
+
+    public void showRect() {
+        System.out.println(
                 "aL:" + minA +
                         ",aR:" + maxA +
                         ",tL:" + minT +
