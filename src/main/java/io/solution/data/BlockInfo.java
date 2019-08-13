@@ -141,7 +141,6 @@ public class BlockInfo {
                 e.printStackTrace();
             }
         }
-        dataA = null;
         return res;
     }
 
@@ -175,24 +174,6 @@ public class BlockInfo {
         }
         return res;
     }
-
-    // Todo : 获取block的所有内容
-    public List<Message> readBlock() {
-        return null;
-    }
-
-//    public void flip() {
-//        posA = 0;
-//        posT = 0;
-//    }
-//
-//    public void flipA() {
-//        posA = 0;
-//    }
-//
-//    public void flipT() {
-//        posA = 0;
-//    }
 
     public long getSum() {
         return sum;

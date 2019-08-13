@@ -54,7 +54,7 @@ public class MyHash {
                         + "message数量:" + info.getMessageAmount() + " "
                         + " size:" + info.getSizeA() + "," + info.getSizeT() + " (byte) "
 //                        + " limit:" + info.getLimitA() + "," + info.getLimitT() + " (byte) "
-//                        " mem:" + Runtime.getRuntime().freeMemory() + " (byte) "
+                        + " mem:" + Runtime.getRuntime().freeMemory() + " (byte) "
         );
 
         all[size] = info;
