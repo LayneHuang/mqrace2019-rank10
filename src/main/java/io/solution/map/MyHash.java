@@ -47,15 +47,15 @@ public class MyHash {
 //        System.out.println("最大差值: " + maxADiff + "(a) " + maxTDiff + "(t)");
 //        info.show();
 
-        useByteSum += (info.getSizeA() + info.getSizeT());
-        System.out.println(
-                "插入" + (size + 1) + "块 " +
-                        "使用内存:" + String.format("%.6f", useByteSum / 1024 / 1024 / 1024) + "(GB) "
-                        + "message数量:" + info.getMessageAmount() + " "
-                        + " size:" + info.getSizeA() + "," + info.getSizeT() + " (byte) "
-//                        + " limit:" + info.getLimitA() + "," + info.getLimitT() + " (byte) "
-                        + " mem:" + Runtime.getRuntime().freeMemory() + " (byte) "
-        );
+//        useByteSum += (info.getSizeA() + info.getSizeT());
+//        System.out.println(
+//                "插入" + (size + 1) + "块 " +
+//                        "使用内存:" + String.format("%.6f", useByteSum / 1024 / 1024 / 1024) + "(GB) "
+//                        + "message数量:" + info.getMessageAmount() + " "
+//                        + " size:" + info.getSizeA() + "," + info.getSizeT() + " (byte) "
+////                        + " limit:" + info.getLimitA() + "," + info.getLimitT() + " (byte) "
+//                        + " mem:" + Runtime.getRuntime().freeMemory() + " (byte) "
+//        );
 
         all[size] = info;
         size++;

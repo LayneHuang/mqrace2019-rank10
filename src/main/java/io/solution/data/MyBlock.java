@@ -3,9 +3,6 @@ package io.solution.data;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @Author: laynehuang
  * @CreatedAt: 2019/8/1 0001

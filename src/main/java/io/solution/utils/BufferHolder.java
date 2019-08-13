@@ -136,10 +136,10 @@ class BufferHolder {
                 blockInfo.initBlockInfo(block);
                 blockInfo.setPosition(pos);
                 MyHash.getIns().insert(blockInfo);
-                if (isFirst) {
-                    isFirst = false;
-                    checkError(block, blockInfo);
-                }
+//                if (isFirst) {
+//                    isFirst = false;
+//                    checkError(block, blockInfo);
+//                }
             });
 
             for (int i = 0; i < block.getPageAmount(); ++i) {

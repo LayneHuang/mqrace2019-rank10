@@ -26,7 +26,7 @@ public class HashUtil {
         int pos = cursor.getPos();
         byte[] buf;
         if (!blockInfo.isDirect()) {
-            buf = (isReadT ? blockInfo.getDataT() : blockInfo.getDataT());
+            buf = (isReadT ? blockInfo.getDataT() : blockInfo.getDataA());
         } else {
             buf = cursor.getBytes();
         }

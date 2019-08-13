@@ -1,8 +1,5 @@
 package io.solution.data;
 
-import java.nio.ByteBuffer;
-import java.util.concurrent.locks.ReentrantLock;
-
 /**
  * 游标,多线程读块使用
  *
