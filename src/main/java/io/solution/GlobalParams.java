@@ -78,7 +78,7 @@ public class GlobalParams {
         return (int) (110L * 1024 * 1024 * 1024 / BLOCK_SIZE) / (IS_DEBUG ? 8 : 1);
     }
 
-    public static final int MAX_R_TREE_CHILDREN_AMOUNT = 4;
+    public static final int MAX_R_TREE_CHILDREN_AMOUNT = 8;
 
 
 }
