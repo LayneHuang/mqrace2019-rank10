@@ -8,6 +8,7 @@ import io.solution.map.rtree.RTree;
 import io.solution.map.rtree.Rect;
 import io.solution.utils.HelpUtil;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -25,9 +26,13 @@ public class MyHash {
 
     private BlockInfo[] all = new BlockInfo[limit];
 
-    private RTree rTree = new RTree(GlobalParams.MAX_R_TREE_CHILDEN_AMOUNT);
-
     private int size = 0;
+
+    private RTree rTree = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
+
+    private ByteBuffer aBuffer = ByteBuffer.allocateDirect(GlobalParams.DIRECT_MEMORY_SIZE);
+
+    private int aBufferSize = 0;
 
     public int getSize() {
         return size;
@@ -40,10 +45,6 @@ public class MyHash {
     public static MyHash getIns() {
         return ins;
     }
-
-    //private long maxADiff = 0;
-    //    private long maxTDiff = 0;
-    private double useByteSum = 0;
 
     public synchronized void insert(BlockInfo info) {
 //        System.out.println("插入块的信息:");
@@ -61,9 +62,22 @@ public class MyHash {
 //                        + " limit:" + info.getLimitA() + "," + info.getLimitT() + " (byte) "
 //                        + " mem:" + Runtime.getRuntime().freeMemory() + " (byte) "
 //        );
+
+        // RTree 插入
         Rect rect = new Rect(info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA());
         rTree.Insert(rect, info.getSum(), info.getMessageAmount(), size);
 //        System.out.println("rtree节点数:" + rTree.getSize());
+
+        // a放到buffer中
+        info.setIdx(size);
+        info.setaPosition(aBufferSize);
+        for (int i = 0; i < info.getSizeA(); ++i) {
+            aBuffer.put(aBufferSize + i, info.getDataA()[i]);
+        }
+        aBufferSize += info.getSizeA();
+        info.setDataA(null);
+
+        // 放到列表中
         all[size] = info;
         size++;
         if (size == limit) {
@@ -138,26 +152,6 @@ public class MyHash {
 //        System.out.println("RTree求和总和:" + res + " 个数:" + messageAmount);
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
-
-    /**
-     * 输出各块的情况
-     *
-     * @return
-     */
-    public void showEachInfo() {
-        for (int i = 0; i < size; ++i) {
-            BlockInfo info = all[i];
-            System.out.println(
-                    "第" + i + "块信息个数: " + info.getMessageAmount() +
-                            " 占用内存:" + (info.getSizeT() + info.getSizeA()) + "(byte), " +
-                            ((double) (info.getSizeT() + info.getSizeA()) / GlobalParams.ONE_MB) + "(MB) " +
-                            " a 字节: " + (info.getSizeA()) +
-                            " t 字节: " + (info.getSizeT())
-            );
-
-        }
-    }
-
 
     public List<Message> force2(long minT, long maxT, long minA, long maxA) {
 //        System.out.println("hash list size: " + size);
@@ -240,4 +234,10 @@ public class MyHash {
 //        System.out.println("暴力求和总和:" + res + " 个数:" + messageAmount);
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
+
+
+    public ByteBuffer getaBuffer() {
+        return aBuffer;
+    }
+
 }

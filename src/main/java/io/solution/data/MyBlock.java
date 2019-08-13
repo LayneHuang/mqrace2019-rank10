@@ -69,6 +69,7 @@ public class MyBlock {
             maxT = Math.max(maxT, page.getMaxT());
         }
         pages[pageAmount++] = page;
+        messageAmount += page.getMessageAmount();
     }
 
     public long getMinA() {

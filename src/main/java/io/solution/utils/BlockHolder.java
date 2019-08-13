@@ -30,8 +30,6 @@ public class BlockHolder {
         return ins;
     }
 
-//    private int outCount = 0;
-
     private void work() {
         System.out.println("Block holder worker 开始工作~");
         while (!isFinish) {
@@ -39,16 +37,14 @@ public class BlockHolder {
             for (int i = 0; i < GlobalParams.BLOCK_COUNT_LIMIT; ++i) {
                 MyBlock block = blockQueue.poll();
                 if (block != null) {
-//                    outCount++;
                     blocks.add(block);
-//                    System.out.println("取出块个数:" + outCount);
                 }
             }
 
             if (!blocks.isEmpty()) {
                 // 归并
                 // System.out.println("归并块个数:" + blocks.size());
-                // blocks = SortUtil.myMergeSort(blocks);
+//                blocks = SortUtil.myMergeSort(blocks);
                 BufferHolder.getIns().commit(blocks);
             }
         }

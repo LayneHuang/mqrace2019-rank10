@@ -57,22 +57,15 @@ class BufferHolder {
         return ins;
     }
 
-//    private int inCount = 0;
-
     void commit(List<MyBlock> blocks) {
         try {
             for (MyBlock block : blocks) {
-//                inCount++;
                 blockQueue.put(block);
-//                System.out.println("buffer holder提交块个数:" + inCount);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
-
-    //    private int writeCount = 0;
-//    private boolean isFirst = true;
 
     private void writeFile() {
         System.out.println("BufferHolder write file 开始工作~");
@@ -100,8 +93,6 @@ class BufferHolder {
         }
     }
 
-//    private long totalWriteMessage = 0;
-
     void flush() {
         System.out.println("BufferHolder flush");
         while (!blockQueue.isEmpty()) {
@@ -121,16 +112,14 @@ class BufferHolder {
      */
     private void solve(MyBlock block) {
         writeFileLock.lock();
-        ByteBuffer buffer = ByteBuffer.allocateDirect(
+        ByteBuffer buffer = ByteBuffer.allocate(
                 GlobalParams.BLOCK_SIZE
 
         );
-//        ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.getBodySize());
+
         try {
-//            writeCount++;
-//            System.out.println("写入块的个数:" + writeCount + ",块大小:" + block.getPageAmount());
+
             long pos = channel.position();
-//            System.out.println("当前文件位置:" + pos);
             executor.execute(() -> {
                 BlockInfo blockInfo = new BlockInfo();
                 blockInfo.initBlockInfo(block);
@@ -149,9 +138,7 @@ class BufferHolder {
             buffer.flip();
             channel.write(buffer);
             buffer.clear();
-//            totalWriteMessage += messageAmount;
-//            System.out.println("写入Message个数: " + totalWriteMessage + "(总) " + messageAmount + "(本次)");
-//            MyHash.getIns().insert(blockInfo);
+
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

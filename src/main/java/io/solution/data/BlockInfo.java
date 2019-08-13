@@ -5,8 +5,6 @@ import io.solution.GlobalParams;
 import io.solution.utils.HashUtil;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @Author: laynehuang
@@ -14,11 +12,11 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class BlockInfo {
 
-    // 是否使用栈外内存
-    private boolean isDirect = false;
-
     private int limitA = GlobalParams.getBlockMessageLimit() + 200;
     private int limitT = GlobalParams.getBlockMessageLimit() + 200;
+
+    // 在列表中的位置
+    private int idx;
 
     private long maxT;
     private long minT;
@@ -26,29 +24,25 @@ public class BlockInfo {
     private long minA;
     private int amount;
 
-    // 偏移值的和
+    // a的和
     private long sum;
 
+    // body 在文件中的偏移位置
     private long position;
+
     private int messageAmount;
 
     // 块内A是递增的
     private long beginA;        // 第一个a值
     private byte[] dataA;       // a的压缩数据
-    private ByteBuffer bDataA;  // a的栈外压缩数据
     private int sizeA;          // a的压缩数据占用的位
+    private int aPosition;     // a在buffer中的偏移位置
 
     private long beginT;        // 第一个t值
     private byte[] dataT;       // t的压缩数据
-    private ByteBuffer bDataT;  // t的栈外压缩数据
     private int sizeT;          // t的压缩数据占用的位
 
     public BlockInfo() {
-        // 2分之1放到栈外内存
-        int rnk = ThreadLocalRandom.current().nextInt(100);
-        if (rnk % 2 == 0) {
-            isDirect = true;
-        }
         dataA = new byte[limitA];
         dataT = new byte[limitT];
     }
@@ -95,38 +89,17 @@ public class BlockInfo {
                 }
             }
         }
-
-        if (isDirect) {
-            bDataA = ByteBuffer.allocateDirect(sizeA);
-            bDataT = ByteBuffer.allocateDirect(sizeT);
-            bDataA.put(dataA, 0, sizeA);
-            bDataT.put(dataT, 0, sizeT);
-            dataA = dataT = null;
-        }
     }
 
     /**
      * 获取所有Message a的值
      */
-
-    private static final String lockA = "set_bytes_lock_a";
-    private static final String lockT = "set_bytes_lock_t";
-
     public long[] readBlockA() {
         long[] res = new long[messageAmount];
         long pre = beginA;
         res[0] = pre;
         MyCursor cursor = new MyCursor();
-
-        if (isDirect) {
-            synchronized (lockA) {
-                byte[] bytes = new byte[sizeA];
-                bDataA.flip();
-                bDataA.get(bytes);
-                cursor.setBytes(bytes);
-            }
-        }
-
+        cursor.setPos(aPosition);
         for (int i = 1; i < messageAmount; ++i) {
             try {
                 long aDiff = HashUtil.readInt(this, false, cursor);
@@ -150,14 +123,6 @@ public class BlockInfo {
         long pre = beginT;
         res[0] = pre;
         MyCursor cursor = new MyCursor();
-        if (isDirect) {
-            synchronized (lockT) {
-                bDataT.flip();
-                byte[] bytes = new byte[sizeT];
-                bDataT.get(bytes);
-                cursor.setBytes(bytes);
-            }
-        }
         for (int i = 1; i < messageAmount; ++i) {
             try {
                 int tDiff = HashUtil.readInt(this, true, cursor);
@@ -304,7 +269,19 @@ public class BlockInfo {
         this.limitA = limit;
     }
 
-    public boolean isDirect() {
-        return this.isDirect;
+    public int getIdx() {
+        return idx;
+    }
+
+    public void setIdx(int idx) {
+        this.idx = idx;
+    }
+
+    public int getaPosition() {
+        return aPosition;
+    }
+
+    public void setaPosition(int aPosition) {
+        this.aPosition = aPosition;
     }
 }

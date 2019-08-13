@@ -42,59 +42,11 @@ public class HelpUtil {
         return a <= maxA && a >= minA && t <= maxT && t >= minT;
     }
 
-    private static List<Message> transToList(ByteBuffer buffer, int size) {
-        List<Message> messages = new ArrayList<>();
-        for (int i = 0; i < size; ++i) {
-            int pSize = buffer.getInt();
-            for (int j = 0; j < pSize; ++j) {
-                long t = buffer.getLong();
-                long a = buffer.getLong();
-                byte[] bd = new byte[GlobalParams.getBodySize()];
-                buffer.get(bd);
-                Message message = new Message(a, t, bd);
-                messages.add(message);
-            }
-        }
-        return messages;
-    }
-
-    /**
-     * 读取Block 中整个 message 列表
-     */
-    public static List<Message> readMessages(long position, int size) {
-        FileChannel channel = null;
-        List<Message> res;
-        try {
-            channel = FileChannel.open(
-                    GlobalParams.getPath(),
-                    StandardOpenOption.READ
-            );
-            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
-            channel.read(buffer, position);
-            buffer.flip();
-            res = transToList(buffer, size / GlobalParams.PAGE_SIZE);
-            buffer.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
-            res = new ArrayList<>();
-        } finally {
-            try {
-                if (channel != null) {
-                    channel.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return res;
-    }
-
-
     /**
      * 只写入body的情况
      * 读取Block 中 message 列表
      */
-    public static byte[][] readBody( long position, int messageCount) {
+    public static byte[][] readBody(long position, int messageCount) {
         int size = messageCount * GlobalParams.getBodySize();
         FileChannel channel = null;
         byte[][] res = new byte[messageCount][GlobalParams.getBodySize()];
@@ -104,7 +56,7 @@ public class HelpUtil {
                     GlobalParams.getPath(),
                     StandardOpenOption.READ
             );
-            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            ByteBuffer buffer = ByteBuffer.allocate(size);
             channel.read(buffer, position);
             buffer.flip();
 

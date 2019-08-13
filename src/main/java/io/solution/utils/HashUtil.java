@@ -2,8 +2,10 @@ package io.solution.utils;
 
 import io.solution.data.BlockInfo;
 import io.solution.data.MyCursor;
+import io.solution.map.MyHash;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
@@ -15,24 +17,12 @@ import java.util.Arrays;
 public class HashUtil {
 
 
-    /**
-     * @param blockInfo
-     * @param isReadT
-     * @param cursor
-     * @return 偏移量
-     */
     public static int readInt(BlockInfo blockInfo, boolean isReadT, MyCursor cursor) throws IOException {
-
+        if (!isReadT) {
+            return readIntA(blockInfo, cursor);
+        }
         int pos = cursor.getPos();
-        byte[] buf;
-        if (!blockInfo.isDirect()) {
-            buf = (isReadT ? blockInfo.getDataT() : blockInfo.getDataA());
-        } else {
-            buf = cursor.getBytes();
-        }
-        if (buf == null) {
-            System.out.println("fuck~~~    " + blockInfo.isDirect());
-        }
+        byte[] buf = blockInfo.getDataT();
         int len = 1;
         int b = buf[pos] & 0xff;
         int n = b & 0x7f;
@@ -60,9 +50,38 @@ public class HashUtil {
         return (n >>> 1) ^ -(n & 1); // back to two's-complement
     }
 
+    private static int readIntA(BlockInfo blockInfo, MyCursor cursor) throws IOException {
+        int pos = cursor.getPos();
+        ByteBuffer buffer = MyHash.getIns().getaBuffer();
+        int len = 1;
+        int b = buffer.get(pos) & 0xff;
+        int n = b & 0x7f;
+        if (b > 0x7f) {
+            b = buffer.get(pos + len++) & 0xff;
+            n ^= (b & 0x7f) << 7;
+            if (b > 0x7f) {
+                b = buffer.get(pos + len++) & 0xff;
+                n ^= (b & 0x7f) << 14;
+                if (b > 0x7f) {
+                    b = buffer.get(pos + len++) & 0xff;
+                    n ^= (b & 0x7f) << 21;
+                    if (b > 0x7f) {
+                        b = buffer.get(pos + len++) & 0xff;
+                        n ^= (b & 0x7f) << 28;
+                        if (b > 0x7f) {
+                            throw new IOException("Invalid int encoding");
+                        }
+                    }
+                }
+            }
+        }
+        pos += len;
+        cursor.setPos(pos);
+        return (n >>> 1) ^ -(n & 1); // back to two's-complement
+    }
+
     public static int encodeInt(int n, BlockInfo blockInfo, boolean isHashT, int pos) {
 
-//        int pos = (isHashT ? blockInfo.getSizeT() : blockInfo.getSizeA());
         byte[] buf = (isHashT ? blockInfo.getDataT() : blockInfo.getDataA());
         int limit = (isHashT ? blockInfo.getLimitT() : blockInfo.getLimitA());
 
