@@ -169,7 +169,7 @@ public class MyHash {
         if (res % 5 == 0) {
 
             System.out.println(
-                    "RTree搜索结点个数：" + result.getCheckNode() +
+                    "RTree搜索结点个数:" + result.getCheckNode() +
                     " 消息个数:" + messageAmount
                             + " 查询包含块数:" + result.getCnt()
                             + " 相交块数:" + result.getResult().size()
