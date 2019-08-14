@@ -134,9 +134,7 @@ public class MyHash {
 //        System.out.println("查询区间: " + minT + " " + maxA + " " + minA + " " + maxA);
         long res = 0;
         long messageAmount = 0;
-
         AverageResult result = rTree.SearchAverage(new Rect(minT, maxT, minA, maxA));
-
 //        ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
         res += result.getSum();
         messageAmount += result.getCnt();
@@ -169,11 +167,11 @@ public class MyHash {
         if (res % 5 == 0) {
 
             System.out.println(
-                    "RTree搜索结点个数:" + result.getCheckNode() +
-                    " 消息个数:" + messageAmount
+                    "RTree搜索结点个数:" + result.getCheckNode()
+                            + " 消息个数:" + messageAmount
                             + " 查询包含块数:" + result.getCnt()
                             + " 相交块数:" + result.getResult().size()
-                    +"查询区间跨段（tDiff,aDiff): (" + (maxT-minT) + "," +(maxA-minA)+")"
+                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT-minT) + "," +(maxA-minA)+")"
             );
         }
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
