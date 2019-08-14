@@ -3,6 +3,7 @@ package io.solution.map;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
+import io.solution.map.rtree.AverageResult;
 import io.solution.map.rtree.Entry;
 import io.solution.map.rtree.RTree;
 import io.solution.map.rtree.Rect;
@@ -69,7 +70,7 @@ public class MyHash {
 
         // RTree 插入
         Rect rect = new Rect(info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA());
-        rTree.Insert(rect, size);
+        rTree.Insert(rect, info.getSum(), info.getMessageAmount(), size);
 //        System.out.println("rtree节点数:" + rTree.getSize());
 
         // a放到buffer中
@@ -126,27 +127,30 @@ public class MyHash {
     public long find3(long minT, long maxT, long minA, long maxA) {
 //        System.out.println("查询区间: " + minT + " " + maxA + " " + minA + " " + maxA);
 //        force3(minT, maxT, minA, maxA);
-        int insideCount = 0;
-        int intersectCount = 0;
+//        int insideCount = 0;
+//        int intersectCount = 0;
         long res = 0;
         long messageAmount = 0;
 
-        ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
-
-        for (Entry entry : nodes) {
+        AverageResult result = rTree.SearchAverage(new Rect(minT, maxT, minA, maxA));
+//        ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
+        res += result.getSum();
+        messageAmount += result.getCnt();
+//        System.out.println(res + "  cnt = "+ messageAmount);
+        for (Entry entry : result.getResult()) {
 //            System.out.println("idx : " + entry.getIdx() + " sum:" + entry.getSum() + " cnt:" + entry.getCount());
 //            entry.show();
-            if (
-                    HelpUtil.matrixInside(
-                            minT, maxT, minA, maxA,
-                            entry.getRect().x1, entry.getRect().x2, entry.getRect().y1, entry.getRect().y2
-                    )
-            ) {
-                BlockInfo info = all[entry.getIdx()];
-                res += info.getSum();
-                messageAmount += info.getMessageAmount();
-                insideCount++;
-            } else {
+//            if (
+//                    HelpUtil.matrixInside(
+//                            minT, maxT, minA, maxA,
+//                            entry.getRect().x1, entry.getRect().x2, entry.getRect().y1, entry.getRect().y2
+//                    )
+//            ) {
+//                BlockInfo info = all[entry.getIdx()];
+//                res += info.getSum();
+//                messageAmount += info.getMessageAmount();
+//                insideCount++;
+//            } else {
                 BlockInfo info = all[entry.getIdx()];
                 long[] tList = info.readBlockT();
                 long[] aList = info.readBlockA();
@@ -156,14 +160,14 @@ public class MyHash {
                         messageAmount++;
                     }
                 }
-                intersectCount++;
-            }
+//                intersectCount++;
+//            }
         }
 
 //        System.out.println("RTree求和总和:" + res + " 个数:" + messageAmount);
-        if (res % 2 == 1 && messageAmount % 2 == 1) {
-            System.out.println("查询包含块数:" + insideCount + " 相交块数:" + intersectCount);
-        }
+//        if (res % 2 == 1 && messageAmount % 2 == 1) {
+//            System.out.println("查询包含块数:" + insideCount + " 相交块数:" + intersectCount);
+//        }
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
 
