@@ -3,7 +3,6 @@ package io.solution.utils;
 import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
 import io.solution.data.MyBlock;
-import io.solution.data.MyPage;
 import io.solution.map.MyHash;
 
 import java.io.IOException;
@@ -14,8 +13,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -140,7 +137,6 @@ class BufferHolder {
             // 第几块
             for (MyBlock block : blocks) {
                 long nPos = pos;
-
 //                executor.execute(() -> {
                 BlockInfo blockInfo = new BlockInfo();
                 blockInfo.setPosition(nPos);
@@ -148,13 +144,10 @@ class BufferHolder {
                 MyHash.getIns().insert(blockInfo);
 //                });
 
-                for (int i = 0; i < block.getPageAmount(); ++i) {
-                    MyPage page = block.getPages()[i];
-                    for (int j = 0; j < page.getMessageAmount(); ++j) {
-                        buffer.put(page.getMessages()[j].getBody());
-                        pos += GlobalParams.getBodySize();
-                    }
+                for (int i = 0; i < block.getMessageAmount(); ++i) {
+                    buffer.put(block.getMessages()[i].getBody());
                 }
+                pos += GlobalParams.getBodySize() * block.getMessageAmount();
             }
 
             // 写文件

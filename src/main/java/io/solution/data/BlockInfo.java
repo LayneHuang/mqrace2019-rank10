@@ -22,7 +22,6 @@ public class BlockInfo {
     private long minT;
     private long maxA;
     private long minA;
-    private int amount;
 
     // a的和
     private long sum;
@@ -56,37 +55,30 @@ public class BlockInfo {
         setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
         messageAmount = block.getMessageAmount();
         sum = block.getSum();
-        amount = block.getPageAmount();
 
         // 初始化
         sizeA = sizeT = 0;
-        // flip();
         boolean isFirst = true;
-        long lastA = 0;
-        long lastT = 0;
-        int posA = 0;
-        int posT = 0;
+        long lastA = 0, lastT = 0;
+        int posA = 0, posT = 0;
 
-        for (int i = 0; i < block.getPageAmount(); ++i) {
-            MyPage page = block.getPages()[i];
-            for (int j = 0; j < page.getMessageAmount(); ++j) {
-                Message message = page.getMessages()[j];
-                if (isFirst) {
-                    lastA = beginA = message.getA();
-                    lastT = beginT = message.getT();
-                    isFirst = false;
-                } else {
-                    long nowA = message.getA();
-                    long nowT = message.getT();
-                    int aDiff = (int) (nowA - lastA);
-                    // a
-                    posA += HashUtil.encodeInt(aDiff, this, false, posA);
-                    // t
-                    int tDiff = (int) (nowT - lastT);
-                    posT += HashUtil.encodeInt(tDiff, this, true, posT);
-                    lastA = nowA;
-                    lastT = nowT;
-                }
+        for (int i = 0; i < block.getMessageAmount(); ++i) {
+            Message message = block.getMessages()[i];
+            if (isFirst) {
+                lastA = beginA = message.getA();
+                lastT = beginT = message.getT();
+                isFirst = false;
+            } else {
+                long nowA = message.getA();
+                long nowT = message.getT();
+                int aDiff = (int) (nowA - lastA);
+                // a
+                posA += HashUtil.encodeInt(aDiff, this, false, posA);
+                // t
+                int tDiff = (int) (nowT - lastT);
+                posT += HashUtil.encodeInt(tDiff, this, true, posT);
+                lastA = nowA;
+                lastT = nowT;
             }
         }
     }
@@ -142,10 +134,6 @@ public class BlockInfo {
         return sum;
     }
 
-    public int getAmount() {
-        return amount;
-    }
-
     public long getPosition() {
         return position;
     }
@@ -187,7 +175,6 @@ public class BlockInfo {
                         ",tR:" + maxT +
                         ",aL:" + minA +
                         ",aR:" + maxA +
-                        ",amount:" + amount +
                         ",sum:" + sum +
                         ",pos:" + position +
                         ",aDiff: " + (maxA - minA) +
@@ -202,16 +189,11 @@ public class BlockInfo {
                         ",aR:" + maxA +
                         ",tL:" + minT +
                         ",tR:" + maxT +
-                        ",amount:" + amount +
                         ",sum:" + sum +
                         ",pos:" + position +
                         ",aDiff: " + (maxA - minA) +
                         ",tDiff: " + (maxT - minT)
         );
-    }
-
-    private void setAmount(int amount) {
-        this.amount = amount;
     }
 
     public int getMessageAmount() {

@@ -15,62 +15,32 @@ public class MyBlock {
     private long maxT;
     private long sum;
 
-    private MyPage[] pages;
-
-    private int pageAmount;
+    private Message[] messages;
 
     private int messageAmount;
 
     public MyBlock() {
-        pages = new MyPage[GlobalParams.getBlockPageLimit()];
-    }
-
-    public MyPage[] getPages() {
-        return this.pages;
-    }
-
-    public int getPageAmount() {
-        return pageAmount;
+        sum = 0;
+        messages = new Message[GlobalParams.getBlockMessageLimit()];
     }
 
     public void addMessages(Message[] messages, int size) {
         sum = 0;
-        Message[] tempMsgs = new Message[GlobalParams.getPageMessageCount()];
-        int pageMessageAmount = 0;
+        if (size == 0) return;
+        this.messageAmount = size;
         for (int i = 0; i < size; ++i) {
-            Message message = messages[i];
-            tempMsgs[pageMessageAmount++] = message;
-            if (pageMessageAmount == GlobalParams.getPageMessageCount()) {
-                MyPage page = new MyPage();
-                page.addMessages(tempMsgs, pageMessageAmount);
-                addPage(page);
-                pageMessageAmount = 0;
+            this.messages[i] = messages[i];
+            sum += messages[i].getA();
+            if (i == 0) {
+                minA = maxA = messages[i].getA();
+                minT = maxT = messages[i].getT();
+            } else {
+                minA = Math.min(minA, messages[i].getA());
+                maxA = Math.max(maxA, messages[i].getA());
+                minT = Math.min(minT, messages[i].getT());
+                maxT = Math.max(maxT, messages[i].getT());
             }
         }
-
-        if (pageMessageAmount > 0) {
-            MyPage page = new MyPage();
-            page.addMessages(tempMsgs, pageMessageAmount);
-            addPage(page);
-        }
-        this.messageAmount = size;
-    }
-
-    public void addPage(MyPage page) {
-        sum += page.getSum();
-        if (pageAmount == 0) {
-            minA = page.getMinA();
-            maxA = page.getMaxA();
-            minT = page.getMinT();
-            maxT = page.getMaxT();
-        } else {
-            minA = Math.min(minA, page.getMinA());
-            maxA = Math.max(maxA, page.getMaxA());
-            minT = Math.min(minT, page.getMinT());
-            maxT = Math.max(maxT, page.getMaxT());
-        }
-        pages[pageAmount++] = page;
-        messageAmount += page.getMessageAmount();
     }
 
     public long getMinA() {
@@ -103,5 +73,9 @@ public class MyBlock {
 
     public int getMessageAmount() {
         return messageAmount;
+    }
+
+    public Message[] getMessages() {
+        return messages;
     }
 }

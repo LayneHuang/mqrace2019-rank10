@@ -81,7 +81,7 @@ public class MyHash {
         aBufferSize += info.getSizeA();
         info.setDataA(null);
 
-        info.show();
+//        info.show();
         aTotalDiff += info.getMaxA() - info.getMinA();
         tTotalDiff += info.getMaxT() - info.getMinT();
         areaSum += (info.getMaxT() - info.getMinA()) * (info.getMaxT() - info.getMinA());
@@ -161,7 +161,9 @@ public class MyHash {
         }
 
 //        System.out.println("RTree求和总和:" + res + " 个数:" + messageAmount);
-        System.out.println("查询包含块数:" + insideCount + " 相交块数:" + intersectCount);
+        if (res % 2 == 1 && messageAmount % 2 == 1) {
+            System.out.println("查询包含块数:" + insideCount + " 相交块数:" + intersectCount);
+        }
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
 
@@ -170,6 +172,6 @@ public class MyHash {
     }
 
     public void showAllBlockInfo() {
-        System.out.println("aTotalDiff:" + aTotalDiff + " tTotalDiff:" + tTotalDiff + " areaSum: " +  areaSum);
+        System.out.println("aTotalDiff:" + aTotalDiff + " tTotalDiff:" + tTotalDiff + " areaSum: " + areaSum);
     }
 }

@@ -70,12 +70,11 @@ public class HeapHolder {
         int index = getIndex(threadId);
         PriorityQueue<Message> queue = heaps.get(index);
         // 组合成页，然后进行提交到缓冲池当中
-        long addCount = GlobalParams.getBlockMessageLimit();
-        if (queue.size() >= addCount) {
+        if (queue.size() >= GlobalParams.getBlockMessageLimit()) {
             MyBlock block = new MyBlock();
             Message[] messages = new Message[GlobalParams.getBlockMessageLimit()];
             int messageAmount = 0;
-            for (int i = 0; i < addCount; ++i) {
+            for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
                 if (!queue.isEmpty()) {
                     Message message = queue.poll();
                     messages[messageAmount++] = message;
@@ -124,9 +123,10 @@ public class HeapHolder {
                 heaps = null;
                 indexMap.clear();
                 indexMap = null;
-                System.gc();
-                System.out.println("jvm GC~~");
+//                System.gc();
+//                System.out.println("jvm GC~~");
                 MyHash.getIns().showAllBlockInfo();
+                System.out.println("BlockInfo的Size:" + MyHash.getIns().getSize() + ",");
                 GlobalParams.setStepOneFinished();
             }
         }
