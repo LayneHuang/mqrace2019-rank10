@@ -47,6 +47,9 @@ public class MyHash {
         return ins;
     }
 
+    private long maxDiffA = 0;
+    private long maxDiffT = 0;
+    private long maxArea = 0;
     private long aTotalDiff = 0;
     private long tTotalDiff = 0;
     private double areaSum = 0;
@@ -83,9 +86,14 @@ public class MyHash {
         info.setDataA(null);
 
 //        info.show();
-        aTotalDiff += info.getMaxA() - info.getMinA();
-        tTotalDiff += info.getMaxT() - info.getMinT();
-        areaSum += (info.getMaxT() - info.getMinA()) * (info.getMaxT() - info.getMinA());
+        long diffA = info.getMaxA() - info.getMinA();
+        long diffT = info.getMaxT() - info.getMinT();
+        aTotalDiff += diffA;
+        tTotalDiff += diffT;
+        areaSum += diffA * diffT;
+        maxDiffA = Math.max(maxDiffA, diffA);
+        maxDiffT = Math.max(maxDiffT, diffT);
+        maxArea = Math.max(maxArea, diffA * diffT);
 
         // 放到列表中
         all[size] = info;
@@ -98,11 +106,9 @@ public class MyHash {
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
 
-//        List<Message> res = force2(minT, maxT, minA, maxA);
         ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
         List<Message> res = new ArrayList<>();
         for (Entry node : nodes) {
-//            Entry entry = nodes.get(i);
             int idx = node.getIdx();
             BlockInfo info = all[idx];
             byte[][] bodys = HelpUtil.readBody(info.getPosition(), info.getMessageAmount());
@@ -126,9 +132,6 @@ public class MyHash {
 
     public long find3(long minT, long maxT, long minA, long maxA) {
 //        System.out.println("查询区间: " + minT + " " + maxA + " " + minA + " " + maxA);
-//        force3(minT, maxT, minA, maxA);
-//        int insideCount = 0;
-//        int intersectCount = 0;
         long res = 0;
         long messageAmount = 0;
 
@@ -151,23 +154,24 @@ public class MyHash {
 //                messageAmount += info.getMessageAmount();
 //                insideCount++;
 //            } else {
-                BlockInfo info = all[entry.getIdx()];
-                long[] tList = info.readBlockT();
-                long[] aList = info.readBlockA();
-                for (int j = 0; j < info.getMessageAmount(); ++j) {
-                    if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
-                        res += aList[j];
-                        messageAmount++;
-                    }
+            BlockInfo info = all[entry.getIdx()];
+            long[] tList = info.readBlockT();
+            long[] aList = info.readBlockA();
+            for (int j = 0; j < info.getMessageAmount(); ++j) {
+                if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
+                    res += aList[j];
+                    messageAmount++;
                 }
-//                intersectCount++;
-//            }
+            }
         }
 
-//        System.out.println("RTree求和总和:" + res + " 个数:" + messageAmount);
-//        if (res % 2 == 1 && messageAmount % 2 == 1) {
-//            System.out.println("查询包含块数:" + insideCount + " 相交块数:" + intersectCount);
-//        }
+        if (res % 5 == 0) {
+            System.out.println(
+                    "消息个数:" + messageAmount
+                            + " 查询包含块数:" + result.getCnt()
+                            + " 相交块数:" + result.getResult().size()
+            );
+        }
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
 
@@ -176,6 +180,13 @@ public class MyHash {
     }
 
     public void showAllBlockInfo() {
-        System.out.println("aTotalDiff:" + aTotalDiff + " tTotalDiff:" + tTotalDiff + " areaSum: " + areaSum);
+        System.out.println(
+                "aTotalDiff:" + aTotalDiff
+                        + " tTotalDiff:" + tTotalDiff
+                        + " areaSum: " + areaSum
+                        + " maxDiffA: " + maxDiffA
+                        + " maxDiffT: " + maxDiffT
+                        + " maxArea: " + maxArea
+        );
     }
 }
