@@ -10,8 +10,6 @@ public class MyCursor {
 
     private int pos;
 
-    private byte[] bytes;
-
     public int getPos() {
         return pos;
     }

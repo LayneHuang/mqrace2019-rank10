@@ -47,6 +47,7 @@ public class MyBlock {
                 pageMessageAmount = 0;
             }
         }
+
         if (pageMessageAmount > 0) {
             MyPage page = new MyPage();
             page.addMessages(tempMsgs, pageMessageAmount);

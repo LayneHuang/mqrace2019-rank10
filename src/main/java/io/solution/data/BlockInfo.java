@@ -191,7 +191,8 @@ public class BlockInfo {
                         ",sum:" + sum +
                         ",pos:" + position +
                         ",aDiff: " + (maxA - minA) +
-                        ",tDiff: " + (maxT - minT)
+                        ",tDiff: " + (maxT - minT) +
+                        ",area: " + ((maxA - minA) * (maxT - minT))
         );
     }
 

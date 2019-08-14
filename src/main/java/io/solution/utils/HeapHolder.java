@@ -3,6 +3,7 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
+import io.solution.map.MyHash;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
@@ -125,7 +126,7 @@ public class HeapHolder {
                 indexMap = null;
                 System.gc();
                 System.out.println("jvm GC~~");
-
+                MyHash.getIns().showAllBlockInfo();
                 GlobalParams.setStepOneFinished();
             }
         }

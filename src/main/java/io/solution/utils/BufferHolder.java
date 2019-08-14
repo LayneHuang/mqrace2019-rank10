@@ -36,7 +36,7 @@ class BufferHolder {
 
     private FileChannel channel;
 
-    private ExecutorService executor = Executors.newFixedThreadPool(3);
+//    private ExecutorService executor = Executors.newFixedThreadPool(3);
 
     // 线程安全
     private List<MyBlock> blocks = Collections.synchronizedList(new LinkedList<>());
@@ -127,7 +127,6 @@ class BufferHolder {
      */
 
 //    private int outCount = 0;
-
     private void solve() {
         writeFileLock.lock();
         ByteBuffer buffer = ByteBuffer.allocate(
@@ -142,12 +141,12 @@ class BufferHolder {
             for (MyBlock block : blocks) {
                 long nPos = pos;
 
-                executor.execute(() -> {
-                    BlockInfo blockInfo = new BlockInfo();
-                    blockInfo.setPosition(nPos);
-                    blockInfo.initBlockInfo(block);
-                    MyHash.getIns().insert(blockInfo);
-                });
+//                executor.execute(() -> {
+                BlockInfo blockInfo = new BlockInfo();
+                blockInfo.setPosition(nPos);
+                blockInfo.initBlockInfo(block);
+                MyHash.getIns().insert(blockInfo);
+//                });
 
                 for (int i = 0; i < block.getPageAmount(); ++i) {
                     MyPage page = block.getPages()[i];

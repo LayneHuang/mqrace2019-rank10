@@ -46,6 +46,10 @@ public class MyHash {
         return ins;
     }
 
+    private long aTotalDiff = 0;
+    private long tTotalDiff = 0;
+    private double areaSum = 0;
+
     public synchronized void insert(BlockInfo info) {
 //        System.out.println("插入块的信息:");
 //        maxADiff = Math.max(info.getMaxA() - info.getMinA(), maxADiff);
@@ -76,6 +80,11 @@ public class MyHash {
         }
         aBufferSize += info.getSizeA();
         info.setDataA(null);
+
+        info.show();
+        aTotalDiff += info.getMaxA() - info.getMinA();
+        tTotalDiff += info.getMaxT() - info.getMinT();
+        areaSum += (info.getMaxT() - info.getMinA()) * (info.getMaxT() - info.getMinA());
 
         // 放到列表中
         all[size] = info;
@@ -117,7 +126,8 @@ public class MyHash {
     public long find3(long minT, long maxT, long minA, long maxA) {
 //        System.out.println("查询区间: " + minT + " " + maxA + " " + minA + " " + maxA);
 //        force3(minT, maxT, minA, maxA);
-
+        int insideCount = 0;
+        int intersectCount = 0;
         long res = 0;
         long messageAmount = 0;
 
@@ -135,110 +145,31 @@ public class MyHash {
                 BlockInfo info = all[entry.getIdx()];
                 res += info.getSum();
                 messageAmount += info.getMessageAmount();
+                insideCount++;
             } else {
                 BlockInfo info = all[entry.getIdx()];
                 long[] tList = info.readBlockT();
                 long[] aList = info.readBlockA();
                 for (int j = 0; j < info.getMessageAmount(); ++j) {
-                    long a = aList[j];
-                    long t = tList[j];
-                    if (HelpUtil.inSide(t, a, minT, maxT, minA, maxA)) {
+                    if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                         res += aList[j];
                         messageAmount++;
                     }
                 }
+                intersectCount++;
             }
         }
 
 //        System.out.println("RTree求和总和:" + res + " 个数:" + messageAmount);
+        System.out.println("查询包含块数:" + insideCount + " 相交块数:" + intersectCount);
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
-
-    public List<Message> force2(long minT, long maxT, long minA, long maxA) {
-//        System.out.println("hash list size: " + size);
-        List<Message> res = new ArrayList<>();
-//        long[] aList = new long[GlobalParams.getBlockMessageLimit()];
-//        long[] tList = new long[GlobalParams.getBlockMessageLimit()];
-//        byte[][] bodys = new byte[GlobalParams.getBlockMessageLimit()][GlobalParams.getBodySize()];
-        for (int i = 0; i < size; ++i) {
-            BlockInfo info = all[i];
-            if (HelpUtil.intersect(
-                    minT, maxT, minA, maxA,
-                    info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
-            )) {
-//                List<Message> messages = HelpUtil.readMessages(
-//                        info.getPosition(),
-//                        info.getAmount() * GlobalParams.PAGE_SIZE
-//                );
-                byte[][] bodys = HelpUtil.readBody(info.getPosition(), info.getMessageAmount());
-                long[] aList = info.readBlockA();
-                long[] tList = info.readBlockT();
-                for (int j = 0; j < info.getMessageAmount(); ++j) {
-                    if (
-                            HelpUtil.inSide(
-                                    tList[j], aList[j],
-                                    minT, maxT, minA, maxA
-                            )
-                    ) {
-                        Message message = new Message(aList[j], tList[j], bodys[j]);
-                        res.add(message);
-                    }
-                }
-            }
-        }
-
-        res.sort(Comparator.comparingLong(Message::getT));
-        return res;
-    }
-
-
-    public long force3(long minT, long maxT, long minA, long maxA) {
-        long res = 0;
-        long messageAmount = 0;
-//        long[] aList = new long[GlobalParams.getBlockMessageLimit()];
-//        long[] tList = new long[GlobalParams.getBlockMessageLimit()];
-        for (int i = 0; i < size; ++i) {
-            BlockInfo info = all[i];
-            if (            // 完全包含
-                    HelpUtil.matrixInside(
-                            minT, maxT, minA, maxA,
-                            info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
-                    )
-            ) {
-
-//                System.out.println("完全包含: " + i + "(idx)");
-                info.show();
-                res += info.getSum();
-                messageAmount += info.getMessageAmount();
-            } else if (    // 部分包含
-                    HelpUtil.intersect(
-                            minT, maxT, minA, maxA,
-                            info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA()
-                    )
-            ) {
-//                System.out.println("矩阵相交: " + i + "(idx)");
-//                info.show();
-//                tList = info.readBlockT(tList);
-                long[] tList = info.readBlockT();
-//                aList = info.readBlockA(aList);
-                long[] aList = info.readBlockA();
-                for (int j = 0; j < info.getMessageAmount(); ++j) {
-                    long a = aList[j];
-                    long t = tList[j];
-                    if (HelpUtil.inSide(t, a, minT, maxT, minA, maxA)) {
-                        res += aList[j];
-                        messageAmount++;
-                    }
-                }
-            }
-        }
-//        System.out.println("暴力求和总和:" + res + " 个数:" + messageAmount);
-        return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
-    }
-
 
     public ByteBuffer getaBuffer() {
         return aBuffer;
     }
 
+    public void showAllBlockInfo() {
+        System.out.println("aTotalDiff:" + aTotalDiff + " tTotalDiff:" + tTotalDiff + " areaSum: " +  areaSum);
+    }
 }
