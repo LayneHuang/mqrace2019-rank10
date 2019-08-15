@@ -123,10 +123,10 @@ public class HeapHolder {
                 heaps = null;
                 indexMap.clear();
                 indexMap = null;
-//                System.gc();
-//                System.out.println("jvm GC~~");
+                System.gc();
                 MyHash.getIns().showAllBlockInfo();
                 System.out.println("BlockInfo的Size:" + MyHash.getIns().getSize() + ",");
+                System.out.println("jvm GC~~ rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
                 GlobalParams.setStepOneFinished();
             }
         }
