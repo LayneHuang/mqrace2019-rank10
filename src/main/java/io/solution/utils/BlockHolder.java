@@ -31,7 +31,7 @@ public class BlockHolder {
     }
 
     private void work() {
-        System.out.println("Block holder worker 开始工作~");
+//        System.out.println("Block holder worker 开始工作~");
         while (!isFinish) {
             List<MyBlock> blocks = new ArrayList<>();
             for (int i = 0; i < GlobalParams.BLOCK_COUNT_LIMIT; ++i) {
@@ -61,7 +61,7 @@ public class BlockHolder {
     }
 
     void flush() {
-        System.out.println("block holder flush");
+//        System.out.println("block holder flush");
         List<MyBlock> blocks = new ArrayList<>();
         while (!blockQueue.isEmpty()) {
             MyBlock block = null;

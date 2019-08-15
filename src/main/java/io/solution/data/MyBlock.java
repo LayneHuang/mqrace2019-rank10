@@ -2,6 +2,7 @@ package io.solution.data;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
+import io.solution.utils.SortUtil;
 
 /**
  * @Author: laynehuang
@@ -98,5 +99,16 @@ public class MyBlock {
 
     public Message[] getMessages() {
         return messages;
+    }
+
+    // 使得块内a有序
+    public void sortByA() {
+        SortUtil.quickSort(messages, 0, messageAmount - 1 );
+        for (int i = 1; i < messageAmount; ++i) {
+            if (messages[i].getA() < messages[i - 1].getA()) {
+                System.out.println("fuck~~~");
+                break;
+            }
+        }
     }
 }

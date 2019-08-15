@@ -3,11 +3,9 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
-import io.solution.map.MyHash;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -93,7 +91,7 @@ public class HeapHolder {
         }
         synchronized (this) {
             if (!GlobalParams.isStepOneFinished()) {
-                System.out.println("heap holder flush");
+//                System.out.println("heap holder flush");
                 Message[] messages = new Message[GlobalParams.getBlockMessageLimit()];
                 int messageAmount = 0;
                 for (Queue<Message> queue : heaps) {
@@ -123,8 +121,8 @@ public class HeapHolder {
                 indexMap.clear();
                 indexMap = null;
                 System.gc();
-                MyHash.getIns().showAllBlockInfo();
-                System.out.println("BlockInfo的Size:" + MyHash.getIns().getSize() + ",");
+//                MyHash.getIns().showAllBlockInfo();
+//                System.out.println("BlockInfo的Size:" + MyHash.getIns().getSize() + ",");
                 System.out.println("jvm GC~~ rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
                 GlobalParams.setStepOneFinished();
             }

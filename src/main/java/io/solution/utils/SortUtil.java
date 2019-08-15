@@ -89,4 +89,44 @@ public class SortUtil {
         return result;
     }
 
+    public static void quickSort(Message[] messages, int low, int high) {
+        int i, j;
+        if (low > high) {
+            return;
+        }
+        i = low;
+        j = high;
+        long temp = messages[low].getA();
+
+        while (i < j) {
+            while (temp <= messages[j].getA() && i < j) {
+                j--;
+            }
+            while (temp >= messages[i].getA() && i < j) {
+                i++;
+            }
+            if (i < j) {
+                swapValue(messages[i], messages[j]);
+            }
+        }
+        swapValue(messages[low], messages[i]);
+        quickSort(messages, low, j - 1);
+        quickSort(messages, j + 1, high);
+    }
+
+    private static void swapValue(Message message1, Message message2) {
+        long tempA = message1.getA();
+        long tempT = message1.getT();
+        byte[] tempBody = new byte[GlobalParams.getBodySize()];
+        for (int k = 0; k < GlobalParams.getBodySize(); ++k) {
+            tempBody[k] = message1.getBody()[k];
+        }
+        message1.setA(message2.getA());
+        message1.setT(message2.getA());
+        message1.setBody(message2.getBody());
+        message2.setA(tempA);
+        message2.setT(tempT);
+        message2.setBody(tempBody);
+    }
+
 }

@@ -65,6 +65,7 @@ class BufferHolder {
         try {
             for (MyBlock block : blocks) {
 //                inCount++;
+                block.sortByA();
                 blockQueue.put(block);
             }
         } catch (InterruptedException e) {
@@ -73,7 +74,7 @@ class BufferHolder {
     }
 
     private void writeFile() {
-        System.out.println("BufferHolder write file 开始工作~");
+//        System.out.println("BufferHolder write file 开始工作~");
         while (!isFinish) {
             try {
                 for (int i = 0; i < GlobalParams.WRITE_COUNT_LIMIT; ++i) {
@@ -86,7 +87,7 @@ class BufferHolder {
                 if (blocks.isEmpty() || isFinish) {
                     // 结束
                     isFinish = true;
-                    System.out.println("BufferHolder write file 结束~");
+//                    System.out.println("BufferHolder write file 结束~");
                     break;
                 } else {
                     solve();
@@ -108,7 +109,7 @@ class BufferHolder {
     private ReentrantLock writeFileLock = new ReentrantLock();
 
     void flush() {
-        System.out.println("BufferHolder flush");
+//        System.out.println("BufferHolder flush");
         writeFileLock.lock();
         while (!blockQueue.isEmpty()) {
             MyBlock block = blockQueue.poll();
