@@ -47,8 +47,14 @@ public class MyHash {
         return ins;
     }
 
+    private long minA = Long.MAX_VALUE;
+    private long minT = Long.MAX_VALUE;
+    private long maxA = 0;
+    private long maxT = 0;
     private long maxDiffA = 0;
     private long maxDiffT = 0;
+    private long minDiffA = Long.MAX_VALUE;
+    private long minDiffT = Long.MAX_VALUE;
     private long maxArea = 0;
     private long aTotalDiff = 0;
     private long tTotalDiff = 0;
@@ -93,7 +99,15 @@ public class MyHash {
         areaSum += diffA * diffT;
         maxDiffA = Math.max(maxDiffA, diffA);
         maxDiffT = Math.max(maxDiffT, diffT);
+        minDiffA = Math.min(minDiffA, diffA);
+        minDiffT = Math.min(minDiffT, diffT);
+
         maxArea = Math.max(maxArea, diffA * diffT);
+
+        maxA = Math.max(maxA, info.getMaxA());
+        minA = Math.min(minA, info.getMinA());
+        maxT = Math.max(maxT, info.getMaxT());
+        minT = Math.min(minT, info.getMinT());
 
         // 放到列表中
         all[size] = info;
@@ -130,13 +144,13 @@ public class MyHash {
         return res;
     }
 
-    private int find3Count = 0 ;
+    private int find3Count = 0;
 
     public long find3(long minT, long maxT, long minA, long maxA) {
 
         find3Count++;
 
-        if( find3Count > 10000) {
+        if (find3Count > 10000) {
             return 0;
         }
 
@@ -181,11 +195,11 @@ public class MyHash {
             System.out.println(
                     "RTree搜索结点个数:" + result.getCheckNode()
                             + " 消息个数:" + messageAmount
-                            + " 查询包含块数:" + result.getCnt()
+                            + " 查询包含块的消息数:" + result.getCnt()
                             + " 相交块数:" + result.getResult().size()
-                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT-minT) + "," +(maxA-minA)+")"
-                            + " r树查询时间：" + (s2-s1)
-                            + " 求相交块平均值时间: " + (s4-s3)
+                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT - minT) + "," + (maxA - minA) + ")"
+                            + " r树查询时间：" + (s2 - s1)
+                            + " 求相交块平均值时间: " + (s4 - s3)
             );
         }
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
@@ -197,10 +211,16 @@ public class MyHash {
 
     public void showAllBlockInfo() {
         System.out.println(
-                "aTotalDiff:" + aTotalDiff
+                " minA: " + minA
+                        + " maxA: " + maxA
+                        + " minT: " + minT
+                        + " maxT: " + maxT
+                        + " aTotalDiff:" + aTotalDiff
                         + " tTotalDiff:" + tTotalDiff
                         + " areaSum: " + areaSum
+                        + " minDiffA: " + minDiffA
                         + " maxDiffA: " + maxDiffA
+                        + " minDiffT: " + minDiffT
                         + " maxDiffT: " + maxDiffT
                         + " maxArea: " + maxArea
         );

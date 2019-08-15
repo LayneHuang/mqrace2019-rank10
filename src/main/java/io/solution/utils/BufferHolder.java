@@ -10,8 +10,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +36,7 @@ class BufferHolder {
 //    private ExecutorService executor = Executors.newFixedThreadPool(3);
 
     // 线程安全
-    private List<MyBlock> blocks = Collections.synchronizedList(new LinkedList<>());
+    private List<MyBlock> blocks = Collections.synchronizedList(new ArrayList<>());
 
     private BufferHolder() {
         try {
@@ -82,6 +82,7 @@ class BufferHolder {
                         blocks.add(block);
                     }
                 }
+
                 if (blocks.isEmpty() || isFinish) {
                     // 结束
                     isFinish = true;
@@ -104,20 +105,23 @@ class BufferHolder {
         }
     }
 
+    private ReentrantLock writeFileLock = new ReentrantLock();
+
     void flush() {
         System.out.println("BufferHolder flush");
+        writeFileLock.lock();
         while (!blockQueue.isEmpty()) {
             MyBlock block = blockQueue.poll();
             if (block != null) {
                 blocks.add(block);
             }
         }
+        writeFileLock.unlock();
         if (!blocks.isEmpty()) {
             solve();
         }
     }
 
-    private ReentrantLock writeFileLock = new ReentrantLock();
 
     /**
      * 写操作
@@ -126,6 +130,12 @@ class BufferHolder {
 //    private int outCount = 0;
     private void solve() {
         writeFileLock.lock();
+
+        if (blocks.isEmpty()) {
+            writeFileLock.unlock();
+            return;
+        }
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 GlobalParams.BLOCK_SIZE * blocks.size()
         );
