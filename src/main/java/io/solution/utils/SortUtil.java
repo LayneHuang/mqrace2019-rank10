@@ -74,23 +74,22 @@ public class SortUtil {
 
         // 结果集
         List<MyBlock> result = new ArrayList<>();
-
-        List<SortMessage> sortMessages = new ArrayList<>();
+//
+//        List<SortMessage> sortMessages = new ArrayList<>();
+//        for (int i = 0; i < totalSize; ++i) {
+//            sortMessages.add(new SortMessage(i / GlobalParams.getBlockMessageLimit(), i, messages[i].getA()));
+//        }
+//
+//        sortMessages.sort((o1, o2) -> {
+//            int blockCmp = Integer.compare(o2.inB, o1.inB);
+//            return blockCmp == 0 ? Long.compare(o2.a, o1.a) : blockCmp;
+//        });
+//
         for (int i = 0; i < totalSize; ++i) {
-            sortMessages.add(new SortMessage(i / GlobalParams.getBlockMessageLimit(), i, messages[i].getA()));
-        }
-
-        sortMessages.sort((o1, o2) -> {
-            int blockCmp = Integer.compare(o2.inB, o1.inB);
-            return blockCmp == 0 ? Long.compare(o2.a, o1.a) : blockCmp;
-        });
-
-        for (int i = 0; i < totalSize; ++i) {
-            int pos = sortMessages.get(i).idx;
             if (i % GlobalParams.getBlockMessageLimit() == 0) {
                 result.add(new MyBlock());
             }
-            result.get(result.size() - 1).addMessage(messages[pos]);
+            result.get(result.size() - 1).addMessage(messages[i]);
         }
 
 //        int tempSize = 0;

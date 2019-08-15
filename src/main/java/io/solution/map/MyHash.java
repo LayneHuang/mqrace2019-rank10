@@ -144,14 +144,14 @@ public class MyHash {
         return res;
     }
 
-    private int find3Count = 0;
+//    private int find3Count = 0;
 
     public long find3(long minT, long maxT, long minA, long maxA) {
 
-        find3Count++;
-        if (find3Count > 10000) {
-            return 0;
-        }
+//        find3Count++;
+//        if (find3Count > 10000) {
+//            return 0;
+//        }
 
 //        System.out.println("查询区间: " + minT + " " + maxA + " " + minA + " " + maxA);
         long res = 0;
@@ -163,33 +163,33 @@ public class MyHash {
         res += result.getSum();
         messageAmount += result.getCnt();
 //        System.out.println(res + "  cnt = "+ messageAmount);
-        long s3 = System.nanoTime();
+//        long s3 = System.nanoTime();
         for (Entry entry : result.getResult()) {
-//            System.out.println("idx : " + entry.getIdx() + " sum:" + entry.getSum() + " cnt:" + entry.getCount());
-//            entry.show();
-//            if (
-//                    HelpUtil.matrixInside(
-//                            minT, maxT, minA, maxA,
-//                            entry.getRect().x1, entry.getRect().x2, entry.getRect().y1, entry.getRect().y2
-//                    )
-//            ) {
-//                BlockInfo info = all[entry.getIdx()];
-//                res += info.getSum();
-//                messageAmount += info.getMessageAmount();
-//                insideCount++;
-//            } else {
             BlockInfo info = all[entry.getIdx()];
-            long[] tList = info.readBlockT();
-            long[] aList = info.readBlockA();
-            for (int j = 0; j < info.getMessageAmount(); ++j) {
-                if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
-                    res += aList[j];
-                    messageAmount++;
+            if (minT <= info.getMinT() && info.getMaxT() <= maxT) {
+                long[] aList = info.readBlockA();
+                for (int j = 0; j < info.getMessageAmount(); ++j) {
+                    if (minA <= aList[j] && aList[j] <= maxA) {
+                        res += aList[j];
+                        messageAmount++;
+                    }
+                }
+            } else {
+                long[] tList = info.readBlockT();
+                long[] aList = info.readBlockA();
+                for (int j = 0; j < info.getMessageAmount(); ++j) {
+                    if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
+                        res += aList[j];
+                        messageAmount++;
+                    }
+//                    else if (tList[j] > maxT) {
+//                        break;
+//                    }
                 }
             }
         }
 //        long s4 = System.nanoTime();
-//        if (res % 5 == 0) {
+//        if (res % 100 == 0) {
 //
 //            System.out.println(
 //                    "RTree搜索结点个数:" + result.getCheckNode()
