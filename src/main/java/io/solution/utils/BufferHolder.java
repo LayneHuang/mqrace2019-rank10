@@ -65,7 +65,7 @@ class BufferHolder {
         try {
             for (MyBlock block : blocks) {
 //                inCount++;
-                block.sortByA();
+//                block.sortByA();
                 blockQueue.put(block);
             }
         } catch (InterruptedException e) {
