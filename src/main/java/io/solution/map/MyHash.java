@@ -144,14 +144,14 @@ public class MyHash {
         return res;
     }
 
-//    private int find3Count = 0;
+    private int find3Count = 0;
 
     public long find3(long minT, long maxT, long minA, long maxA) {
 
-//        find3Count++;
-//        if (find3Count > 10000) {
-//            return 0;
-//        }
+        find3Count++;
+        if (find3Count > 10000) {
+            return 0;
+        }
 
 //        System.out.println("查询区间: " + minT + " " + maxA + " " + minA + " " + maxA);
         long res = 0;

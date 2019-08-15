@@ -86,6 +86,11 @@ public class SortUtil {
             }
         }
 
+        // 归并后直接再块内按A排序
+        for (MyBlock block : blocks) {
+            block.sortByA();
+        }
+
         return result;
     }
 
