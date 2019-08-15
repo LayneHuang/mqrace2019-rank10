@@ -6,7 +6,9 @@ import io.solution.data.MyBlock;
 import io.solution.map.MyHash;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -27,7 +29,7 @@ public class HeapHolder {
     /**
      * 各自线程所使用的堆
      */
-    private ArrayList<PriorityQueue<Message>> heaps;
+    private ArrayList<Queue<Message>> heaps;
 
     private static HeapHolder ins = new HeapHolder();
 
@@ -48,10 +50,7 @@ public class HeapHolder {
                 if (indexMap.containsKey(threadId)) {
                     return indexMap.get(threadId);
                 }
-                PriorityQueue<Message> queue = new PriorityQueue<>((o1, o2) -> {
-                    int res = -Long.compare(o1.getA(), o2.getA());
-                    return res == 0 ? -Long.compare(o1.getT(), o2.getT()) : res;
-                });
+                Queue<Message> queue = new LinkedList<>();
                 int index = heaps.size();
                 indexMap.put(threadId, index);
                 heaps.add(queue);
@@ -62,13 +61,13 @@ public class HeapHolder {
 
     public void put(long threadId, Message message) {
         int index = getIndex(threadId);
-        PriorityQueue<Message> queue = heaps.get(index);
+        Queue<Message> queue = heaps.get(index);
         queue.add(message);
     }
 
     public void checkAndCommit(long threadId) {
         int index = getIndex(threadId);
-        PriorityQueue<Message> queue = heaps.get(index);
+        Queue<Message> queue = heaps.get(index);
         // 组合成页，然后进行提交到缓冲池当中
         if (queue.size() >= GlobalParams.getBlockMessageLimit()) {
             MyBlock block = new MyBlock();
@@ -97,7 +96,7 @@ public class HeapHolder {
                 System.out.println("heap holder flush");
                 Message[] messages = new Message[GlobalParams.getBlockMessageLimit()];
                 int messageAmount = 0;
-                for (PriorityQueue<Message> queue : heaps) {
+                for (Queue<Message> queue : heaps) {
                     while (!queue.isEmpty()) {
                         Message message = queue.poll();
                         messages[messageAmount++] = message;

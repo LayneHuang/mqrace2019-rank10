@@ -57,7 +57,7 @@ public class SortUtil {
                 if (indexs[i] >= block.getMessageAmount()) {
                     continue;
                 }
-                long minA = block.getMessages()[indexs[i]].getA();
+                long minA = block.getMessages()[indexs[i]].getT();
                 if (selectedBlockIndex == -1 || minA < sMinA) {
                     selectedBlockIndex = i;
                     sMinA = minA;
