@@ -3,6 +3,7 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
+import io.solution.data.SortMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,23 +74,42 @@ public class SortUtil {
 
         // 结果集
         List<MyBlock> result = new ArrayList<>();
-        int tempSize = 0;
+
+        List<SortMessage> sortMessages = new ArrayList<>();
         for (int i = 0; i < totalSize; ++i) {
-            if (tempSize == 0) {
-                MyBlock block = new MyBlock();
-                result.add(block);
-            }
-            result.get(result.size() - 1).addMessage(messages[i]);
-            tempSize++;
-            if (tempSize == GlobalParams.getBlockMessageLimit()) {
-                tempSize = 0;
-            }
+            sortMessages.add(new SortMessage(i / GlobalParams.getBlockMessageLimit(), i, messages[i].getA()));
         }
 
-        // 归并后直接再块内按A排序
-        for (MyBlock block : blocks) {
-            block.sortByA();
+        sortMessages.sort((o1, o2) -> {
+            int blockCmp = Integer.compare(o2.inB, o1.inB);
+            return blockCmp == 0 ? Long.compare(o2.a, o1.a) : blockCmp;
+        });
+
+        for (int i = 0; i < totalSize; ++i) {
+            int pos = sortMessages.get(i).idx;
+            if (i % GlobalParams.getBlockMessageLimit() == 0) {
+                result.add(new MyBlock());
+            }
+            result.get(result.size() - 1).addMessage(messages[pos]);
         }
+
+//        int tempSize = 0;
+//        for (int i = 0; i < totalSize; ++i) {
+//            if (tempSize == 0) {
+//                MyBlock block = new MyBlock();
+//                result.add(block);
+//            }
+//            result.get(result.size() - 1).addMessage(messages[i]);
+//            tempSize++;
+//            if (tempSize == GlobalParams.getBlockMessageLimit()) {
+//                tempSize = 0;
+//            }
+//        }
+
+//         归并后直接再块内按A排序 (超时)
+//        for (MyBlock block : blocks) {
+//            block.sortByA();
+//        }
 
         return result;
     }
