@@ -21,6 +21,7 @@ public class MyBlock {
 
     public MyBlock() {
         sum = 0;
+        messageAmount = 0;
         messages = new Message[GlobalParams.getBlockMessageLimit()];
     }
 
@@ -41,6 +42,26 @@ public class MyBlock {
                 maxT = Math.max(maxT, messages[i].getT());
             }
         }
+    }
+
+    public void addMessagesStupid(Message[] messages, int size) {
+        if (size == 0) return;
+        messageAmount = size;
+        System.arraycopy(messages, 0, this.messages, 0, messageAmount);
+    }
+
+    public void addMessage(Message message) {
+        sum += message.getA();
+        if (messageAmount == 0) {
+            minA = maxA = message.getA();
+            minT = maxT = message.getT();
+        } else {
+            minA = Math.min(minA, message.getA());
+            maxA = Math.max(maxA, message.getA());
+            minT = Math.min(minT, message.getT());
+            maxT = Math.max(maxT, message.getT());
+        }
+        messages[messageAmount++] = message;
     }
 
     public long getMinA() {
