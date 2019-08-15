@@ -47,18 +47,18 @@ public class MyHash {
         return ins;
     }
 
-    private long minA = Long.MAX_VALUE;
-    private long minT = Long.MAX_VALUE;
-    private long maxA = 0;
-    private long maxT = 0;
-    private long maxDiffA = 0;
-    private long maxDiffT = 0;
-    private long minDiffA = Long.MAX_VALUE;
-    private long minDiffT = Long.MAX_VALUE;
-    private long maxArea = 0;
-    private long aTotalDiff = 0;
-    private long tTotalDiff = 0;
-    private double areaSum = 0;
+//    private long minA = Long.MAX_VALUE;
+//    private long minT = Long.MAX_VALUE;
+//    private long maxA = 0;
+//    private long maxT = 0;
+//    private long maxDiffA = 0;
+//    private long maxDiffT = 0;
+//    private long minDiffA = Long.MAX_VALUE;
+//    private long minDiffT = Long.MAX_VALUE;
+//    private long maxArea = 0;
+//    private long aTotalDiff = 0;
+//    private long tTotalDiff = 0;
+//    private double areaSum = 0;
 
     public synchronized void insert(BlockInfo info) {
 //        System.out.println("插入块的信息:");
@@ -92,22 +92,22 @@ public class MyHash {
         info.setDataA(null);
 
 //        info.show();
-        long diffA = info.getMaxA() - info.getMinA();
-        long diffT = info.getMaxT() - info.getMinT();
-        aTotalDiff += diffA;
-        tTotalDiff += diffT;
-        areaSum += diffA * diffT;
-        maxDiffA = Math.max(maxDiffA, diffA);
-        maxDiffT = Math.max(maxDiffT, diffT);
-        minDiffA = Math.min(minDiffA, diffA);
-        minDiffT = Math.min(minDiffT, diffT);
-
-        maxArea = Math.max(maxArea, diffA * diffT);
-
-        maxA = Math.max(maxA, info.getMaxA());
-        minA = Math.min(minA, info.getMinA());
-        maxT = Math.max(maxT, info.getMaxT());
-        minT = Math.min(minT, info.getMinT());
+//        long diffA = info.getMaxA() - info.getMinA();
+//        long diffT = info.getMaxT() - info.getMinT();
+//        aTotalDiff += diffA;
+//        tTotalDiff += diffT;
+//        areaSum += diffA * diffT;
+//        maxDiffA = Math.max(maxDiffA, diffA);
+//        maxDiffT = Math.max(maxDiffT, diffT);
+//        minDiffA = Math.min(minDiffA, diffA);
+//        minDiffT = Math.min(minDiffT, diffT);
+//
+//        maxArea = Math.max(maxArea, diffA * diffT);
+//
+//        maxA = Math.max(maxA, info.getMaxA());
+//        minA = Math.min(minA, info.getMinA());
+//        maxT = Math.max(maxT, info.getMaxT());
+//        minT = Math.min(minT, info.getMinT());
 
         // 放到列表中
         all[size] = info;
@@ -149,7 +149,6 @@ public class MyHash {
     public long find3(long minT, long maxT, long minA, long maxA) {
 
 //        find3Count++;
-//
 //        if (find3Count > 10000) {
 //            return 0;
 //        }
@@ -209,20 +208,20 @@ public class MyHash {
         return aBuffer;
     }
 
-    public void showAllBlockInfo() {
-        System.out.println(
-                " minA: " + minA
-                        + " maxA: " + maxA
-                        + " minT: " + minT
-                        + " maxT: " + maxT
-                        + " aTotalDiff:" + aTotalDiff
-                        + " tTotalDiff:" + tTotalDiff
-                        + " areaSum: " + areaSum
-                        + " minDiffA: " + minDiffA
-                        + " maxDiffA: " + maxDiffA
-                        + " minDiffT: " + minDiffT
-                        + " maxDiffT: " + maxDiffT
-                        + " maxArea: " + maxArea
-        );
-    }
+//    public void showAllBlockInfo() {
+//        System.out.println(
+//                " minA: " + minA
+//                        + " maxA: " + maxA
+//                        + " minT: " + minT
+//                        + " maxT: " + maxT
+//                        + " aTotalDiff:" + aTotalDiff
+//                        + " tTotalDiff:" + tTotalDiff
+//                        + " areaSum: " + areaSum
+//                        + " minDiffA: " + minDiffA
+//                        + " maxDiffA: " + maxDiffA
+//                        + " minDiffT: " + minDiffT
+//                        + " maxDiffT: " + maxDiffT
+//                        + " maxArea: " + maxArea
+//        );
+//    }
 }
