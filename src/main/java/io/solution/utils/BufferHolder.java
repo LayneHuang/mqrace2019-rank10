@@ -36,7 +36,7 @@ class BufferHolder {
 //    private ExecutorService executor = Executors.newFixedThreadPool(3);
 
     // 线程安全
-    private List<MyBlock> blocks = Collections.synchronizedList(new ArrayList<>());
+    private List<MyBlock> blocks = new ArrayList<>();
 
     private BufferHolder() {
         try {
@@ -110,14 +110,12 @@ class BufferHolder {
 
     void flush() {
 //        System.out.println("BufferHolder flush");
-        writeFileLock.lock();
         while (!blockQueue.isEmpty()) {
             MyBlock block = blockQueue.poll();
             if (block != null) {
                 blocks.add(block);
             }
         }
-        writeFileLock.unlock();
         if (!blocks.isEmpty()) {
             solve();
         }

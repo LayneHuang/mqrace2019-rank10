@@ -7,6 +7,7 @@ import io.solution.map.MyHash;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -93,30 +94,14 @@ public class HeapHolder {
         synchronized (this) {
             if (!GlobalParams.isStepOneFinished()) {
 //                System.out.println("heap holder flush");
-                Message[] messages = new Message[GlobalParams.getBlockMessageLimit()];
-                int messageAmount = 0;
-                for (Queue<Message> queue : heaps) {
-                    while (!queue.isEmpty()) {
-                        Message message = queue.poll();
-                        messages[messageAmount++] = message;
-                        if (messageAmount >= GlobalParams.getBlockMessageLimit()) {
-                            MyBlock block = new MyBlock();
-                            block.addMessages(messages, messageAmount);
-                            BlockHolder.getIns().commit(block);
-                            messageAmount = 0;
-                        }
-                    }
-                }
-                if (messageAmount > 0) {
-                    MyBlock block = new MyBlock();
-                    block.addMessages(messages, messageAmount);
+                List<MyBlock> blocks = SortUtil.myMergeSort(heaps);
+                for (MyBlock block : blocks) {
                     BlockHolder.getIns().commit(block);
                 }
                 BlockHolder.getIns().flush();
                 BufferHolder.getIns().flush();
                 // 打印个块的信息
                 // MyHash.getIns().showEachInfo();
-
                 // 清空
                 heaps = null;
                 indexMap.clear();

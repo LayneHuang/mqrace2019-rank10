@@ -3,10 +3,10 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
-import io.solution.data.SortMessage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * 排序工具
@@ -36,7 +36,7 @@ public class SortUtil {
         int[] indexs = new int[size];
         // 当前选择的block
         int selectedBlockIndex = -1;
-        // 选择到最小的a
+        // 选择到最小的t
         long sMinA = Long.MAX_VALUE;
         // 插入结果的数量
         int nowSize = 0;
@@ -112,6 +112,58 @@ public class SortUtil {
 
         return result;
     }
+
+    static List<MyBlock> myMergeSort(ArrayList<Queue<Message>> heaps) {
+        List<MyBlock> result = new ArrayList<>();
+        Message[] messages = new Message[GlobalParams.getBlockMessageLimit()];
+        int messagesAmount = 0;
+        int nowSize = 0;
+        int totalSize = 0;
+        for (Queue<Message> queue : heaps) {
+            totalSize += queue.size();
+        }
+        while (nowSize < totalSize) {
+            int idx = 0;
+            int sIdx = -1;
+            long minValue = Long.MAX_VALUE;
+            for (Queue<Message> queue : heaps) {
+                Message message = queue.peek();
+                if (message != null) {
+                    long t = message.getT();
+                    if (t < minValue) {
+                        minValue = t;
+                        sIdx = idx;
+                    }
+                }
+                idx++;
+            }
+
+            if (sIdx != -1) {
+                Message message = heaps.get(sIdx).poll();
+                if (message != null) {
+                    messages[messagesAmount] = message;
+                    messagesAmount++;
+                    if (messagesAmount == GlobalParams.getBlockMessageLimit()) {
+                        MyBlock block = new MyBlock();
+                        block.addMessages(messages, messagesAmount);
+                        result.add(block);
+                        messagesAmount = 0;
+                    }
+                }
+                nowSize++;
+            }
+        }
+
+        if (messagesAmount > 0) {
+            MyBlock block = new MyBlock();
+            System.out.println(messagesAmount);
+            block.addMessages(messages, messagesAmount);
+            result.add(block);
+        }
+
+        return result;
+    }
+
 
     public static void quickSort(Message[] messages, int low, int high) {
         int i, j;

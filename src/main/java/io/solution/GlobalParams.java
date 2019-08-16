@@ -15,7 +15,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 34);
+    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 17);
 
     public static final long BLOCK_SIZE_LIMIT = BLOCK_SIZE / PAGE_SIZE;
 
