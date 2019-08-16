@@ -80,7 +80,9 @@ class BufferHolder {
                 for (int i = 0; i < GlobalParams.WRITE_COUNT_LIMIT; ++i) {
                     MyBlock block = blockQueue.poll(1, TimeUnit.SECONDS);
                     if (block != null) {
+                        writeFileLock.lock();
                         blocks.add(block);
+                        writeFileLock.unlock();
                     }
                 }
 
@@ -113,7 +115,9 @@ class BufferHolder {
         while (!blockQueue.isEmpty()) {
             MyBlock block = blockQueue.poll();
             if (block != null) {
+                writeFileLock.lock();
                 blocks.add(block);
+                writeFileLock.unlock();
             }
         }
         if (!blocks.isEmpty()) {
@@ -166,9 +170,8 @@ class BufferHolder {
             blocks.clear();
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            writeFileLock.unlock();
         }
+        writeFileLock.unlock();
     }
 
 }
