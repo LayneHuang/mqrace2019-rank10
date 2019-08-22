@@ -117,7 +117,7 @@ public class MyHash {
         long messageAmount = 0;
 //        long s1 = System.nanoTime();
         AverageResult result = rTree.SearchAverage(new Rect(minT, maxT, minA, maxA));
-        long s2 = System.nanoTime();
+//        long s2 = System.nanoTime();
 
         //        ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
         res += result.getSum();

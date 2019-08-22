@@ -39,18 +39,15 @@ public class HelpUtil {
         return a <= maxA && a >= minA && t <= maxT && t >= minT;
     }
 
-    /**
-     * 只写入body的情况
-     * 读取Block 中 message 列表
-     */
-    public static byte[][] readBody(long position, int messageCount) {
-        int size = messageCount * GlobalParams.getBodySize();
+
+    public static long[] readT(long position, int messageCount) {
+        int size = messageCount * 8;
         FileChannel channel = null;
-        byte[][] res = new byte[messageCount][GlobalParams.getBodySize()];
+        long[] res = new long[messageCount];
 
         try {
             channel = FileChannel.open(
-                    GlobalParams.getPath(2),
+                    GlobalParams.getPath(0),
                     StandardOpenOption.READ
             );
             ByteBuffer buffer = ByteBuffer.allocateDirect(size);
@@ -59,7 +56,7 @@ public class HelpUtil {
 
             // trans
             for (int i = 0; i < messageCount; ++i) {
-                buffer.get(res[i], 0, GlobalParams.getBodySize());
+                res[i] = buffer.getLong();
             }
 
             buffer.clear();
@@ -111,14 +108,18 @@ public class HelpUtil {
         return res;
     }
 
-    public static long[] readT(long position, int messageCount) {
-        int size = messageCount * 8;
+    /**
+     * 只写入body的情况
+     * 读取Block 中 message 列表
+     */
+    public static byte[][] readBody(long position, int messageCount) {
+        int size = messageCount * GlobalParams.getBodySize();
         FileChannel channel = null;
-        long[] res = new long[messageCount];
+        byte[][] res = new byte[messageCount][GlobalParams.getBodySize()];
 
         try {
             channel = FileChannel.open(
-                    GlobalParams.getPath(0),
+                    GlobalParams.getPath(2),
                     StandardOpenOption.READ
             );
             ByteBuffer buffer = ByteBuffer.allocateDirect(size);
@@ -127,7 +128,7 @@ public class HelpUtil {
 
             // trans
             for (int i = 0; i < messageCount; ++i) {
-                res[i] = buffer.getLong();
+                buffer.get(res[i], 0, GlobalParams.getBodySize());
             }
 
             buffer.clear();
@@ -144,5 +145,6 @@ public class HelpUtil {
         }
         return res;
     }
+
 
 }

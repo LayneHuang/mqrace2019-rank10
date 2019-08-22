@@ -34,16 +34,16 @@ class BufferHolder {
     private FileChannel channelT;
     private FileChannel channelBody;
 
-    ByteBuffer buffer = ByteBuffer.allocateDirect(
-            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT * 2
+    private ByteBuffer buffer = ByteBuffer.allocateDirect(
+            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
     );
 
-    ByteBuffer aBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT * 2
+    private ByteBuffer aBuffer = ByteBuffer.allocateDirect(
+            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
     );
 
-    ByteBuffer tBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT * 2
+    private ByteBuffer tBuffer = ByteBuffer.allocateDirect(
+            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
     );
 
     // 线程安全
@@ -160,13 +160,13 @@ class BufferHolder {
         }
     }
 
-
     /**
      * 写操作
      */
 
 //    private int outCount = 0;
     private void solve() {
+
         writeFileLock.lock();
 
         if (blocks.isEmpty()) {
@@ -174,9 +174,21 @@ class BufferHolder {
             return;
         }
 
-//        outCount += blocks.size();
-//        System.out.println(inCount + ", " + outCount);
-//        System.out.println(blocks.size());
+        if (blocks.size() > GlobalParams.WRITE_COUNT_LIMIT) {
+
+            buffer = ByteBuffer.allocateDirect(
+                    GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * blocks.size()
+            );
+
+            aBuffer = ByteBuffer.allocateDirect(
+                    8 * GlobalParams.getBlockMessageLimit() * blocks.size()
+            );
+
+            tBuffer = ByteBuffer.allocateDirect(
+                    8 * GlobalParams.getBlockMessageLimit() * blocks.size()
+            );
+
+        }
 
         try {
             long posBody = channelBody.position();
