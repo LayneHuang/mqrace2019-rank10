@@ -2,18 +2,20 @@ package io.solution.data;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
-import io.solution.utils.HashUtil;
+import io.solution.map.rtree.AverageResult;
+import io.solution.map.rtree.Entry;
+import io.solution.map.rtree.RTree;
+import io.solution.map.rtree.Rect;
+import io.solution.utils.HelpUtil;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Author: laynehuang
  * @CreatedAt: 2019/8/6 0006
  */
 public class BlockInfo {
-
-    private int limitA = GlobalParams.getBlockMessageLimit() + 200;
-    private int limitT = GlobalParams.getBlockMessageLimit() + 200;
 
     // 在列表中的位置
     private int idx;
@@ -23,123 +25,198 @@ public class BlockInfo {
     private long maxA;
     private long minA;
 
+    private int messageAmount;
+
     // a的和
     private long sum;
 
-    // body 在文件中的偏移位置
-    private long position;
+    private RTree rTree = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
 
-    private int messageAmount;
+    private PageInfo[] pageInfos = new PageInfo[GlobalParams.getBlockPageLimit()];
 
-    // 块内A是递增的
-    private long beginA;        // 第一个a值
-    private byte[] dataA;       // a的压缩数据
-    private int sizeA;          // a的压缩数据占用的位
-    private int aPosition;     // a在buffer中的偏移位置
-
-    private long beginT;        // 第一个t值
-    private byte[] dataT;       // t的压缩数据
-    private int sizeT;          // t的压缩数据占用的位
-
-    public BlockInfo() {
-        dataA = new byte[limitA];
-        dataT = new byte[limitT];
-    }
+    private int pageInfoSize;
 
     /**
      * block info 赋值
      * 调用前必须先设置 消息数量
      */
-    public void initBlockInfo(MyBlock block) {
+    public void initBlockInfo(MyBlock block, long position, long positionA) {
 
+        pageInfoSize = 0;
         setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
-        messageAmount = block.getMessageAmount();
         sum = block.getSum();
-
-        // 初始化
-        sizeA = sizeT = 0;
-        boolean isFirst = true;
-        long lastA = 0, lastT = 0;
-        int posA = 0, posT = 0;
+        messageAmount = block.getMessageAmount();
+        Message[] messages = new Message[GlobalParams.getPageMessageCount()];
+        int messageAmount = 0;
 
         for (int i = 0; i < block.getMessageAmount(); ++i) {
             Message message = block.getMessages()[i];
-            if (isFirst) {
-                lastA = beginA = message.getA();
-                lastT = beginT = message.getT();
-                isFirst = false;
-            } else {
-                long nowA = message.getA();
-                long nowT = message.getT();
-                int aDiff = (int) (nowA - lastA);
-                // a
-                posA += HashUtil.encodeInt(aDiff, this, false, posA);
-                // t
-                int tDiff = (int) (nowT - lastT);
-                posT += HashUtil.encodeInt(tDiff, this, true, posT);
-                lastA = nowA;
-                lastT = nowT;
+            messages[messageAmount++] = message;
+            if (messageAmount == GlobalParams.getPageMessageCount()) {
+                addPageInfo(messages, messageAmount, position, positionA);
+                messageAmount = 0;
             }
+        }
+
+        if (messageAmount > 0) {
+            addPageInfo(messages, messageAmount, position, positionA);
+        }
+    }
+
+    private void addPageInfo(
+            Message[] messages,
+            int messageAmount,
+            long position,          // 块偏移起始
+            long positionA
+
+    ) {
+
+        PageInfo pageInfo = new PageInfo();
+
+        pageInfo.addMessages(
+                messages,
+                messageAmount,
+                position + GlobalParams.getBodySize() * messageAmount * pageInfoSize,
+                positionA + 8 * messageAmount * pageInfoSize
+        );
+//        if (pageInfo.getMessageAmount() == 0) {
+//            System.out.println("fuck~~");
+//        }
+        rTree.Insert(
+                new Rect(
+                        pageInfo.getMinT(),
+                        pageInfo.getMaxT(),
+                        pageInfo.getMinA(),
+                        pageInfo.getMaxA()
+                ),
+                pageInfo.getSum(),
+                pageInfo.getMessageAmount(),
+                pageInfoSize
+        );
+
+        pageInfos[pageInfoSize++] = pageInfo;
+    }
+
+    public List<Message> find2(long minT, long maxT, long minA, long maxA) {
+        List<Message> res = new ArrayList<>();
+        for (int i = 0; i < pageInfoSize; ++i) {
+            PageInfo info = pageInfos[i];
+            long[] tList = info.readPageT();
+            long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
+            byte[][] bodyList = HelpUtil.readBody(info.getPosition(), info.getMessageAmount());
+            for (int j = 0; j < info.getMessageAmount(); ++j) {
+//                System.out.println("f2:" + tList[j] + "," + aList[j]);
+                if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
+                    Message message = new Message(aList[j], tList[j], bodyList[j]);
+                    res.add(message);
+                }
+            }
+        }
+        return res;
+    }
+
+    public void find3(long minT, long maxT, long minA, long maxA, MyResult myResult) {
+
+        long res = 0;
+        long cnt = 0;
+
+        long s1 = System.nanoTime();
+        AverageResult result = rTree.SearchAverage(new Rect(minT, maxT, minA, maxA));
+        res += result.getSum();
+        cnt += result.getCnt();
+        long s2 = System.nanoTime();
+
+        for (Entry entry : result.getResult()) {
+            PageInfo info = pageInfos[entry.getIdx()];
+            long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
+            if (minT <= info.getMinT() && info.getMaxT() <= maxT) {
+                for (int i = 0; i < info.getMessageAmount(); ++i) {
+                    if (minA <= aList[i] && aList[i] <= maxA) {
+                        res += aList[i];
+                        cnt++;
+                    }
+                }
+            } else {
+                long[] tList = info.readPageT();
+                for (int i = 0; i < info.getMessageAmount(); ++i) {
+                    if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
+                        res += aList[i];
+                        cnt++;
+                    }
+                }
+            }
+        }
+        myResult.setSum(res);
+        myResult.setCnt(cnt);
+        long s3 = System.nanoTime();
+        if (res == 0) {
+            System.out.println(
+                    "内层RTree搜索结点个数:" + result.getCheckNode()
+                            + " 消息总和:" + res
+                            + " 消息个数:" + cnt
+                            + " 查询包含块的个数:" + result.getCnt()
+                            + " 相交块数:" + result.getResult().size()
+                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT - minT) + "," + (maxA - minA) + ")"
+                            + " r树查询时间：" + (s2 - s1)
+                            + " 求相交块平均值时间: " + (s3 - s2)
+            );
+            System.out.println("query:" + minT + "," + maxT + "," + minA + "," + maxA);
+            for (Entry entry : result.getResult()) {
+                PageInfo info = pageInfos[entry.getIdx()];
+                System.out.println("page:" + info.getMinT() + "," + info.getMaxT() + "," + info.getMinA() + "," + info.getMaxA());
+            }
+
         }
     }
 
     /**
      * 获取所有Message a的值
      */
-    public long[] readBlockA() {
-        long[] res = new long[messageAmount];
-        long pre = beginA;
-        res[0] = pre;
-        MyCursor cursor = new MyCursor();
-        cursor.setPos(aPosition);
-        for (int i = 1; i < messageAmount; ++i) {
-            try {
-                long aDiff = HashUtil.readInt(this, false, cursor);
-                pre += aDiff;
-                res[i] = pre;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ArrayIndexOutOfBoundsException e) {
-                System.out.println("当前i : " + i + "," + "sizeA:" + sizeA + " limitA:" + limitA);
-                e.printStackTrace();
-            }
-        }
-        return res;
-    }
+//    public long[] readBlockA() {
+//        long[] res = new long[messageAmount];
+//        long pre = beginA;
+//        res[0] = pre;
+//        MyCursor cursor = new MyCursor();
+//        cursor.setPos(aPosition);
+//        for (int i = 1; i < messageAmount; ++i) {
+//            try {
+//                long aDiff = HashUtil.readInt(this, false, cursor);
+//                pre += aDiff;
+//                res[i] = pre;
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } catch (ArrayIndexOutOfBoundsException e) {
+//                System.out.println("当前i : " + i + "," + "sizeA:" + sizeA + " limitA:" + limitA);
+//                e.printStackTrace();
+//            }
+//        }
+//        return res;
+//    }
 
     /**
      * 获取所有Message t的值
      */
-    public long[] readBlockT() {
-        long[] res = new long[messageAmount];
-        long pre = beginT;
-        res[0] = pre;
-        MyCursor cursor = new MyCursor();
-        for (int i = 1; i < messageAmount; ++i) {
-            try {
-                int tDiff = HashUtil.readInt(this, true, cursor);
-                pre += tDiff;
-                res[i] = pre;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ArrayIndexOutOfBoundsException e) {
-                System.out.println("当前i : " + i + "," + "sizeT:" + sizeT + " limitT:" + limitT);
-                e.printStackTrace();
-            }
-        }
-        return res;
-    }
-
+//    public long[] readPageT() {
+//        long[] res = new long[messageAmount];
+//        long pre = beginT;
+//        res[0] = pre;
+//        MyCursor cursor = new MyCursor();
+//        for (int i = 1; i < messageAmount; ++i) {
+//            try {
+//                int tDiff = HashUtil.readInt(this, true, cursor);
+//                pre += tDiff;
+//                res[i] = pre;
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } catch (ArrayIndexOutOfBoundsException e) {
+//                System.out.println("当前i : " + i + "," + "sizeT:" + sizeT + " limitT:" + limitT);
+//                e.printStackTrace();
+//            }
+//        }
+//        return res;
+//    }
     public long getSum() {
         return sum;
-    }
-
-    public long getPosition() {
-        return position;
-    }
-
-    public void setPosition(long position) {
-        this.position = position;
     }
 
     private void setSquare(long minT, long maxT, long minA, long maxA) {
@@ -176,7 +253,6 @@ public class BlockInfo {
                         ",aL:" + minA +
                         ",aR:" + maxA +
                         ",sum:" + sum +
-                        ",pos:" + position +
                         ",aDiff: " + (maxA - minA) +
                         ",tDiff: " + (maxT - minT) +
                         ",area: " + ((maxA - minA) * (maxT - minT))
@@ -190,10 +266,42 @@ public class BlockInfo {
                         ",tL:" + minT +
                         ",tR:" + maxT +
                         ",sum:" + sum +
-                        ",pos:" + position +
                         ",aDiff: " + (maxA - minA) +
                         ",tDiff: " + (maxT - minT)
         );
+    }
+
+
+//    public int getLimitT() {
+//        return limitT;
+//    }
+//
+//    public void setLimitT(int limit) {
+//        this.limitT = limit;
+//    }
+//
+//    public int getLimitA() {
+//        return limitA;
+//    }
+//
+//    public void setLimitA(int limit) {
+//        this.limitA = limit;
+//    }
+
+    public int getIdx() {
+        return idx;
+    }
+
+    public void setIdx(int idx) {
+        this.idx = idx;
+    }
+
+    public RTree getrTree() {
+        return rTree;
+    }
+
+    public void setrTree(RTree rTree) {
+        this.rTree = rTree;
     }
 
     public int getMessageAmount() {
@@ -204,67 +312,11 @@ public class BlockInfo {
         this.messageAmount = messageAmount;
     }
 
-    public byte[] getDataA() {
-        return dataA;
+    public PageInfo[] getPageInfos() {
+        return this.pageInfos;
     }
 
-    public void setDataA(byte[] dataA) {
-        this.dataA = dataA;
-    }
-
-    public byte[] getDataT() {
-        return dataT;
-    }
-
-    public void setDataT(byte[] dataT) {
-        this.dataT = dataT;
-    }
-
-    public int getSizeA() {
-        return sizeA;
-    }
-
-    public void setSizeA(int sizeA) {
-        this.sizeA = sizeA;
-    }
-
-    public int getSizeT() {
-        return sizeT;
-    }
-
-    public void setSizeT(int sizeT) {
-        this.sizeT = sizeT;
-    }
-
-    public int getLimitT() {
-        return limitT;
-    }
-
-    public void setLimitT(int limit) {
-        this.limitT = limit;
-    }
-
-    public int getLimitA() {
-        return limitA;
-    }
-
-    public void setLimitA(int limit) {
-        this.limitA = limit;
-    }
-
-    public int getIdx() {
-        return idx;
-    }
-
-    public void setIdx(int idx) {
-        this.idx = idx;
-    }
-
-    public int getaPosition() {
-        return aPosition;
-    }
-
-    public void setaPosition(int aPosition) {
-        this.aPosition = aPosition;
+    public int getPageInfoSize() {
+        return pageInfoSize;
     }
 }

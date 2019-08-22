@@ -3,11 +3,12 @@ package io.solution.map;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
+import io.solution.data.MyResult;
+import io.solution.data.PageInfo;
 import io.solution.map.rtree.AverageResult;
 import io.solution.map.rtree.Entry;
 import io.solution.map.rtree.RTree;
 import io.solution.map.rtree.Rect;
-import io.solution.utils.HelpUtil;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -31,9 +32,13 @@ public class MyHash {
 
     private RTree rTree = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
 
-    private ByteBuffer aBuffer = ByteBuffer.allocateDirect(GlobalParams.DIRECT_MEMORY_SIZE);
+    private ByteBuffer tBuffer = ByteBuffer.allocateDirect(GlobalParams.DIRECT_MEMORY_SIZE);
 
-    private int aBufferSize = 0;
+    private int tBufferSize = 0;
+
+    public int gettBufferSize() {
+        return tBufferSize;
+    }
 
     public int getSize() {
         return size;
@@ -82,14 +87,18 @@ public class MyHash {
         rTree.Insert(rect, info.getSum(), info.getMessageAmount(), size);
 //        System.out.println("rtree节点数:" + rTree.getSize());
 
-        // a放到buffer中
         info.setIdx(size);
-        info.setaPosition(aBufferSize);
-        for (int i = 0; i < info.getSizeA(); ++i) {
-            aBuffer.put(aBufferSize + i, info.getDataA()[i]);
+
+        // t放到buffer中
+        for (int i = 0; i < info.getPageInfoSize(); ++i) {
+            PageInfo pageInfo = info.getPageInfos()[i];
+            pageInfo.settPosition(tBufferSize);
+            for (int j = 0; j < pageInfo.getSizeT(); ++j) {
+                tBuffer.put(tBufferSize + j, pageInfo.getDataT()[j]);
+            }
+            tBufferSize += pageInfo.getSizeT();
+            pageInfo.setDataT(null);
         }
-        aBufferSize += info.getSizeA();
-        info.setDataA(null);
 
 //        info.show();
 //        long diffA = info.getMaxA() - info.getMinA();
@@ -119,26 +128,12 @@ public class MyHash {
     }
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
-
         ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
         List<Message> res = new ArrayList<>();
         for (Entry node : nodes) {
             int idx = node.getIdx();
             BlockInfo info = all[idx];
-            byte[][] bodys = HelpUtil.readBody(info.getPosition(), info.getMessageAmount());
-            long[] aList = info.readBlockA();
-            long[] tList = info.readBlockT();
-            for (int j = 0; j < info.getMessageAmount() && tList[j] <= maxT; ++j) {
-                if (
-                        HelpUtil.inSide(
-                                tList[j], aList[j],
-                                minT, maxT, minA, maxA
-                        )
-                ) {
-                    Message message = new Message(aList[j], tList[j], bodys[j]);
-                    res.add(message);
-                }
-            }
+            res.addAll(info.find2(minT, maxT, minA, maxA));
         }
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
@@ -156,53 +151,44 @@ public class MyHash {
 //        System.out.println("查询区间: " + minT + " " + maxA + " " + minA + " " + maxA);
         long res = 0;
         long messageAmount = 0;
-//        long s1 = System.nanoTime();
+        long s1 = System.nanoTime();
         AverageResult result = rTree.SearchAverage(new Rect(minT, maxT, minA, maxA));
-//        long s2 = System.nanoTime();
-//        ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
+        long s2 = System.nanoTime();
+
+        //        ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
         res += result.getSum();
         messageAmount += result.getCnt();
 //        System.out.println(res + "  cnt = "+ messageAmount);
-//        long s3 = System.nanoTime();
+        long s3 = System.nanoTime();
+        MyResult myResult = new MyResult();
         for (Entry entry : result.getResult()) {
             BlockInfo info = all[entry.getIdx()];
-            if (minT <= info.getMinT() && info.getMaxT() <= maxT) {
-                long[] aList = info.readBlockA();
-                for (int j = 0; j < info.getMessageAmount(); ++j) {
-                    if (minA <= aList[j] && aList[j] <= maxA) {
-                        res += aList[j];
-                        messageAmount++;
-                    }
-                }
-            } else {
-                long[] tList = info.readBlockT();
-                long[] aList = info.readBlockA();
-                for (int j = 0; j < info.getMessageAmount() && tList[j] <= maxT; ++j) {
-                    if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
-                        res += aList[j];
-                        messageAmount++;
-                    }
-                }
-            }
+            info.find3(minT, maxT, minA, maxA, myResult);
+            res += myResult.getSum();
+            messageAmount += myResult.getCnt();
         }
-//        long s4 = System.nanoTime();
-//        if (res % 100 == 0) {
-//
-//            System.out.println(
-//                    "RTree搜索结点个数:" + result.getCheckNode()
-//                            + " 消息个数:" + messageAmount
-//                            + " 查询包含块的消息数:" + result.getCnt()
-//                            + " 相交块数:" + result.getResult().size()
-//                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT - minT) + "," + (maxA - minA) + ")"
-//                            + " r树查询时间：" + (s2 - s1)
-//                            + " 求相交块平均值时间: " + (s4 - s3)
-//            );
-//        }
+        long s4 = System.nanoTime();
+        if (res % 100 == 0) {
+
+            System.out.println(
+                    "外层RTree搜索结点个数:" + result.getCheckNode()
+                            + " 消息个数:" + messageAmount
+                            + " 查询包含块的个数:" + result.getCnt()
+                            + " 相交块数:" + result.getResult().size()
+                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT - minT) + "," + (maxA - minA) + ")"
+                            + " r树查询时间：" + (s2 - s1)
+                            + " 求相交块平均值时间: " + (s4 - s3)
+            );
+        }
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
 
-    public ByteBuffer getaBuffer() {
-        return aBuffer;
+    public BlockInfo[] getAll() {
+        return all;
+    }
+
+    public ByteBuffer gettBuffer() {
+        return tBuffer;
     }
 
 //    public void showAllBlockInfo() {

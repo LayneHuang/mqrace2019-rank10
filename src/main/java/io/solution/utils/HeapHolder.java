@@ -2,6 +2,7 @@ package io.solution.utils;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
+import io.solution.data.BlockInfo;
 import io.solution.data.MyBlock;
 import io.solution.map.MyHash;
 
@@ -108,8 +109,24 @@ public class HeapHolder {
                 indexMap = null;
                 System.gc();
 //                MyHash.getIns().showAllBlockInfo();
-                System.out.println("BlockInfo的Size:" + MyHash.getIns().getSize());
+                System.out.println(
+                        "BlockInfo的Size:" + MyHash.getIns().getSize()
+                                + ", aBufferSize:" + MyHash.getIns().gettBufferSize()
+                );
                 System.out.println("jvm GC~~ rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
+
+                for (int i = 0; i < MyHash.getIns().getSize(); ++i) {
+                    BlockInfo blockInfo = MyHash.getIns().getAll()[i];
+                    System.out.println(
+                            "i:" + i
+                                    + " msg amount:" + blockInfo.getMessageAmount()
+                                    + " minT:" + blockInfo.getMinT()
+                                    + " maxT:" + blockInfo.getMaxT()
+                                    + " minA:" + blockInfo.getMinA()
+                                    + " maxA:" + blockInfo.getMaxA()
+                    );
+                }
+
                 GlobalParams.setStepOneFinished();
             }
         }

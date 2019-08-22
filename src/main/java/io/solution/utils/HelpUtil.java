@@ -50,7 +50,7 @@ public class HelpUtil {
 
         try {
             channel = FileChannel.open(
-                    GlobalParams.getPath(),
+                    GlobalParams.getPath(true),
                     StandardOpenOption.READ
             );
             ByteBuffer buffer = ByteBuffer.allocate(size);
@@ -76,4 +76,39 @@ public class HelpUtil {
         }
         return res;
     }
+
+    public static long[] readA(long position, int messageCount) {
+        int size = messageCount * GlobalParams.getBodySize();
+        FileChannel channel = null;
+        long[] res = new long[messageCount];
+
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getPath(false),
+                    StandardOpenOption.READ
+            );
+            ByteBuffer buffer = ByteBuffer.allocate(size);
+            channel.read(buffer, position);
+            buffer.flip();
+
+            // trans
+            for (int i = 0; i < messageCount; ++i) {
+                res[i] = buffer.getLong();
+            }
+
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
+
 }

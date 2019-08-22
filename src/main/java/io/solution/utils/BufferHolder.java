@@ -1,9 +1,12 @@
 package io.solution.utils;
 
+import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
 import io.solution.data.MyBlock;
+import io.solution.data.PageInfo;
 import io.solution.map.MyHash;
+import jdk.nashorn.internal.ir.Block;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,7 +14,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +33,8 @@ class BufferHolder {
 
     private LinkedBlockingQueue<MyBlock> blockQueue;
 
-    private FileChannel channel;
+    private FileChannel channelA;
+    private FileChannel channelBody;
 
 //    private ExecutorService executor = Executors.newFixedThreadPool(3);
 
@@ -40,12 +43,20 @@ class BufferHolder {
 
     private BufferHolder() {
         try {
-            Path path = GlobalParams.getPath();
-            channel = FileChannel.open(
+            Path path = GlobalParams.getPath(false);
+            channelA = FileChannel.open(
                     path,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.APPEND
             );
+
+            Path pathBody = GlobalParams.getPath(true);
+            channelBody = FileChannel.open(
+                    pathBody,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -89,7 +100,7 @@ class BufferHolder {
                 if (blocks.isEmpty() || isFinish) {
                     // 结束
                     isFinish = true;
-//                    System.out.println("BufferHolder write file 结束~");
+                    System.out.println("BufferHolder write file 结束~");
                     break;
                 } else {
                     solve();
@@ -99,9 +110,13 @@ class BufferHolder {
             }
         }
         try {
-            if (channel != null) {
-                channel.close();
-                channel = null;
+            if (channelA != null) {
+                channelA.close();
+                channelA = null;
+            }
+            if (channelBody != null) {
+                channelBody.close();
+                channelBody = null;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -111,7 +126,7 @@ class BufferHolder {
     private ReentrantLock writeFileLock = new ReentrantLock();
 
     void flush() {
-//        System.out.println("BufferHolder flush");
+        System.out.println("BufferHolder flush");
         while (!blockQueue.isEmpty()) {
             MyBlock block = blockQueue.poll();
             if (block != null) {
@@ -140,34 +155,47 @@ class BufferHolder {
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(
-                GlobalParams.BLOCK_SIZE * blocks.size()
+                GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * blocks.size()
         );
+
+        ByteBuffer aBuffer = ByteBuffer.allocate(
+                8 * GlobalParams.getBlockMessageLimit() * blocks.size()
+        );
+
 //        outCount += blocks.size();
 //        System.out.println(inCount + ", " + outCount);
 //        System.out.println(blocks.size());
+
         try {
-            long pos = channel.position();
+            long posA = channelA.position();
+            long posBody = channelBody.position();
             // 第几块
             for (MyBlock block : blocks) {
-                long nPos = pos;
-//                executor.execute(() -> {
+                long nPosBody = posBody;
+                long nPosA = posA;
                 BlockInfo blockInfo = new BlockInfo();
-                blockInfo.setPosition(nPos);
-                blockInfo.initBlockInfo(block);
+                blockInfo.initBlockInfo(block, nPosBody, nPosA);
                 MyHash.getIns().insert(blockInfo);
-//                });
-
+                // checkError(block, blockInfo);
                 for (int i = 0; i < block.getMessageAmount(); ++i) {
+                    aBuffer.putLong(block.getMessages()[i].getA());
                     buffer.put(block.getMessages()[i].getBody());
                 }
-                pos += GlobalParams.getBodySize() * block.getMessageAmount();
+                posBody += GlobalParams.getBodySize() * block.getMessageAmount();
+                posA += 8 * block.getMessageAmount();
             }
 
             // 写文件
             buffer.flip();
-            channel.write(buffer);
+            channelBody.write(buffer);
             buffer.clear();
+
+            aBuffer.flip();
+            channelA.write(aBuffer);
+            aBuffer.clear();
+
             blocks.clear();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
