@@ -69,8 +69,8 @@ public class MyHash {
         // RTree 插入
         Rect rect = new Rect(info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA());
         rTree.Insert(rect, info.getSum(), info.getMessageAmount(), size);
-        info.setIdx(size);
-
+//        info.setIdx(size);
+        System.out.println("now block size:" + size );
         // t放到buffer中
 //        for (int i = 0; i < info.getPageInfoSize(); ++i) {
 //            PageInfo pageInfo = info.getPageInfos()[i];
