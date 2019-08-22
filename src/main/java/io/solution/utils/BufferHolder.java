@@ -31,31 +31,43 @@ class BufferHolder {
     private LinkedBlockingQueue<MyBlock> blockQueue;
 
     private FileChannel channelA;
+    private FileChannel channelT;
     private FileChannel channelBody;
 
-    ByteBuffer buffer = ByteBuffer.allocate(
-            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
+    ByteBuffer buffer = ByteBuffer.allocateDirect(
+            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT * 2
     );
 
-    ByteBuffer aBuffer = ByteBuffer.allocate(
-            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
+    ByteBuffer aBuffer = ByteBuffer.allocateDirect(
+            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT * 2
     );
 
-//    private ExecutorService executor = Executors.newFixedThreadPool(3);
+    ByteBuffer tBuffer = ByteBuffer.allocateDirect(
+            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT * 2
+    );
 
     // 线程安全
     private List<MyBlock> blocks = new ArrayList<>();
 
     private BufferHolder() {
         try {
-            Path path = GlobalParams.getPath(false);
-            channelA = FileChannel.open(
-                    path,
+
+            Path pathT = GlobalParams.getPath(0);
+            channelT = FileChannel.open(
+                    pathT,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.APPEND
             );
 
-            Path pathBody = GlobalParams.getPath(true);
+
+            Path pathA = GlobalParams.getPath(1);
+            channelA = FileChannel.open(
+                    pathA,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+
+            Path pathBody = GlobalParams.getPath(2);
             channelBody = FileChannel.open(
                     pathBody,
                     StandardOpenOption.CREATE,
@@ -169,18 +181,21 @@ class BufferHolder {
         try {
             long posBody = channelBody.position();
             long posA = channelA.position();
+            long posT = channelT.position();
             // 第几块
             for (MyBlock block : blocks) {
                 BlockInfo blockInfo = new BlockInfo();
-                blockInfo.initBlockInfo(block, posBody, posA);
+                blockInfo.initBlockInfo(block, posT, posA, posBody);
                 MyHash.getIns().insert(blockInfo);
                 // checkError(block, blockInfo);
                 for (int i = 0; i < block.getMessageAmount(); ++i) {
                     aBuffer.putLong(block.getMessages()[i].getA());
+                    tBuffer.putLong(block.getMessages()[i].getT());
                     buffer.put(block.getMessages()[i].getBody());
                 }
-                posBody += GlobalParams.getBodySize() * block.getMessageAmount();
+                posT += 8 * block.getMessageAmount();
                 posA += 8 * block.getMessageAmount();
+                posBody += GlobalParams.getBodySize() * block.getMessageAmount();
             }
 
             // 写文件
@@ -191,6 +206,10 @@ class BufferHolder {
             aBuffer.flip();
             channelA.write(aBuffer);
             aBuffer.clear();
+
+            tBuffer.flip();
+            channelT.write(tBuffer);
+            tBuffer.clear();
 
             blocks.clear();
 

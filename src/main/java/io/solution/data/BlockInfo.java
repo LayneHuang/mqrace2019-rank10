@@ -40,7 +40,7 @@ public class BlockInfo {
      * block info 赋值
      * 调用前必须先设置 消息数量
      */
-    public void initBlockInfo(MyBlock block, long position, long positionA) {
+    public void initBlockInfo(MyBlock block, long positionT, long positionA, long positionB) {
 
         pageInfoSize = 0;
         setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
@@ -51,15 +51,16 @@ public class BlockInfo {
         for (int i = 0; i < block.getMessageAmount(); ++i) {
             messages[tempSize++] = block.getMessages()[i];
             if (tempSize == GlobalParams.getPageMessageCount()) {
-                addPageInfo(messages, tempSize, position, positionA);
-                position += GlobalParams.getBodySize() * tempSize;
+                addPageInfo(messages, tempSize, positionT, positionA, positionB);
+                positionT += 8 * tempSize;
                 positionA += 8 * tempSize;
+                positionB += GlobalParams.getBodySize() * tempSize;
                 tempSize = 0;
             }
         }
 
         if (tempSize > 0) {
-            addPageInfo(messages, tempSize, position, positionA);
+            addPageInfo(messages, tempSize, positionT, positionA, positionB);
         }
 
     }
@@ -67,13 +68,12 @@ public class BlockInfo {
     private void addPageInfo(
             Message[] messages,
             int messageAmount,
-            long position,          // 块偏移起始
-            long positionA
-
+            long positionT,            // 块偏移起始
+            long positionA,
+            long positionB
     ) {
-
         PageInfo pageInfo = new PageInfo();
-        pageInfo.addMessages(messages, messageAmount, position, positionA);
+        pageInfo.addMessages(messages, messageAmount, positionT, positionA, positionB);
         rTree.Insert(
                 new Rect(
                         pageInfo.getMinT(),
@@ -93,9 +93,9 @@ public class BlockInfo {
         List<Message> res = new ArrayList<>();
         for (int i = 0; i < pageInfoSize; ++i) {
             PageInfo info = pageInfos[i];
-            long[] tList = info.readPageT();
+            long[] tList = HelpUtil.readT(info.getPositionT(), info.getMessageAmount());
             long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
-            byte[][] bodyList = HelpUtil.readBody(info.getPosition(), info.getMessageAmount());
+            byte[][] bodyList = HelpUtil.readBody(info.getPositionB(), info.getMessageAmount());
             for (int j = 0; j < info.getMessageAmount() && aList[j] <= maxA; ++j) {
 //                System.out.println("f2:" + tList[j] + "," + aList[j]);
                 if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
@@ -129,7 +129,7 @@ public class BlockInfo {
                     }
                 }
             } else {
-                long[] tList = info.readPageT();
+                long[] tList = HelpUtil.readT(info.getPositionT(), info.getMessageAmount());
                 for (int i = 0; i < info.getMessageAmount() && aList[i] <= maxA; ++i) {
                     if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
                         res += aList[i];

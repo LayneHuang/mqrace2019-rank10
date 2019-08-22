@@ -32,13 +32,13 @@ public class MyHash {
 
     private RTree rTree = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
 
-    private ByteBuffer tBuffer = ByteBuffer.allocateDirect(GlobalParams.DIRECT_MEMORY_SIZE);
+//    private ByteBuffer tBuffer = ByteBuffer.allocateDirect(GlobalParams.DIRECT_MEMORY_SIZE);
 
-    private int tBufferSize = 0;
+//    private int tBufferSize = 0;
 
-    public int gettBufferSize() {
-        return tBufferSize;
-    }
+//    public int gettBufferSize() {
+//        return tBufferSize;
+//    }
 
     public int getSize() {
         return size;
@@ -72,15 +72,15 @@ public class MyHash {
         info.setIdx(size);
 
         // t放到buffer中
-        for (int i = 0; i < info.getPageInfoSize(); ++i) {
-            PageInfo pageInfo = info.getPageInfos()[i];
-            pageInfo.settPosition(tBufferSize);
-            for (int j = 0; j < pageInfo.getSizeT(); ++j) {
-                tBuffer.put(tBufferSize + j, pageInfo.getDataT()[j]);
-            }
-            tBufferSize += pageInfo.getSizeT();
-            pageInfo.setDataT(null);
-        }
+//        for (int i = 0; i < info.getPageInfoSize(); ++i) {
+//            PageInfo pageInfo = info.getPageInfos()[i];
+//            pageInfo.settPosition(tBufferSize);
+//            for (int j = 0; j < pageInfo.getSizeT(); ++j) {
+//                tBuffer.put(tBufferSize + j, pageInfo.getDataT()[j]);
+//            }
+//            tBufferSize += pageInfo.getSizeT();
+//            pageInfo.setDataT(null);
+//        }
 
         // 放到列表中
         all[size] = info;
@@ -150,10 +150,10 @@ public class MyHash {
     public BlockInfo[] getAll() {
         return all;
     }
-
-    public ByteBuffer gettBuffer() {
-        return tBuffer;
-    }
+//
+//    public ByteBuffer gettBuffer() {
+//        return tBuffer;
+//    }
 
 //    public void showAllBlockInfo() {
 //        System.out.println(
