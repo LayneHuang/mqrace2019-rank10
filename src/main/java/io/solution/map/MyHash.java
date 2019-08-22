@@ -65,7 +65,6 @@ public class MyHash {
 //    private long tTotalDiff = 0;
 //    private double areaSum = 0;
     private long totalMsgAmount = 0 ;
-    private long costTime = 0;
     public synchronized void insert(BlockInfo info) {
         // RTree 插入
         Rect rect = new Rect(info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA());
@@ -73,8 +72,7 @@ public class MyHash {
 //        info.setIdx(size);
         totalMsgAmount += info.getMessageAmount();
         long s = System.currentTimeMillis();
-        System.out.println("now block size:" + size + ", inserted msg amount:" + totalMsgAmount + ", costTime:" + (s-costTime) +"ms");
-        costTime=s;
+        System.out.println("now block size:" + size + ", inserted msg amount:" + totalMsgAmount);
         // t放到buffer中
 //        for (int i = 0; i < info.getPageInfoSize(); ++i) {
 //            PageInfo pageInfo = info.getPageInfos()[i];

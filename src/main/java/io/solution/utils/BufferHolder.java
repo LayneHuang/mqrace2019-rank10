@@ -195,7 +195,10 @@ class BufferHolder {
             // 第几块
             for (MyBlock block : blocks) {
                 BlockInfo blockInfo = new BlockInfo();
+                long s = System.currentTimeMillis();
                 blockInfo.initBlockInfo(block, posT, posA, posBody);
+                long e = System.currentTimeMillis();
+                System.out.println("build block rtree used " + (e-s) +"ms");
                 MyHash.getIns().insert(blockInfo);
                 // checkError(block, blockInfo);
                 for (int i = 0; i < block.getMessageAmount(); ++i) {
