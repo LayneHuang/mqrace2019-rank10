@@ -18,7 +18,7 @@ import java.util.List;
 public class BlockInfo {
 
     // 在列表中的位置
-    private int idx;
+//    private int idx;
 
     private long maxT;
     private long minT;
@@ -288,13 +288,13 @@ public class BlockInfo {
 //        this.limitA = limit;
 //    }
 
-    public int getIdx() {
-        return idx;
-    }
-
-    public void setIdx(int idx) {
-        this.idx = idx;
-    }
+//    public int getIdx() {
+//        return idx;
+//    }
+//
+//    public void setIdx(int idx) {
+//        this.idx = idx;
+//    }
 
     public RTree getrTree() {
         return rTree;
