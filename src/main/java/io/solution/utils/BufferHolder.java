@@ -1,12 +1,9 @@
 package io.solution.utils;
 
-import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
 import io.solution.data.MyBlock;
-import io.solution.data.PageInfo;
 import io.solution.map.MyHash;
-import jdk.nashorn.internal.ir.Block;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -167,14 +164,12 @@ class BufferHolder {
 //        System.out.println(blocks.size());
 
         try {
-            long posA = channelA.position();
             long posBody = channelBody.position();
+            long posA = channelA.position();
             // 第几块
             for (MyBlock block : blocks) {
-                long nPosBody = posBody;
-                long nPosA = posA;
                 BlockInfo blockInfo = new BlockInfo();
-                blockInfo.initBlockInfo(block, nPosBody, nPosA);
+                blockInfo.initBlockInfo(block, posBody, posA);
                 MyHash.getIns().insert(blockInfo);
                 // checkError(block, blockInfo);
                 for (int i = 0; i < block.getMessageAmount(); ++i) {

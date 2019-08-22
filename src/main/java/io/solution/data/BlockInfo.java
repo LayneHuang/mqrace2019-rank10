@@ -46,21 +46,22 @@ public class BlockInfo {
         setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
         sum = block.getSum();
         messageAmount = block.getMessageAmount();
+        int tempSize = 0;
         Message[] messages = new Message[GlobalParams.getPageMessageCount()];
-        int messageAmount = 0;
-
         for (int i = 0; i < block.getMessageAmount(); ++i) {
-            Message message = block.getMessages()[i];
-            messages[messageAmount++] = message;
-            if (messageAmount == GlobalParams.getPageMessageCount()) {
-                addPageInfo(messages, messageAmount, position, positionA);
-                messageAmount = 0;
+            messages[tempSize++] = block.getMessages()[i];
+            if (tempSize == GlobalParams.getPageMessageCount()) {
+                addPageInfo(messages, tempSize, position, positionA);
+                position += GlobalParams.getBodySize() * tempSize;
+                positionA += 8 * tempSize;
+                tempSize = 0;
             }
         }
 
-        if (messageAmount > 0) {
-            addPageInfo(messages, messageAmount, position, positionA);
+        if (tempSize > 0) {
+            addPageInfo(messages, tempSize, position, positionA);
         }
+
     }
 
     private void addPageInfo(
@@ -72,16 +73,7 @@ public class BlockInfo {
     ) {
 
         PageInfo pageInfo = new PageInfo();
-
-        pageInfo.addMessages(
-                messages,
-                messageAmount,
-                position + GlobalParams.getBodySize() * messageAmount * pageInfoSize,
-                positionA + 8 * messageAmount * pageInfoSize
-        );
-//        if (pageInfo.getMessageAmount() == 0) {
-//            System.out.println("fuck~~");
-//        }
+        pageInfo.addMessages(messages, messageAmount, position, positionA);
         rTree.Insert(
                 new Rect(
                         pageInfo.getMinT(),
@@ -104,7 +96,7 @@ public class BlockInfo {
             long[] tList = info.readPageT();
             long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
             byte[][] bodyList = HelpUtil.readBody(info.getPosition(), info.getMessageAmount());
-            for (int j = 0; j < info.getMessageAmount(); ++j) {
+            for (int j = 0; j < info.getMessageAmount() && aList[j] <= maxA; ++j) {
 //                System.out.println("f2:" + tList[j] + "," + aList[j]);
                 if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                     Message message = new Message(aList[j], tList[j], bodyList[j]);
@@ -120,17 +112,17 @@ public class BlockInfo {
         long res = 0;
         long cnt = 0;
 
-        long s1 = System.nanoTime();
+//        long s1 = System.nanoTime();
         AverageResult result = rTree.SearchAverage(new Rect(minT, maxT, minA, maxA));
         res += result.getSum();
         cnt += result.getCnt();
-        long s2 = System.nanoTime();
+//        long s2 = System.nanoTime();
 
         for (Entry entry : result.getResult()) {
             PageInfo info = pageInfos[entry.getIdx()];
             long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
             if (minT <= info.getMinT() && info.getMaxT() <= maxT) {
-                for (int i = 0; i < info.getMessageAmount(); ++i) {
+                for (int i = 0; i < info.getMessageAmount() && aList[i] <= maxA; ++i) {
                     if (minA <= aList[i] && aList[i] <= maxA) {
                         res += aList[i];
                         cnt++;
@@ -138,7 +130,7 @@ public class BlockInfo {
                 }
             } else {
                 long[] tList = info.readPageT();
-                for (int i = 0; i < info.getMessageAmount(); ++i) {
+                for (int i = 0; i < info.getMessageAmount() && aList[i] <= maxA; ++i) {
                     if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
                         res += aList[i];
                         cnt++;
@@ -148,25 +140,33 @@ public class BlockInfo {
         }
         myResult.setSum(res);
         myResult.setCnt(cnt);
-        long s3 = System.nanoTime();
-        if (res == 0) {
-            System.out.println(
-                    "内层RTree搜索结点个数:" + result.getCheckNode()
-                            + " 消息总和:" + res
-                            + " 消息个数:" + cnt
-                            + " 查询包含块的个数:" + result.getCnt()
-                            + " 相交块数:" + result.getResult().size()
-                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT - minT) + "," + (maxA - minA) + ")"
-                            + " r树查询时间：" + (s2 - s1)
-                            + " 求相交块平均值时间: " + (s3 - s2)
-            );
-            System.out.println("query:" + minT + "," + maxT + "," + minA + "," + maxA);
-            for (Entry entry : result.getResult()) {
-                PageInfo info = pageInfos[entry.getIdx()];
-                System.out.println("page:" + info.getMinT() + "," + info.getMaxT() + "," + info.getMinA() + "," + info.getMaxA());
-            }
-
-        }
+//        long s3 = System.nanoTime();
+//        if (res == 0) {
+//            System.out.println(
+//                    "内层RTree搜索结点个数:" + result.getCheckNode()
+//                            + " 消息总和:" + res
+//                            + " 消息个数:" + cnt
+//                            + " 查询包含块的个数:" + result.getCnt()
+//                            + " 相交块数:" + result.getResult().size()
+//                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT - minT) + "," + (maxA - minA) + ")"
+//                            + " r树查询时间：" + (s2 - s1)
+//                            + " 求相交块平均值时间: " + (s3 - s2)
+//            );
+//            System.out.println("query:" + minT + "," + maxT + "," + minA + "," + maxA);
+//            for (Entry entry : result.getResult()) {
+//                PageInfo info = pageInfos[entry.getIdx()];
+//                System.out.println("page:" + info.getMinT() + "," + info.getMaxT() + "," + info.getMinA() + "," + info.getMaxA());
+//                long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
+//                long nowAMax = Long.MIN_VALUE;
+//                long nowAMin = Long.MAX_VALUE;
+//                for (int i = 0; i < info.getMessageAmount(); ++i) {
+//                    nowAMax = Math.max(nowAMax, aList[i]);
+//                    nowAMin = Math.min(nowAMin, aList[i]);
+//                }
+//                System.out.println("now: " + nowAMin + "," + nowAMax);
+//            }
+//
+//        }
     }
 
     /**

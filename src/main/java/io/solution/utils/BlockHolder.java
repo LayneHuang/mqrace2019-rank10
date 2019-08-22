@@ -44,7 +44,7 @@ public class BlockHolder {
             if (!blocks.isEmpty()) {
                 // 归并
                 // System.out.println("归并块个数:" + blocks.size());
-//                blocks = SortUtil.myMergeSort(blocks);
+                blocks = SortUtil.myMergeSort(blocks);
                 BufferHolder.getIns().commit(blocks);
             }
         }
@@ -79,7 +79,7 @@ public class BlockHolder {
         if (!blocks.isEmpty()) {
             // 归并
 //            System.out.println("归并块个数:" + blocks.size());
-//            blocks = SortUtil.myMergeSort(blocks);
+            blocks = SortUtil.myMergeSort(blocks);
             BufferHolder.getIns().commit(blocks);
         }
         isFinish = true;

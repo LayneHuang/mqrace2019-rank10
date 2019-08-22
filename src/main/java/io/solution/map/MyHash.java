@@ -66,27 +66,9 @@ public class MyHash {
 //    private double areaSum = 0;
 
     public synchronized void insert(BlockInfo info) {
-//        System.out.println("插入块的信息:");
-//        maxADiff = Math.max(info.getMaxA() - info.getMinA(), maxADiff);
-//        maxTDiff = Math.max(info.getMaxT() - info.getMinT(), maxTDiff);
-//        System.out.println("最大差值: " + maxADiff + "(a) " + maxTDiff + "(t)");
-//        info.show();
-
-//        useByteSum += (info.getSizeA() + info.getSizeT());
-//        System.out.println(
-//                "插入" + (size + 1) + "块 " +
-//                        "使用内存:" + String.format("%.6f", useByteSum / 1024 / 1024 / 1024) + "(GB) "
-//                        + "message数量:" + info.getMessageAmount() + " "
-//                        + " size:" + info.getSizeA() + "," + info.getSizeT() + " (byte) "
-//                        + " limit:" + info.getLimitA() + "," + info.getLimitT() + " (byte) "
-//                        + " mem:" + Runtime.getRuntime().freeMemory() + " (byte) "
-//        );
-
         // RTree 插入
         Rect rect = new Rect(info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA());
         rTree.Insert(rect, info.getSum(), info.getMessageAmount(), size);
-//        System.out.println("rtree节点数:" + rTree.getSize());
-
         info.setIdx(size);
 
         // t放到buffer中
@@ -99,24 +81,6 @@ public class MyHash {
             tBufferSize += pageInfo.getSizeT();
             pageInfo.setDataT(null);
         }
-
-//        info.show();
-//        long diffA = info.getMaxA() - info.getMinA();
-//        long diffT = info.getMaxT() - info.getMinT();
-//        aTotalDiff += diffA;
-//        tTotalDiff += diffT;
-//        areaSum += diffA * diffT;
-//        maxDiffA = Math.max(maxDiffA, diffA);
-//        maxDiffT = Math.max(maxDiffT, diffT);
-//        minDiffA = Math.min(minDiffA, diffA);
-//        minDiffT = Math.min(minDiffT, diffT);
-//
-//        maxArea = Math.max(maxArea, diffA * diffT);
-//
-//        maxA = Math.max(maxA, info.getMaxA());
-//        minA = Math.min(minA, info.getMinA());
-//        maxT = Math.max(maxT, info.getMaxT());
-//        minT = Math.min(minT, info.getMinT());
 
         // 放到列表中
         all[size] = info;
@@ -151,7 +115,7 @@ public class MyHash {
 //        System.out.println("查询区间: " + minT + " " + maxA + " " + minA + " " + maxA);
         long res = 0;
         long messageAmount = 0;
-        long s1 = System.nanoTime();
+//        long s1 = System.nanoTime();
         AverageResult result = rTree.SearchAverage(new Rect(minT, maxT, minA, maxA));
         long s2 = System.nanoTime();
 
@@ -159,7 +123,7 @@ public class MyHash {
         res += result.getSum();
         messageAmount += result.getCnt();
 //        System.out.println(res + "  cnt = "+ messageAmount);
-        long s3 = System.nanoTime();
+//        long s3 = System.nanoTime();
         MyResult myResult = new MyResult();
         for (Entry entry : result.getResult()) {
             BlockInfo info = all[entry.getIdx()];
@@ -167,19 +131,19 @@ public class MyHash {
             res += myResult.getSum();
             messageAmount += myResult.getCnt();
         }
-        long s4 = System.nanoTime();
-        if (res % 100 == 0) {
-
-            System.out.println(
-                    "外层RTree搜索结点个数:" + result.getCheckNode()
-                            + " 消息个数:" + messageAmount
-                            + " 查询包含块的个数:" + result.getCnt()
-                            + " 相交块数:" + result.getResult().size()
-                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT - minT) + "," + (maxA - minA) + ")"
-                            + " r树查询时间：" + (s2 - s1)
-                            + " 求相交块平均值时间: " + (s4 - s3)
-            );
-        }
+//        long s4 = System.nanoTime();
+//        if (res % 100 == 0) {
+//
+//            System.out.println(
+//                    "外层RTree搜索结点个数:" + result.getCheckNode()
+//                            + " 消息个数:" + messageAmount
+//                            + " 查询包含块的个数:" + result.getCnt()
+//                            + " 相交块数:" + result.getResult().size()
+//                            + " 查询区间跨段（tDiff,aDiff): (" + (maxT - minT) + "," + (maxA - minA) + ")"
+//                            + " r树查询时间：" + (s2 - s1)
+//                            + " 求相交块平均值时间: " + (s4 - s3)
+//            );
+//        }
         return messageAmount == 0 ? 0 : Math.floorDiv(res, messageAmount);
     }
 
