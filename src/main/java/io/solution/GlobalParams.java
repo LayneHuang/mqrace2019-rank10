@@ -13,7 +13,7 @@ public class GlobalParams {
 
 //    public static final int DIRECT_MEMORY_SIZE = (IS_DEBUG ? 1 : 2) * 1050 * 1000 * 1000;
 
-    private static final int PAGE_SIZE = 1024 * 8;
+    private static final int PAGE_SIZE = 1024 * 4;
 
     public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1024 : 1024 * 2);
 
@@ -89,6 +89,6 @@ public class GlobalParams {
         return (int) (110L * 1024 * 1024 * 1024 / BLOCK_SIZE) / (IS_DEBUG ? 8 : 1);
     }
 
-    public static final int MAX_R_TREE_CHILDREN_AMOUNT = 8;
+    public static final int MAX_R_TREE_CHILDREN_AMOUNT = 12;
 
 }
