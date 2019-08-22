@@ -96,7 +96,7 @@ public class BlockInfo {
             long[] tList = HelpUtil.readT(info.getPositionT(), info.getMessageAmount());
             long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
             byte[][] bodyList = HelpUtil.readBody(info.getPositionB(), info.getMessageAmount());
-            for (int j = 0; j < info.getMessageAmount() && aList[j] <= maxA; ++j) {
+            for (int j = 0; j < info.getMessageAmount() && tList[j] <= maxT; ++j) {
 //                System.out.println("f2:" + tList[j] + "," + aList[j]);
                 if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                     Message message = new Message(aList[j], tList[j], bodyList[j]);
@@ -122,7 +122,7 @@ public class BlockInfo {
             PageInfo info = pageInfos[entry.getIdx()];
             long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
             if (minT <= info.getMinT() && info.getMaxT() <= maxT) {
-                for (int i = 0; i < info.getMessageAmount() && aList[i] <= maxA; ++i) {
+                for (int i = 0; i < info.getMessageAmount(); ++i) {
                     if (minA <= aList[i] && aList[i] <= maxA) {
                         res += aList[i];
                         cnt++;
@@ -130,7 +130,7 @@ public class BlockInfo {
                 }
             } else {
                 long[] tList = HelpUtil.readT(info.getPositionT(), info.getMessageAmount());
-                for (int i = 0; i < info.getMessageAmount() && aList[i] <= maxA; ++i) {
+                for (int i = 0; i < info.getMessageAmount() && tList[i] <= maxT; ++i) {
                     if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
                         res += aList[i];
                         cnt++;

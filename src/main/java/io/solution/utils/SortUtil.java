@@ -72,23 +72,23 @@ public class SortUtil {
         }
 
         // 结果集
-//        List<MyBlock> result = new ArrayList<>();
-//
-//        int tempSize = 0;
-//        for (int i = 0; i < totalSize; ++i) {
-//            if (tempSize == 0) {
-//                MyBlock block = new MyBlock();
-//                result.add(block);
-//            }
-//            result.get(result.size() - 1).addMessage(messages[i]);
-//            tempSize++;
-//            if (tempSize == GlobalParams.getBlockMessageLimit()) {
-//                tempSize = 0;
-//            }
-//        }
-//
-//        return result;
-        return sortByA(messages, nowSize);
+        List<MyBlock> result = new ArrayList<>();
+
+        int tempSize = 0;
+        for (int i = 0; i < totalSize; ++i) {
+            if (tempSize == 0) {
+                MyBlock block = new MyBlock();
+                result.add(block);
+            }
+            result.get(result.size() - 1).addMessage(messages[i]);
+            tempSize++;
+            if (tempSize == GlobalParams.getBlockMessageLimit()) {
+                tempSize = 0;
+            }
+        }
+
+        return result;
+//        return sortByA(messages, nowSize);
     }
 
     static List<MyBlock> myMergeSort(ArrayList<Queue<Message>> heaps) {
@@ -124,22 +124,22 @@ public class SortUtil {
             }
         }
 
-//        List<MyBlock> result = new ArrayList<>();
-//
-//        int tempSize = 0;
-//        for (int i = 0; i < totalSize; ++i) {
-//            if (tempSize == 0) {
-//                MyBlock block = new MyBlock();
-//                result.add(block);
-//            }
-//            result.get(result.size() - 1).addMessage(messages[i]);
-//            tempSize++;
-//            if (tempSize == GlobalParams.getBlockMessageLimit()) {
-//                tempSize = 0;
-//            }
-//        }
-//        return result;
-        return sortByA(messages, nowSize);
+        List<MyBlock> result = new ArrayList<>();
+
+        int tempSize = 0;
+        for (int i = 0; i < totalSize; ++i) {
+            if (tempSize == 0) {
+                MyBlock block = new MyBlock();
+                result.add(block);
+            }
+            result.get(result.size() - 1).addMessage(messages[i]);
+            tempSize++;
+            if (tempSize == GlobalParams.getBlockMessageLimit()) {
+                tempSize = 0;
+            }
+        }
+        return result;
+//        return sortByA(messages, nowSize);
     }
 
 

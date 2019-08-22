@@ -92,8 +92,6 @@ class BufferHolder {
     void commit(List<MyBlock> blocks) {
         try {
             for (MyBlock block : blocks) {
-//                inCount++;
-//                block.sortByA();
                 blockQueue.put(block);
             }
         } catch (InterruptedException e) {
