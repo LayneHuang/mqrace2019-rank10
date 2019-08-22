@@ -33,6 +33,14 @@ class BufferHolder {
     private FileChannel channelA;
     private FileChannel channelBody;
 
+    ByteBuffer buffer = ByteBuffer.allocate(
+            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
+    );
+
+    ByteBuffer aBuffer = ByteBuffer.allocate(
+            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
+    );
+
 //    private ExecutorService executor = Executors.newFixedThreadPool(3);
 
     // 线程安全
@@ -130,6 +138,9 @@ class BufferHolder {
                 writeFileLock.lock();
                 blocks.add(block);
                 writeFileLock.unlock();
+                if (blocks.size() >= GlobalParams.WRITE_COUNT_LIMIT) {
+                    solve();
+                }
             }
         }
         if (!blocks.isEmpty()) {
@@ -150,14 +161,6 @@ class BufferHolder {
             writeFileLock.unlock();
             return;
         }
-
-        ByteBuffer buffer = ByteBuffer.allocate(
-                GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * blocks.size()
-        );
-
-        ByteBuffer aBuffer = ByteBuffer.allocate(
-                8 * GlobalParams.getBlockMessageLimit() * blocks.size()
-        );
 
 //        outCount += blocks.size();
 //        System.out.println(inCount + ", " + outCount);

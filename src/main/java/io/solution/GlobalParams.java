@@ -13,7 +13,7 @@ public class GlobalParams {
 
     public static final int DIRECT_MEMORY_SIZE = (IS_DEBUG ? 1 : 2) * 1050 * 1000 * 1000;
 
-    private static final int PAGE_SIZE = 1024 * 4;
+    private static final int PAGE_SIZE = 1024 * 8;
 
     public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1024 : 1024 * 2);
 
@@ -27,7 +27,7 @@ public class GlobalParams {
     /**
      * 写文件拥塞队列大小
      */
-    public static final int WRITE_COUNT_LIMIT = 8;
+    public static final int WRITE_COUNT_LIMIT = 4;
 
     private static boolean isStepOneFinished = false;
 

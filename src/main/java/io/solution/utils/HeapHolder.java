@@ -111,7 +111,7 @@ public class HeapHolder {
 //                MyHash.getIns().showAllBlockInfo();
                 System.out.println(
                         "BlockInfo的Size:" + MyHash.getIns().getSize()
-                                + ", aBufferSize:" + MyHash.getIns().gettBufferSize()
+                                + ", tBufferSize:" + MyHash.getIns().gettBufferSize()
                 );
                 System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
 

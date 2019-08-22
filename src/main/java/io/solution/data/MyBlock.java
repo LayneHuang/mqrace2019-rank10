@@ -2,7 +2,6 @@ package io.solution.data;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
-import io.solution.utils.SortUtil;
 
 /**
  * @Author: laynehuang
@@ -43,12 +42,6 @@ public class MyBlock {
                 maxT = Math.max(maxT, messages[i].getT());
             }
         }
-    }
-
-    public void addMessagesStupid(Message[] messages, int size) {
-        if (size == 0) return;
-        messageAmount = size;
-        System.arraycopy(messages, 0, this.messages, 0, messageAmount);
     }
 
     public void addMessage(Message message) {
