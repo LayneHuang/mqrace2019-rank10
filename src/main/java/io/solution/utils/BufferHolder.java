@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -35,19 +37,18 @@ class BufferHolder {
     private FileChannel channelBody;
 
     private ByteBuffer buffer = ByteBuffer.allocateDirect(
-            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
+            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit()
     );
 
     private ByteBuffer aBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
+            8 * GlobalParams.getBlockMessageLimit()
     );
 
     private ByteBuffer tBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
+            8 * GlobalParams.getBlockMessageLimit()
     );
 
-    // 线程安全
-    private List<MyBlock> blocks = new ArrayList<>();
+    private ExecutorService executor = Executors.newFixedThreadPool(2);
 
     private BufferHolder() {
         try {
@@ -87,8 +88,6 @@ class BufferHolder {
         return ins;
     }
 
-//    private int inCount = 0;
-
     void commit(List<MyBlock> blocks) {
         try {
             for (MyBlock block : blocks) {
@@ -103,22 +102,13 @@ class BufferHolder {
 //        System.out.println("BufferHolder write file 开始工作~");
         while (!isFinish) {
             try {
-                for (int i = 0; i < GlobalParams.WRITE_COMMIT_COUNT_LIMIT; ++i) {
-                    MyBlock block = blockQueue.poll(1, TimeUnit.SECONDS);
-                    if (block != null) {
-                        writeFileLock.lock();
-                        blocks.add(block);
-                        writeFileLock.unlock();
-                    }
-                }
-
-                if (blocks.isEmpty() || isFinish) {
-                    // 结束
+                MyBlock block = blockQueue.poll(1, TimeUnit.SECONDS);
+                if (block == null) {
                     isFinish = true;
                     System.out.println("BufferHolder write file 结束~");
                     break;
                 } else {
-                    solve();
+                    solve(block);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -145,16 +135,8 @@ class BufferHolder {
         while (!blockQueue.isEmpty()) {
             MyBlock block = blockQueue.poll();
             if (block != null) {
-                writeFileLock.lock();
-                blocks.add(block);
-                writeFileLock.unlock();
-                if (blocks.size() >= GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
-                    solve();
-                }
+                solve(block);
             }
-        }
-        if (!blocks.isEmpty()) {
-            solve();
         }
     }
 
@@ -163,37 +145,15 @@ class BufferHolder {
      */
 
 //    private int outCount = 0;
-    private void solve() {
+    private void solve(MyBlock block) {
 
         writeFileLock.lock();
-
-        if (blocks.isEmpty()) {
-            writeFileLock.unlock();
-            return;
-        }
-
-        if (blocks.size() > GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
-
-            buffer = ByteBuffer.allocateDirect(
-                    GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * blocks.size()
-            );
-
-            aBuffer = ByteBuffer.allocateDirect(
-                    8 * GlobalParams.getBlockMessageLimit() * blocks.size()
-            );
-
-            tBuffer = ByteBuffer.allocateDirect(
-                    8 * GlobalParams.getBlockMessageLimit() * blocks.size()
-            );
-
-        }
-
         try {
             long posBody = channelBody.position();
             long posA = channelA.position();
             long posT = channelT.position();
-            // 第几块
-            for (MyBlock block : blocks) {
+
+            executor.execute(() -> {
                 BlockInfo blockInfo = new BlockInfo();
                 long s = System.currentTimeMillis();
                 blockInfo.initBlockInfo(block, posT, posA, posBody);
@@ -202,17 +162,15 @@ class BufferHolder {
                         + "(minT,MaxT,minA,maxA): (" + block.getMinT() + "," + block.getMaxT() + "," + block.getMinA() + "," + block.getMaxA() + ")");
                 MyHash.getIns().insert(blockInfo);
                 // checkError(block, blockInfo);
-                for (int i = 0; i < block.getMessageAmount(); ++i) {
-                    aBuffer.putLong(block.getMessages()[i].getA());
-                    tBuffer.putLong(block.getMessages()[i].getT());
-                    buffer.put(block.getMessages()[i].getBody());
-                }
-                posT += 8 * block.getMessageAmount();
-                posA += 8 * block.getMessageAmount();
-                posBody += GlobalParams.getBodySize() * block.getMessageAmount();
-            }
+            });
 
             // 写文件
+            for (int i = 0; i < block.getMessageAmount(); ++i) {
+                aBuffer.putLong(block.getMessages()[i].getA());
+                tBuffer.putLong(block.getMessages()[i].getT());
+                buffer.put(block.getMessages()[i].getBody());
+            }
+
             buffer.flip();
             channelBody.write(buffer);
             buffer.clear();
@@ -224,8 +182,6 @@ class BufferHolder {
             tBuffer.flip();
             channelT.write(tBuffer);
             tBuffer.clear();
-
-            blocks.clear();
 
         } catch (IOException e) {
             e.printStackTrace();
