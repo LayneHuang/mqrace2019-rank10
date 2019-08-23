@@ -55,6 +55,7 @@ public class MyHash {
     public List<Message> easyFind2(long minT, long maxT, long minA, long maxA) {
         ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
         List<Message> res = new ArrayList<>();
+        long s1 = System.currentTimeMillis();
         for (Entry node : nodes) {
             long[] tList = HelpUtil.readT(node.posT, node.count);
             long[] aList = HelpUtil.readA(node.posA, node.count);
@@ -65,6 +66,10 @@ public class MyHash {
                     res.add(message);
                 }
             }
+        }
+        long s2 = System.currentTimeMillis();
+        if (s2 - s1 > 200) {
+            System.out.println("Step2 node size:" + nodes.size() + ",Res size:" + res.size() + ", cost time:" + (s2 - s1));
         }
         res.sort(Comparator.comparingLong(Message::getT));
         return res;

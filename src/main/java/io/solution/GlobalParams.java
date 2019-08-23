@@ -11,9 +11,9 @@ public class GlobalParams {
 
     private static boolean IS_DEBUG = Boolean.valueOf(System.getProperty("debug", "false"));
 
-    private static final int PAGE_SIZE = 1024 * 8;
+    private static final int PAGE_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 2);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 8);
 
     /**
      * 拥塞队列的大小
