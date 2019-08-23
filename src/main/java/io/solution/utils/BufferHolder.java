@@ -34,6 +34,9 @@ class BufferHolder {
     private FileChannel channelT;
     private FileChannel channelBody;
 
+
+    private int bufferLimit = GlobalParams.WRITE_COMMIT_COUNT_LIMIT;
+
     private ByteBuffer buffer = ByteBuffer.allocateDirect(
             GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
@@ -141,7 +144,7 @@ class BufferHolder {
     private ReentrantLock writeFileLock = new ReentrantLock();
 
     void flush() {
-        System.out.println("BufferHolder flush");
+//        System.out.println("BufferHolder flush");
         while (!blockQueue.isEmpty()) {
             MyBlock block = blockQueue.poll();
             if (block != null) {
@@ -172,18 +175,20 @@ class BufferHolder {
             return;
         }
 
-        if (blocks.size() > GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
+        if (blocks.size() > bufferLimit) {
+
+            bufferLimit = blocks.size();
 
             buffer = ByteBuffer.allocateDirect(
-                    GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * blocks.size()
+                    GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * bufferLimit
             );
 
             aBuffer = ByteBuffer.allocateDirect(
-                    8 * GlobalParams.getBlockMessageLimit() * blocks.size()
+                    8 * GlobalParams.getBlockMessageLimit() * bufferLimit
             );
 
             tBuffer = ByteBuffer.allocateDirect(
-                    8 * GlobalParams.getBlockMessageLimit() * blocks.size()
+                    8 * GlobalParams.getBlockMessageLimit() * bufferLimit
             );
 
         }

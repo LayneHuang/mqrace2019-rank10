@@ -4,13 +4,11 @@ import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
 import io.solution.data.MyResult;
-import io.solution.data.PageInfo;
 import io.solution.map.rtree.AverageResult;
 import io.solution.map.rtree.Entry;
 import io.solution.map.rtree.RTree;
 import io.solution.map.rtree.Rect;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -31,14 +29,6 @@ public class MyHash {
     private int size = 0;
 
     private RTree rTree = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
-
-//    private ByteBuffer tBuffer = ByteBuffer.allocateDirect(GlobalParams.DIRECT_MEMORY_SIZE);
-
-//    private int tBufferSize = 0;
-
-//    public int gettBufferSize() {
-//        return tBufferSize;
-//    }
 
     public int getSize() {
         return size;

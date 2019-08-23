@@ -59,7 +59,7 @@ public class BlockInfo {
         if (tempSize > 0) {
             addPageInfo(messages, tempSize, positionT, positionA, positionB);
         }
-        for(int i = 0; i < pageInfoSize; i ++) {
+        for (int i = 0; i < pageInfoSize; i++) {
             rTree.Insert(
                     new Rect(
                             pageInfos[i].getMinT(),
@@ -83,30 +83,18 @@ public class BlockInfo {
     ) {
         PageInfo pageInfo = new PageInfo();
         pageInfo.addMessages(messages, messageAmount, positionT, positionA, positionB);
-//        rTree.Insert(
-//                new Rect(
-//                        pageInfo.getMinT(),
-//                        pageInfo.getMaxT(),
-//                        pageInfo.getMinA(),
-//                        pageInfo.getMaxA()
-//                ),
-//                pageInfo.getSum(),
-//                pageInfo.getMessageAmount(),
-//                pageInfoSize
-//        );
-
         pageInfos[pageInfoSize++] = pageInfo;
     }
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
         List<Message> res = new ArrayList<>();
-        for (int i = 0; i < pageInfoSize; ++i) {
-            PageInfo info = pageInfos[i];
+        ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
+        for (Entry entry : nodes) {
+            PageInfo info = pageInfos[entry.getIdx()];
             long[] tList = HelpUtil.readT(info.getPositionT(), info.getMessageAmount());
             long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
             byte[][] bodyList = HelpUtil.readBody(info.getPositionB(), info.getMessageAmount());
-            for (int j = 0; j < info.getMessageAmount() && tList[j] <= maxT; ++j) {
-//                System.out.println("f2:" + tList[j] + "," + aList[j]);
+            for (int j = 0; j < info.getMessageAmount(); ++j) {
                 if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                     Message message = new Message(aList[j], tList[j], bodyList[j]);
                     res.add(message);

@@ -22,7 +22,7 @@ public class GlobalParams {
     /**
      * 拥塞队列的大小
      */
-    public static final int BLOCK_COUNT_LIMIT = 30;
+    public static final int BLOCK_COUNT_LIMIT = 40;
 
     /**
      * 提交个数
@@ -32,7 +32,7 @@ public class GlobalParams {
     /**
      * 写文件拥塞队列大小
      */
-    public static final int WRITE_COUNT_LIMIT = 8;
+    public static final int WRITE_COUNT_LIMIT = 10;
 
     /**
      * 提交个数
