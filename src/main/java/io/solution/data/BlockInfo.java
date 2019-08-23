@@ -17,9 +17,6 @@ import java.util.List;
  */
 public class BlockInfo {
 
-    // 在列表中的位置
-//    private int idx;
-
     private long maxT;
     private long minT;
     private long maxA;
@@ -181,52 +178,6 @@ public class BlockInfo {
 //        }
     }
 
-    /**
-     * 获取所有Message a的值
-     */
-//    public long[] readBlockA() {
-//        long[] res = new long[messageAmount];
-//        long pre = beginA;
-//        res[0] = pre;
-//        MyCursor cursor = new MyCursor();
-//        cursor.setPos(aPosition);
-//        for (int i = 1; i < messageAmount; ++i) {
-//            try {
-//                long aDiff = HashUtil.readInt(this, false, cursor);
-//                pre += aDiff;
-//                res[i] = pre;
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            } catch (ArrayIndexOutOfBoundsException e) {
-//                System.out.println("当前i : " + i + "," + "sizeA:" + sizeA + " limitA:" + limitA);
-//                e.printStackTrace();
-//            }
-//        }
-//        return res;
-//    }
-
-    /**
-     * 获取所有Message t的值
-     */
-//    public long[] readPageT() {
-//        long[] res = new long[messageAmount];
-//        long pre = beginT;
-//        res[0] = pre;
-//        MyCursor cursor = new MyCursor();
-//        for (int i = 1; i < messageAmount; ++i) {
-//            try {
-//                int tDiff = HashUtil.readInt(this, true, cursor);
-//                pre += tDiff;
-//                res[i] = pre;
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            } catch (ArrayIndexOutOfBoundsException e) {
-//                System.out.println("当前i : " + i + "," + "sizeT:" + sizeT + " limitT:" + limitT);
-//                e.printStackTrace();
-//            }
-//        }
-//        return res;
-//    }
     public long getSum() {
         return sum;
     }

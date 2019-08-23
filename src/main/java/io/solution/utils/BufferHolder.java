@@ -35,15 +35,15 @@ class BufferHolder {
     private FileChannel channelBody;
 
     private ByteBuffer buffer = ByteBuffer.allocateDirect(
-            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
+            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
     private ByteBuffer aBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
+            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
     private ByteBuffer tBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COUNT_LIMIT
+            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
     // 线程安全
@@ -103,7 +103,7 @@ class BufferHolder {
 //        System.out.println("BufferHolder write file 开始工作~");
         while (!isFinish) {
             try {
-                for (int i = 0; i < GlobalParams.WRITE_COUNT_LIMIT; ++i) {
+                for (int i = 0; i < GlobalParams.WRITE_COMMIT_COUNT_LIMIT; ++i) {
                     MyBlock block = blockQueue.poll(1, TimeUnit.SECONDS);
                     if (block != null) {
                         writeFileLock.lock();
@@ -148,7 +148,7 @@ class BufferHolder {
                 writeFileLock.lock();
                 blocks.add(block);
                 writeFileLock.unlock();
-                if (blocks.size() >= GlobalParams.WRITE_COUNT_LIMIT) {
+                if (blocks.size() >= GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
                     solve();
                 }
             }
@@ -172,7 +172,7 @@ class BufferHolder {
             return;
         }
 
-        if (blocks.size() > GlobalParams.WRITE_COUNT_LIMIT) {
+        if (blocks.size() > GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
 
             buffer = ByteBuffer.allocateDirect(
                     GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * blocks.size()
@@ -198,8 +198,8 @@ class BufferHolder {
                 long s = System.currentTimeMillis();
                 blockInfo.initBlockInfo(block, posT, posA, posBody);
                 long e = System.currentTimeMillis();
-                System.out.println("build block rtree used " + (e-s) +"ms"
-                        +"(minT,MaxT,minA,maxA): (" + block.getMinT() +","+block.getMaxT()+","+block.getMinA()+","+block.getMaxA()+")");
+                System.out.println("build block rtree used " + (e - s) + "ms"
+                        + "(minT,MaxT,minA,maxA): (" + block.getMinT() + "," + block.getMaxT() + "," + block.getMinA() + "," + block.getMaxA() + ")");
                 MyHash.getIns().insert(blockInfo);
                 // checkError(block, blockInfo);
                 for (int i = 0; i < block.getMessageAmount(); ++i) {

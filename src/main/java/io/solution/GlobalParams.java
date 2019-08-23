@@ -15,19 +15,29 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024 * 8;
 
-    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1024 : 1024 * 2);
+    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1024 : 1024);
 
 //    public static final long BLOCK_SIZE_LIMIT = BLOCK_SIZE / PAGE_SIZE;
 
     /**
      * 拥塞队列的大小
      */
-    public static final int BLOCK_COUNT_LIMIT = 8;
+    public static final int BLOCK_COUNT_LIMIT = 30;
+
+    /**
+     * 提交个数
+     */
+    public static final int BLOCK_COMMIT_COUNT_LIMIT = 4;
 
     /**
      * 写文件拥塞队列大小
      */
     public static final int WRITE_COUNT_LIMIT = 8;
+
+    /**
+     * 提交个数
+     */
+    public static final int WRITE_COMMIT_COUNT_LIMIT = 2;
 
     private static boolean isStepOneFinished = false;
 

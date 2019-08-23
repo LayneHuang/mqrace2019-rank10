@@ -34,7 +34,7 @@ public class BlockHolder {
 //        System.out.println("Block holder worker 开始工作~");
         while (!isFinish) {
             List<MyBlock> blocks = new ArrayList<>();
-            for (int i = 0; i < GlobalParams.BLOCK_COUNT_LIMIT; ++i) {
+            for (int i = 0; i < GlobalParams.BLOCK_COMMIT_COUNT_LIMIT; ++i) {
                 MyBlock block = blockQueue.poll();
                 if (block != null) {
                     blocks.add(block);

@@ -39,7 +39,6 @@ public class HelpUtil {
         return a <= maxA && a >= minA && t <= maxT && t >= minT;
     }
 
-
     public static long[] readT(long position, int messageCount) {
         int size = messageCount * 8;
         FileChannel channel = null;
