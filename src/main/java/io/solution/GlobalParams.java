@@ -15,14 +15,14 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024 * 8;
 
-    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1024 : 1024);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 8);
 
 //    public static final long BLOCK_SIZE_LIMIT = BLOCK_SIZE / PAGE_SIZE;
 
     /**
      * 拥塞队列的大小
      */
-    public static final int BLOCK_COUNT_LIMIT = 30;
+    public static final int BLOCK_COUNT_LIMIT = 80;
 
     /**
      * 提交个数
@@ -32,7 +32,7 @@ public class GlobalParams {
     /**
      * 写文件拥塞队列大小
      */
-    public static final int WRITE_COUNT_LIMIT = 8;
+    public static final int WRITE_COUNT_LIMIT = 40;
 
     /**
      * 提交个数

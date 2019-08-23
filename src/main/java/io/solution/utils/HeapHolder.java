@@ -2,7 +2,6 @@ package io.solution.utils;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
-import io.solution.data.BlockInfo;
 import io.solution.data.MyBlock;
 import io.solution.map.MyHash;
 

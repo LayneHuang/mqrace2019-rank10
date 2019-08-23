@@ -1,7 +1,6 @@
 package io.solution.utils;
 
 import io.solution.GlobalParams;
-import io.solution.data.BlockInfo;
 import io.solution.data.MyBlock;
 import io.solution.map.MyHash;
 
@@ -10,13 +9,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 缓冲
@@ -150,13 +147,13 @@ class BufferHolder {
             long posT = channelT.position();
 
             executor.execute(() -> {
-                BlockInfo blockInfo = new BlockInfo();
-                long s = System.currentTimeMillis();
-                blockInfo.initBlockInfo(block, posT, posA, posBody);
-                long e = System.currentTimeMillis();
-                System.out.println("build block rtree used " + (e - s) + "ms"
-                        + "(minT,MaxT,minA,maxA): (" + block.getMinT() + "," + block.getMaxT() + "," + block.getMinA() + "," + block.getMaxA() + ")");
-                MyHash.getIns().insert(blockInfo);
+//                BlockInfo blockInfo = new BlockInfo();
+//                long s = System.currentTimeMillis();
+//                blockInfo.initBlockInfo(block, posT, posA, posBody);
+//                long e = System.currentTimeMillis();
+//                System.out.println("build block rtree used " + (e - s) + "ms"
+//                        + "(minT,MaxT,minA,maxA): (" + block.getMinT() + "," + block.getMaxT() + "," + block.getMinA() + "," + block.getMaxA() + ")");
+                MyHash.getIns().easyInsert(block, posT, posA, posBody);
                 // checkError(block, blockInfo);
             });
 

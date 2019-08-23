@@ -84,7 +84,7 @@ public class RTree {
     }
 
 
-    public void Insert(Rect r, long sum, int count, int posT, int posA, int posB) {
+    public void Insert(Rect r, long sum, int count, long posT, long posA, long posB) {
         Entry e = new Entry(r, sum, count, posT, posA, posB);
         if (root == null) {
             root = new LeafNode(null, new ArrayList<Entry>());
