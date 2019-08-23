@@ -222,31 +222,6 @@ public class BlockInfo {
         );
     }
 
-
-//    public int getLimitT() {
-//        return limitT;
-//    }
-//
-//    public void setLimitT(int limit) {
-//        this.limitT = limit;
-//    }
-//
-//    public int getLimitA() {
-//        return limitA;
-//    }
-//
-//    public void setLimitA(int limit) {
-//        this.limitA = limit;
-//    }
-
-//    public int getIdx() {
-//        return idx;
-//    }
-//
-//    public void setIdx(int idx) {
-//        this.idx = idx;
-//    }
-
     public RTree getrTree() {
         return rTree;
     }

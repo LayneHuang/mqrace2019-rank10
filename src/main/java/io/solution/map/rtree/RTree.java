@@ -57,33 +57,33 @@ public class RTree {
 
     private void insert(Entry entry, int level) {
         //1.选择合适的叶子结点
-        long s = System.currentTimeMillis();
+//        long s = System.currentTimeMillis();
         Node leaf = this.chooseNode(this.root, entry, level);
         leaf.getEntries().add(entry);
-        long e = System.currentTimeMillis();
-        if(e-s > 30) {
-            System.out.println("chooseNode used:" + (e-s)+"ms");
-        }
+//        long e = System.currentTimeMillis();
+//        if(e-s > 30) {
+//            System.out.println("chooseNode used:" + (e-s)+"ms");
+//        }
 
         //2.若此叶子结点数据数量大于最大值，分裂此叶子结点
-        s = System.currentTimeMillis();
+//        s = System.currentTimeMillis();
         Node split = null;
         if (leaf.getEntries().size() > this.maxChild) {
             split = leaf.spiltNode(maxChild);
         }
-        e = System.currentTimeMillis();
-        if(e-s > 30) {
-            System.out.println("spiltNode used:" + (e-s)+"ms");
-        }
-        s = System.currentTimeMillis();
+//        e = System.currentTimeMillis();
+//        if(e-s > 30) {
+//            System.out.println("spiltNode used:" + (e-s)+"ms");
+//        }
+//        s = System.currentTimeMillis();
         //3.调整颗R树
         ArrayList<Node> res = adjustTree(leaf, split);
-        e = System.currentTimeMillis();
-        if(e-s > 30) {
-            System.out.println("adjustTree used:" + (e-s)+"ms");
-        }
+//        e = System.currentTimeMillis();
+//        if(e-s > 30) {
+//            System.out.println("adjustTree used:" + (e-s)+"ms");
+//        }
         //4.若根节点发生分裂，创建一个新的根节点
-        s = System.currentTimeMillis();
+//        s = System.currentTimeMillis();
         if (res.size() == 2 && res.get(1) != null) {
             height++;
             ArrayList<Entry> list = new ArrayList<Entry>();
@@ -93,10 +93,10 @@ public class RTree {
             res.get(0).setParent(root);
             res.get(1).setParent(root);
         }
-        e = System.currentTimeMillis();
-        if(e-s > 30) {
-            System.out.println("create new root used:" + (e-s)+"ms");
-        }
+//        e = System.currentTimeMillis();
+//        if(e-s > 30) {
+//            System.out.println("create new root used:" + (e-s)+"ms");
+//        }
     }
 
     private Node chooseNode(Node n, Entry entry, int level) {
