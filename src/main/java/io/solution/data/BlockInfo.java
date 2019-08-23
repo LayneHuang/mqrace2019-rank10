@@ -62,7 +62,19 @@ public class BlockInfo {
         if (tempSize > 0) {
             addPageInfo(messages, tempSize, positionT, positionA, positionB);
         }
-
+        for(int i = 0; i < pageInfoSize; i ++) {
+            rTree.Insert(
+                    new Rect(
+                            pageInfos[i].getMinT(),
+                            pageInfos[i].getMaxT(),
+                            pageInfos[i].getMinA(),
+                            pageInfos[i].getMaxA()
+                    ),
+                    pageInfos[i].getSum(),
+                    pageInfos[i].getMessageAmount(),
+                    i
+            );
+        }
     }
 
     private void addPageInfo(
@@ -74,17 +86,17 @@ public class BlockInfo {
     ) {
         PageInfo pageInfo = new PageInfo();
         pageInfo.addMessages(messages, messageAmount, positionT, positionA, positionB);
-        rTree.Insert(
-                new Rect(
-                        pageInfo.getMinT(),
-                        pageInfo.getMaxT(),
-                        pageInfo.getMinA(),
-                        pageInfo.getMaxA()
-                ),
-                pageInfo.getSum(),
-                pageInfo.getMessageAmount(),
-                pageInfoSize
-        );
+//        rTree.Insert(
+//                new Rect(
+//                        pageInfo.getMinT(),
+//                        pageInfo.getMaxT(),
+//                        pageInfo.getMinA(),
+//                        pageInfo.getMaxA()
+//                ),
+//                pageInfo.getSum(),
+//                pageInfo.getMessageAmount(),
+//                pageInfoSize
+//        );
 
         pageInfos[pageInfoSize++] = pageInfo;
     }
