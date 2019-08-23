@@ -102,7 +102,7 @@ class BufferHolder {
 //        System.out.println("BufferHolder write file 开始工作~");
         while (!isFinish) {
             try {
-                MyBlock block = blockQueue.poll(1, TimeUnit.SECONDS);
+                MyBlock block = blockQueue.poll(5, TimeUnit.SECONDS);
                 if (block == null) {
                     isFinish = true;
                     System.out.println("BufferHolder write file 结束~");
@@ -128,8 +128,6 @@ class BufferHolder {
         }
     }
 
-    private ReentrantLock writeFileLock = new ReentrantLock();
-
     void flush() {
         System.out.println("BufferHolder flush");
         while (!blockQueue.isEmpty()) {
@@ -144,10 +142,8 @@ class BufferHolder {
      * 写操作
      */
 
-//    private int outCount = 0;
-    private void solve(MyBlock block) {
+    private synchronized void solve(MyBlock block) {
 
-        writeFileLock.lock();
         try {
             long posBody = channelBody.position();
             long posA = channelA.position();
@@ -186,7 +182,6 @@ class BufferHolder {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        writeFileLock.unlock();
     }
 
 }

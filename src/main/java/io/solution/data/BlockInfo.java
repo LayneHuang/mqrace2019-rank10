@@ -83,18 +83,6 @@ public class BlockInfo {
     ) {
         PageInfo pageInfo = new PageInfo();
         pageInfo.addMessages(messages, messageAmount, positionT, positionA, positionB);
-//        rTree.Insert(
-//                new Rect(
-//                        pageInfo.getMinT(),
-//                        pageInfo.getMaxT(),
-//                        pageInfo.getMinA(),
-//                        pageInfo.getMaxA()
-//                ),
-//                pageInfo.getSum(),
-//                pageInfo.getMessageAmount(),
-//                pageInfoSize
-//        );
-
         pageInfos[pageInfoSize++] = pageInfo;
     }
 
