@@ -33,10 +33,10 @@ public class Rect {
     @Override
     public String toString() {
         return "Rect{" +
-                "x1=" + x1 +
-                ", y1=" + y1 +
-                ", x2=" + x2 +
-                ", y2=" + y2 +
+                "minT=" + x1 +
+                ", minA=" + y1 +
+                ", maxT=" + x2 +
+                ", maxA=" + y2 +
                 '}';
     }
 }
