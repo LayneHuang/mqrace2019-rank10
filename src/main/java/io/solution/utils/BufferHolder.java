@@ -12,8 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -36,8 +34,6 @@ class BufferHolder {
     private FileChannel channelT;
     private FileChannel channelBody;
 
-    private int bufferLimit = GlobalParams.WRITE_COMMIT_COUNT_LIMIT;
-
     private ByteBuffer buffer = ByteBuffer.allocateDirect(
             GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
@@ -49,8 +45,6 @@ class BufferHolder {
     private ByteBuffer tBuffer = ByteBuffer.allocateDirect(
             8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
-
-    private ExecutorService executor = Executors.newFixedThreadPool(3);
 
     // 线程安全
     private List<MyBlock> blocks = new ArrayList<>();
@@ -121,7 +115,7 @@ class BufferHolder {
                 if (blocks.isEmpty() || isFinish) {
                     // 结束
                     isFinish = true;
-//                    System.out.println("BufferHolder write file 结束~");
+                    System.out.println("BufferHolder write file 结束~");
                     break;
                 } else {
                     solve();
@@ -147,7 +141,7 @@ class BufferHolder {
     private ReentrantLock writeFileLock = new ReentrantLock();
 
     void flush() {
-//        System.out.println("BufferHolder flush");
+        System.out.println("BufferHolder flush");
         while (!blockQueue.isEmpty()) {
             MyBlock block = blockQueue.poll();
             if (block != null) {
@@ -178,20 +172,18 @@ class BufferHolder {
             return;
         }
 
-        if (blocks.size() > bufferLimit) {
-
-            bufferLimit = blocks.size();
+        if (blocks.size() > GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
 
             buffer = ByteBuffer.allocateDirect(
-                    GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * bufferLimit
+                    GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * blocks.size()
             );
 
             aBuffer = ByteBuffer.allocateDirect(
-                    8 * GlobalParams.getBlockMessageLimit() * bufferLimit
+                    8 * GlobalParams.getBlockMessageLimit() * blocks.size()
             );
 
             tBuffer = ByteBuffer.allocateDirect(
-                    8 * GlobalParams.getBlockMessageLimit() * bufferLimit
+                    8 * GlobalParams.getBlockMessageLimit() * blocks.size()
             );
 
         }
@@ -202,32 +194,25 @@ class BufferHolder {
             long posT = channelT.position();
             // 第几块
             for (MyBlock block : blocks) {
-                long finalPosT = posT;
-                long finalPosA = posA;
-                long finalPosBody = posBody;
-                executor.execute(() -> {
-//                    long s = System.currentTimeMillis();
-                    BlockInfo blockInfo = new BlockInfo();
-                    blockInfo.initBlockInfo(block, finalPosT, finalPosA, finalPosBody);
-//                    long e = System.currentTimeMillis();
-//                    System.out.println("build block rtree used " + (e - s) + "ms"
-//                            + "(minT,MaxT,minA,maxA): (" + block.getMinT() + "," + block.getMaxT() + "," + block.getMinA() + "," + block.getMaxA() + ")");
-                    MyHash.getIns().insert(blockInfo);
-                });
+                BlockInfo blockInfo = new BlockInfo();
+                long s = System.currentTimeMillis();
+                blockInfo.initBlockInfo(block, posT, posA, posBody);
+                long e = System.currentTimeMillis();
+                System.out.println("build block rtree used " + (e - s) + "ms"
+                        + "(minT,MaxT,minA,maxA): (" + block.getMinT() + "," + block.getMaxT() + "," + block.getMinA() + "," + block.getMaxA() + ")");
+                MyHash.getIns().insert(blockInfo);
+                // checkError(block, blockInfo);
+                for (int i = 0; i < block.getMessageAmount(); ++i) {
+                    aBuffer.putLong(block.getMessages()[i].getA());
+                    tBuffer.putLong(block.getMessages()[i].getT());
+                    buffer.put(block.getMessages()[i].getBody());
+                }
                 posT += 8 * block.getMessageAmount();
                 posA += 8 * block.getMessageAmount();
                 posBody += GlobalParams.getBodySize() * block.getMessageAmount();
             }
 
             // 写文件
-            for (MyBlock block : blocks) {
-                for (int i = 0; i < block.getMessageAmount(); ++i) {
-                    aBuffer.putLong(block.getMessages()[i].getA());
-                    tBuffer.putLong(block.getMessages()[i].getT());
-                    buffer.put(block.getMessages()[i].getBody());
-                }
-            }
-
             buffer.flip();
             channelBody.write(buffer);
             buffer.clear();

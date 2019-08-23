@@ -34,9 +34,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-//        long res = MyHash.getIns().find3(tMin, tMax, aMin, aMax);
-//        System.out.println("step3: " + res);
-//        return res;
+        //        System.out.println("step3: " + res);
+//        return MyHash.getIns().force3(tMin, tMax, aMin, aMax);
         return MyHash.getIns().find3(tMin, tMax, aMin, aMax);
     }
 
