@@ -190,7 +190,7 @@ public class MyHash {
             long[] tList = HelpUtil.readT(node.posT, node.count);
             long[] aList = HelpUtil.readA(node.posA, node.count);
             byte[][] bodyList = HelpUtil.readBody(node.posB, node.count);
-            for (int j = 0; j < node.count && tList[j] <= maxT; ++j) {
+            for (int j = 0; j < node.count && aList[j] <= maxA; ++j) {
 //                System.out.println("f2:" + tList[j] + "," + aList[j]);
                 if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                     Message message = new Message(aList[j], tList[j], bodyList[j]);
@@ -211,15 +211,15 @@ public class MyHash {
         for (Entry node : result.getResult()) {
             long[] aList = HelpUtil.readA(node.posA, node.count);
             if (minT <= node.rect.minT && node.rect.maxT <= maxT) {
-                for (int i = 0; i < node.count; ++i) {
-                    if (minA <= aList[i] && aList[i] <= maxA) {
+                for (int i = 0; i < node.count && aList[i] <= maxA; ++i) {
+                    if (minA <= aList[i]) {
                         res += aList[i];
                         cnt++;
                     }
                 }
             } else {
                 long[] tList = HelpUtil.readT(node.posT, node.count);
-                for (int i = 0; i < node.count && tList[i] <= maxT; ++i) {
+                for (int i = 0; i < node.count && aList[i] <= maxA; ++i) {
                     if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
                         res += aList[i];
                         cnt++;
