@@ -55,6 +55,7 @@ public class MyHash {
 //    private long tTotalDiff = 0;
 //    private double areaSum = 0;
     private long totalMsgAmount = 0 ;
+
     public synchronized void insert(BlockInfo info) {
         // RTree 插入
         Rect rect = new Rect(info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA());
