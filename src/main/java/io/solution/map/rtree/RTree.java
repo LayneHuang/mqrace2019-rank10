@@ -3,8 +3,168 @@ package io.solution.map.rtree;
 import java.util.ArrayList;
 
 public class RTree {
-
     private Node root;
+    private int height;
+    private int maxChild;
+
+    public RTree() {
+        this.root = null;
+        this.height = 1;
+        this.maxChild = 4;
+    }
+
+    public RTree(int maxChild) {
+        this.root = null;
+        this.height = 1;
+        this.maxChild = maxChild;
+    }
+
+    public AverageResult SearchAverage(Rect searchRange) {
+        AverageResult result = new AverageResult();
+        searchAverage(this.root, searchRange, result);
+        return result;
+    }
+
+    private void searchAverage(Node n, Rect searchRange, AverageResult result) {
+        if (searchRange.disjoint(n.getRect()))
+            return;
+
+        if (searchRange.contain(n.getRect())) {
+            result.addSumAndCnt(n.getSum(), n.getCount());
+            return;
+        }
+
+        if (n.isLeaf()) {
+            ArrayList<Entry> entries = n.getEntries();
+            for (Entry e : entries) {
+                if (searchRange.disjoint(e.getRect())) {
+                    continue;
+                }
+
+                if (searchRange.contain(e.getRect())) {
+                    result.addSumAndCnt(e.getSum(), e.getCount());
+                    continue;
+                }
+
+                result.addEntry(e);
+            }
+        } else {
+            ArrayList<Node> nodes = n.getChildren();
+            for (Node node : nodes) {
+                searchAverage(node, searchRange, result);
+            }
+        }
+
+    }
+
+    public ArrayList<Entry> Search(Rect searchRange) {
+        ArrayList<Entry> result = new ArrayList<Entry>();
+        search(this.root, searchRange, result);
+        return result;
+    }
+
+    private void search(Node n, Rect searchRange, ArrayList<Entry> result) {
+        if (n.isLeaf()) {
+            ArrayList<Entry> entries = n.getEntries();
+            for (Entry e : entries) {
+                if (searchRange.disjoint(e.getRect())) {
+                    continue;
+                }
+                result.add(e);
+            }
+        } else {
+            ArrayList<Node> nodes = n.getChildren();
+            for (Node node : nodes) {
+                if (searchRange.disjoint(node.getRect())) {
+                    continue;
+                }
+                search(node, searchRange, result);
+            }
+        }
+    }
+
+
+    public void Insert(Rect r, long sum, int count, long posT, long posA, long posB) {
+        Entry e = new Entry(r, sum, count, posT, posA, posB);
+        if (root == null) {
+            root = new LeafNode(null, new ArrayList<Entry>());
+            root.addEntry(e);
+            return;
+        }
+        insert(e);
+    }
+
+    public void Insert(Entry entry) {
+        if (root == null) {
+            root = new LeafNode(null, new ArrayList<Entry>());
+            root.addEntry(entry);
+            return;
+        }
+        insert(entry);
+    }
+
+    private void insert(Entry entry) {
+        Node leaf = this.chooseNode(root, entry);
+        leaf.addEntry(entry);
+
+        Node split = null;
+        if (leaf.getSize() > this.maxChild) {
+            split = leaf.spiltNode(this.maxChild);
+        }
+
+        ArrayList<Node> res = adjustTree(leaf, split);
+
+        if (res.size() == 2) {
+            height++;
+            Node l = res.get(0), r = res.get(1);
+            root = new NonLeafNode(height, null, res, l.getRect().Add(r.getRect()), l.getSum() + r.getSum(), l.getCount() + r.getCount());
+            res.get(0).setParent(root);
+            res.get(1).setParent(root);
+        }
+    }
+
+    private ArrayList<Node> adjustTree(Node n, Node nn) {
+
+        if (n.getLevel() == this.height) {
+            ArrayList<Node> result = new ArrayList<Node>();
+            result.add(n);
+            if (nn != null) {
+                result.add(nn);
+            }
+            return result;
+        }
+        //没发生分裂
+        n.getParent().Reset();
+        if (nn == null) {
+            return adjustTree(n.getParent(), null);
+        }
+        //发生分裂
+        n.getParent().addNode(nn);
+        Node parent = n.getParent();
+        if (parent.getSize() > this.maxChild) {
+            Node split = parent.spiltNode(maxChild);
+            return adjustTree(parent, split);
+        }
+        return adjustTree(n.getParent(), null);
+    }
+
+    private Node chooseNode(Node n, Entry entry) {
+        if (n.isLeaf()) {
+            return n;
+        }
+
+        long minIncArea = Long.MAX_VALUE;
+        Node chosen = n.getChildren().get(0);
+        for (Node node : n.getChildren()) {
+            Rect tmp = node.getRect().Add(entry.getRect());
+            long d = tmp.getArea() - node.getRect().getArea();
+            if (d < minIncArea || (d == minIncArea && node.getRect().getArea() < chosen.getRect().getArea())) {
+                chosen = node;
+                minIncArea = d;
+            }
+        }
+        return chooseNode(chosen, entry);
+    }
 
     public Node getRoot() {
         return root;
@@ -12,14 +172,6 @@ public class RTree {
 
     public void setRoot(Node root) {
         this.root = root;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
     }
 
     public int getHeight() {
@@ -36,169 +188,5 @@ public class RTree {
 
     public void setMaxChild(int maxChild) {
         this.maxChild = maxChild;
-    }
-
-    private int size;
-    private int height;
-    private int maxChild;
-
-    public RTree(int maxChild) {
-        this.maxChild = maxChild;
-        this.root = new Node(true, 1, null, new ArrayList<Entry>());
-        this.size = 0;
-        this.height = 1;
-    }
-
-    public void Insert(Rect rect, long sum, long cnt, int idx) {
-        Entry entry = new Entry(rect,sum,cnt, idx);
-        this.insert(entry, 1);
-        this.size++;
-    }
-
-    private void insert(Entry entry, int level) {
-        //1.选择合适的叶子结点
-        long s = System.currentTimeMillis();
-        Node leaf = this.chooseNode(this.root, entry, level);
-        leaf.getEntries().add(entry);
-        long e = System.currentTimeMillis();
-        if(e-s > 30) {
-            System.out.println("chooseNode used:" + (e-s)+"ms");
-        }
-
-        //2.若此叶子结点数据数量大于最大值，分裂此叶子结点
-        s = System.currentTimeMillis();
-        Node split = null;
-        if (leaf.getEntries().size() > this.maxChild) {
-            split = leaf.spiltNode(maxChild);
-        }
-        e = System.currentTimeMillis();
-        if(e-s > 30) {
-            System.out.println("spiltNode used:" + (e-s)+"ms");
-        }
-        s = System.currentTimeMillis();
-        //3.调整颗R树
-        ArrayList<Node> res = adjustTree(leaf, split);
-        e = System.currentTimeMillis();
-        if(e-s > 30) {
-            System.out.println("adjustTree used:" + (e-s)+"ms");
-        }
-        //4.若根节点发生分裂，创建一个新的根节点
-        s = System.currentTimeMillis();
-        if (res.size() == 2 && res.get(1) != null) {
-            height++;
-            ArrayList<Entry> list = new ArrayList<Entry>();
-            list.add(new Entry(res.get(0).getRect(),res.get(0).getSum(),res.get(0).getCount(), res.get(0)));
-            list.add(new Entry(res.get(1).getRect(),res.get(0).getSum(),res.get(0).getCount(), res.get(1)));
-            root = new Node(false, height, null, list);
-            res.get(0).setParent(root);
-            res.get(1).setParent(root);
-        }
-        e = System.currentTimeMillis();
-        if(e-s > 30) {
-            System.out.println("create new root used:" + (e-s)+"ms");
-        }
-    }
-
-    private Node chooseNode(Node n, Entry entry, int level) {
-        if (n.getLeaf() || level == n.getLevel()) {
-            return n;
-        }
-
-        //选择插入的子树，遍历，选择扩张面积最小的，若扩张面积相等，选面积最小的
-        long minIncreasedArea = Long.MAX_VALUE;
-        Entry chosen = n.getEntries().get(0);
-        for (Entry e : n.getEntries()) {
-            Rect tmp = e.getRect().Add(entry.getRect());
-            long d = tmp.getArea() - e.getRect().getArea();
-            if ((d == minIncreasedArea && e.getRect().getArea() < chosen.getRect().getArea()) || d < minIncreasedArea) {
-                chosen = e;
-                minIncreasedArea = d;
-            }
-        }
-
-        //递归寻找至叶子节点
-        return chooseNode(chosen.getChild(), entry, level);
-    }
-
-    private ArrayList<Node> adjustTree(Node n, Node nn) {
-        //调整到根节点，结束递归
-        if (n.getLevel() == this.height) {
-            ArrayList<Node> result = new ArrayList<Node>();
-            result.add(n);
-            result.add(nn);
-            return result;
-        }
-
-        //调整该节点的数据
-        n.getEntry().setRect(n.getRect());
-        n.getEntry().setSum(n.getSum());
-        n.getEntry().setCount(n.getCount());
-
-        //没发生分裂
-        if (nn == null) {
-            return adjustTree(n.getParent(), null);
-        }
-
-
-        //发生分裂
-        Entry entryNN = new Entry(nn.getRect(), nn.getSum(), nn.getCount(), nn);
-        n.getParent().getEntries().add(entryNN);
-        Node parent = n.getParent();
-        if (parent.getEntries().size() > maxChild) {
-            Node split = parent.spiltNode(maxChild);
-            return adjustTree(parent, split);
-        }
-        return adjustTree(n.getParent(), null);
-    }
-
-    public ArrayList<Entry> Search(Rect searchRange) {
-        ArrayList<Entry> result = new ArrayList<Entry>();
-        search(this.root, searchRange, result);
-        return result;
-    }
-
-    private void search(Node n, Rect searchRange, ArrayList<Entry> result) {
-        for (int i = 0; i < n.getEntries().size(); i++) {
-            Entry e = n.getEntries().get(i);
-            if (searchRange.disjoint(e.getRect())) {
-                continue;
-            }
-
-            if (!n.getLeaf()) {
-                search(e.getChild(), searchRange, result);
-                continue;
-            }
-
-            result.add(e);
-        }
-    }
-
-    public AverageResult SearchAverage(Rect searchRange) {
-        AverageResult result = new AverageResult();
-        searchAverage(this.root,searchRange, result);
-        return result;
-    }
-    private void searchAverage(Node n, Rect searchRange, AverageResult result) {
-        for(int i = 0; i < n.getEntries().size(); i++) {
-            Entry e = n.getEntries().get(i);
-            if(searchRange.disjoint(e.getRect())) {
-                continue;
-            }
-
-            if(searchRange.contain(e.getRect())) {
-                result.addSumAndCnt(e.getSum(), e.getCount());
-                continue;
-            }
-
-            if(!n.getLeaf()) {
-                searchAverage(e.getChild(), searchRange, result);
-                continue;
-            }
-            result.addEntry(e);
-        }
-    }
-
-    public void PrintTree() {
-        root.Print();
     }
 }

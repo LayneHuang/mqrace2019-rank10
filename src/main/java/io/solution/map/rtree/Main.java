@@ -1,4 +1,4 @@
-package io.solution.map.NewRTree;
+package io.solution.map.rtree;
 
 public class Main {
 

@@ -6,6 +6,7 @@ import io.solution.data.MyBlock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: laynehuang
@@ -43,7 +44,6 @@ public class BlockHolder {
 
             if (!blocks.isEmpty()) {
                 // 归并
-                // System.out.println("归并块个数:" + blocks.size());
                 blocks = SortUtil.myMergeSort(blocks);
                 BufferHolder.getIns().commit(blocks);
             }
@@ -52,8 +52,6 @@ public class BlockHolder {
 
     void commit(MyBlock block) {
         try {
-//            System.out.println("提交块,块大小:" + block.getPageAmount());
-            // block.showSquare();
             blockQueue.put(block);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -64,21 +62,17 @@ public class BlockHolder {
 //        System.out.println("block holder flush");
         List<MyBlock> blocks = new ArrayList<>();
         while (!blockQueue.isEmpty()) {
-            MyBlock block = null;
             try {
-                block = blockQueue.take();
+                MyBlock block = blockQueue.poll(2, TimeUnit.SECONDS);
+                if (block != null) {
+                    blocks.add(block);
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
-            if (block != null) {
-//                outCount++;
-//                System.out.println("block holder flush 取出块个数:" + outCount);
-                blocks.add(block);
             }
         }
         if (!blocks.isEmpty()) {
             // 归并
-//            System.out.println("归并块个数:" + blocks.size());
             blocks = SortUtil.myMergeSort(blocks);
             BufferHolder.getIns().commit(blocks);
         }

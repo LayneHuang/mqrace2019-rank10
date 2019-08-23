@@ -147,14 +147,7 @@ class BufferHolder {
             long posT = channelT.position();
 
             executor.execute(() -> {
-//                BlockInfo blockInfo = new BlockInfo();
-//                long s = System.currentTimeMillis();
-//                blockInfo.initBlockInfo(block, posT, posA, posBody);
-//                long e = System.currentTimeMillis();
-//                System.out.println("build block rtree used " + (e - s) + "ms"
-//                        + "(minT,MaxT,minA,maxA): (" + block.getMinT() + "," + block.getMaxT() + "," + block.getMinA() + "," + block.getMaxA() + ")");
                 MyHash.getIns().easyInsert(block, posT, posA, posBody);
-                // checkError(block, blockInfo);
             });
 
             // 写文件
