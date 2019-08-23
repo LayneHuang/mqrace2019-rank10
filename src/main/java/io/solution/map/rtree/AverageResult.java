@@ -21,7 +21,7 @@ public class AverageResult {
         sum = 0;
         cnt = 0;
         checkNode = 0;
-        result = new ArrayList<Entry>();
+        result = new ArrayList<>();
     }
 
     public long getSum() {

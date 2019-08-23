@@ -122,7 +122,7 @@ class BufferHolder {
                 if (blocks.isEmpty() || isFinish) {
                     // 结束
                     isFinish = true;
-                    System.out.println("BufferHolder write file 结束~");
+//                    System.out.println("BufferHolder write file 结束~");
                     break;
                 } else {
                     solve();
@@ -207,12 +207,12 @@ class BufferHolder {
                 long finalPosA = posA;
                 long finalPosBody = posBody;
                 executor.execute(() -> {
-                    long s = System.currentTimeMillis();
+//                    long s = System.currentTimeMillis();
                     BlockInfo blockInfo = new BlockInfo();
                     blockInfo.initBlockInfo(block, finalPosT, finalPosA, finalPosBody);
-                    long e = System.currentTimeMillis();
-                    System.out.println("build block rtree used " + (e - s) + "ms"
-                            + "(minT,MaxT,minA,maxA): (" + block.getMinT() + "," + block.getMaxT() + "," + block.getMinA() + "," + block.getMaxA() + ")");
+//                    long e = System.currentTimeMillis();
+//                    System.out.println("build block rtree used " + (e - s) + "ms"
+//                            + "(minT,MaxT,minA,maxA): (" + block.getMinT() + "," + block.getMaxT() + "," + block.getMinA() + "," + block.getMaxA() + ")");
                     MyHash.getIns().insert(blockInfo);
                 });
                 posT += 8 * block.getMessageAmount();
