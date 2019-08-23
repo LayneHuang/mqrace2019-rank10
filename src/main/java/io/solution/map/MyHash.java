@@ -4,10 +4,10 @@ import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.BlockInfo;
 import io.solution.data.MyResult;
-import io.solution.map.rtree.AverageResult;
-import io.solution.map.rtree.Entry;
-import io.solution.map.rtree.RTree;
-import io.solution.map.rtree.Rect;
+import io.solution.map.NewRTree.AverageResult;
+import io.solution.map.NewRTree.Entry;
+import io.solution.map.NewRTree.RTree;
+import io.solution.map.NewRTree.Rect;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,7 +59,7 @@ public class MyHash {
     public synchronized void insert(BlockInfo info) {
         // RTree 插入
         Rect rect = new Rect(info.getMinT(), info.getMaxT(), info.getMinA(), info.getMaxA());
-        rTree.Insert(rect, info.getSum(), info.getMessageAmount(), size);
+        rTree.Insert(rect, info.getSum(), info.getMessageAmount(), size, 0, 0);
 //        info.setIdx(size);
 //        totalMsgAmount += info.getMessageAmount();
 //        long s = System.currentTimeMillis();
@@ -88,7 +88,7 @@ public class MyHash {
         ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
         List<Message> res = new ArrayList<>();
         for (Entry node : nodes) {
-            int idx = node.getIdx();
+            int idx = node.getPosT();
             BlockInfo info = all[idx];
             res.addAll(info.find2(minT, maxT, minA, maxA));
         }
@@ -120,7 +120,7 @@ public class MyHash {
 //        long s3 = System.nanoTime();
         MyResult myResult = new MyResult();
         for (Entry entry : result.getResult()) {
-            BlockInfo info = all[entry.getIdx()];
+            BlockInfo info = all[entry.getPosT()];
             info.find3(minT, maxT, minA, maxA, myResult);
             res += myResult.getSum();
             messageAmount += myResult.getCnt();

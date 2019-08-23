@@ -36,7 +36,6 @@ class BufferHolder {
     private FileChannel channelT;
     private FileChannel channelBody;
 
-
     private int bufferLimit = GlobalParams.WRITE_COMMIT_COUNT_LIMIT;
 
     private ByteBuffer buffer = ByteBuffer.allocateDirect(

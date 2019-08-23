@@ -2,10 +2,10 @@ package io.solution.data;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
-import io.solution.map.rtree.AverageResult;
-import io.solution.map.rtree.Entry;
-import io.solution.map.rtree.RTree;
-import io.solution.map.rtree.Rect;
+import io.solution.map.NewRTree.AverageResult;
+import io.solution.map.NewRTree.Entry;
+import io.solution.map.NewRTree.RTree;
+import io.solution.map.NewRTree.Rect;
 import io.solution.utils.HelpUtil;
 
 import java.util.ArrayList;
@@ -29,72 +29,81 @@ public class BlockInfo {
 
     private RTree rTree = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
 
-    private PageInfo[] pageInfos = new PageInfo[GlobalParams.getBlockPageLimit()];
-
-    private int pageInfoSize;
-
     /**
      * block info 赋值
      * 调用前必须先设置 消息数量
      */
     public void initBlockInfo(MyBlock block, long positionT, long positionA, long positionB) {
 
-        pageInfoSize = 0;
         setSquare(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
         sum = block.getSum();
         messageAmount = block.getMessageAmount();
         int tempSize = 0;
-        Message[] messages = new Message[GlobalParams.getPageMessageCount()];
+
+        long sum = 0;
+        long minA = Long.MAX_VALUE;
+        long minT = Long.MAX_VALUE;
+        long maxA = Long.MIN_VALUE;
+        long maxT = Long.MIN_VALUE;
+
         for (int i = 0; i < block.getMessageAmount(); ++i) {
-            messages[tempSize++] = block.getMessages()[i];
+
+            tempSize++;
+
+            long nowA = block.getMessages()[i].getA();
+            long nowT = block.getMessages()[i].getT();
+
+            sum += block.getMessages()[i].getA();
+
+            minT = Math.min(minT, nowT);
+            maxT = Math.max(maxT, nowT);
+            minA = Math.min(minA, nowA);
+            maxA = Math.max(maxA, nowA);
+
             if (tempSize == GlobalParams.getPageMessageCount()) {
-                addPageInfo(messages, tempSize, positionT, positionA, positionB);
+                // 插入到树内
+                rTree.Insert(
+                        new Rect(minT, maxT, minA, maxA),
+                        sum,
+                        tempSize,
+                        (int) positionT,
+                        (int) positionA,
+                        (int) positionB
+                );
+                // 初始化页数据
                 positionT += 8 * tempSize;
                 positionA += 8 * tempSize;
                 positionB += GlobalParams.getBodySize() * tempSize;
+                minA = Long.MAX_VALUE;
+                minT = Long.MAX_VALUE;
+                maxA = Long.MIN_VALUE;
+                maxT = Long.MIN_VALUE;
+                sum = 0;
                 tempSize = 0;
             }
+
         }
 
         if (tempSize > 0) {
-            addPageInfo(messages, tempSize, positionT, positionA, positionB);
-        }
-        for (int i = 0; i < pageInfoSize; i++) {
             rTree.Insert(
-                    new Rect(
-                            pageInfos[i].getMinT(),
-                            pageInfos[i].getMaxT(),
-                            pageInfos[i].getMinA(),
-                            pageInfos[i].getMaxA()
-                    ),
-                    pageInfos[i].getSum(),
-                    pageInfos[i].getMessageAmount(),
-                    i
+                    new Rect(minT, maxT, minA, maxA),
+                    sum,
+                    tempSize,
+                    (int) positionT,
+                    (int) positionA,
+                    (int) positionB
             );
         }
-    }
-
-    private void addPageInfo(
-            Message[] messages,
-            int messageAmount,
-            long positionT,            // 块偏移起始
-            long positionA,
-            long positionB
-    ) {
-        PageInfo pageInfo = new PageInfo();
-        pageInfo.addMessages(messages, messageAmount, positionT, positionA, positionB);
-        pageInfos[pageInfoSize++] = pageInfo;
     }
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
         List<Message> res = new ArrayList<>();
         ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
         for (Entry entry : nodes) {
-            PageInfo info = pageInfos[entry.getIdx()];
-            long[] tList = HelpUtil.readT(info.getPositionT(), info.getMessageAmount());
-            long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
-            byte[][] bodyList = HelpUtil.readBody(info.getPositionB(), info.getMessageAmount());
-            for (int j = 0; j < info.getMessageAmount(); ++j) {
+            long[] tList = HelpUtil.readT(entry.getPosT(), entry.getCount());
+            long[] aList = HelpUtil.readA(entry.getPosA(), entry.getCount());
+            byte[][] bodyList = HelpUtil.readBody(entry.getPosB(), entry.getCount());
+            for (int j = 0; j < entry.getCount(); ++j) {
                 if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                     Message message = new Message(aList[j], tList[j], bodyList[j]);
                     res.add(message);
@@ -116,18 +125,18 @@ public class BlockInfo {
 //        long s2 = System.nanoTime();
 
         for (Entry entry : result.getResult()) {
-            PageInfo info = pageInfos[entry.getIdx()];
-            long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
-            if (minT <= info.getMinT() && info.getMaxT() <= maxT) {
-                for (int i = 0; i < info.getMessageAmount(); ++i) {
+//            PageInfo info = pageInfos[entry.getIdx()];
+            long[] aList = HelpUtil.readA(entry.getPosA(), entry.getCount());
+            if (minT <= entry.getRect().minT && entry.getRect().maxT <= maxT) {
+                for (int i = 0; i < entry.getCount(); ++i) {
                     if (minA <= aList[i] && aList[i] <= maxA) {
                         res += aList[i];
                         cnt++;
                     }
                 }
             } else {
-                long[] tList = HelpUtil.readT(info.getPositionT(), info.getMessageAmount());
-                for (int i = 0; i < info.getMessageAmount() && tList[i] <= maxT; ++i) {
+                long[] tList = HelpUtil.readT(entry.getPosT(), entry.getCount());
+                for (int i = 0; i < entry.getCount() && tList[i] <= maxT; ++i) {
                     if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
                         res += aList[i];
                         cnt++;
@@ -238,11 +247,4 @@ public class BlockInfo {
         this.messageAmount = messageAmount;
     }
 
-    public PageInfo[] getPageInfos() {
-        return this.pageInfos;
-    }
-
-    public int getPageInfoSize() {
-        return pageInfoSize;
-    }
 }

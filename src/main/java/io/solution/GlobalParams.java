@@ -13,7 +13,7 @@ public class GlobalParams {
 
 //    public static final int DIRECT_MEMORY_SIZE = (IS_DEBUG ? 1 : 2) * 1050 * 1000 * 1000;
 
-    private static final int PAGE_SIZE = 1024 * 8;
+    private static final int PAGE_SIZE = 1024 * 4;
 
     public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1024 : 1024);
 
