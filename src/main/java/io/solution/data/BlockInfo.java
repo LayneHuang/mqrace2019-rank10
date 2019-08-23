@@ -100,8 +100,10 @@ public class BlockInfo {
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
         List<Message> res = new ArrayList<>();
-        for (int i = 0; i < pageInfoSize; ++i) {
-            PageInfo info = pageInfos[i];
+
+        ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
+        for (Entry node : nodes) {
+            PageInfo info = pageInfos[node.getIdx()];
             long[] tList = HelpUtil.readT(info.getPositionT(), info.getMessageAmount());
             long[] aList = HelpUtil.readA(info.getPositionA(), info.getMessageAmount());
             byte[][] bodyList = HelpUtil.readBody(info.getPositionB(), info.getMessageAmount());
