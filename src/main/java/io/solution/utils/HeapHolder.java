@@ -100,6 +100,7 @@ public class HeapHolder {
                 }
                 BlockHolder.getIns().flush();
                 BufferHolder.getIns().flush();
+                MyHash.getIns().flush();
                 // 打印个块的信息
                 // MyHash.getIns().showEachInfo();
                 // 清空
@@ -109,7 +110,7 @@ public class HeapHolder {
 //                System.gc();
 //                MyHash.getIns().showAllBlockInfo();
                 System.out.println(
-                        "BlockInfo的Size:" + MyHash.getIns().getSize()
+                        "BlockInfo的Size:" + MyHash.getIns().getBlockCount()
 //                                + ", tBufferSize:" + MyHash.getIns().gettBufferSize()
                 );
                 System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");

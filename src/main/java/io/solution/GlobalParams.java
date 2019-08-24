@@ -16,6 +16,11 @@ public class GlobalParams {
     private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 4);
 
     /**
+     * 消息总数
+     */
+    private static long MSG_COUNT = (IS_DEBUG ? 200_000_000L : 2_100_000_000L);
+
+    /**
      * 拥塞队列的大小
      */
     public static final int BLOCK_COUNT_LIMIT = 1024;
@@ -89,5 +94,11 @@ public class GlobalParams {
     }
 
     public static final int MAX_R_TREE_CHILDREN_AMOUNT = 8;
+
+    public static final int FATHER_TREE_BLOCK_SIZE = 4000;
+
+    public static int getRTreeSubTreeSize() {
+        return (int) Math.floorDiv(MSG_COUNT, (long) getBlockMessageLimit() * FATHER_TREE_BLOCK_SIZE) + 10;
+    }
 
 }

@@ -21,12 +21,18 @@ public class MyHash {
 
     private static MyHash ins = new MyHash();
 
-    private int size = 4096;
+    private int size = GlobalParams.FATHER_TREE_BLOCK_SIZE;
+
     private int curIndex = 0;
 
     private RTree rTree = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
 
-    private ArrayList<RTree> subRTree = new ArrayList<RTree>(20000);
+    private RTree[] subRTree = new RTree[GlobalParams.getRTreeSubTreeSize()];
+
+    public int getCurIndex() {
+        return curIndex;
+    }
+
     public int getSize() {
         return size;
     }
@@ -42,36 +48,31 @@ public class MyHash {
     private long totalMsgAmount = 0;
 
     public void flush() {
-        if(size != 0) {
-            RTree curSubRTree = subRTree.get(curIndex);
-            rTree.Insert(curSubRTree.getRoot().getRect(), curSubRTree.getRoot().getSum(), curSubRTree.getRoot().getCount(),curIndex,0,0);
+        if (size != 0) {
+            RTree curSubRTree = subRTree[curIndex - 1];
+            rTree.Insert(curSubRTree.getRoot().getRect(), curSubRTree.getRoot().getSum(), curSubRTree.getRoot().getCount(), curIndex - 1, 0, 0);
             size = 0;
-            RTree tmp = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
-            subRTree.add(tmp);
-            curIndex ++;
         }
-        System.out.println("rtree size high" +  rTree.getHeight());
     }
+
     public synchronized void easyInsert(MyBlock block, long posT, long posA, long posB) {
         // RTree 插入
-        if(size == 4096) {
-            if(subRTree.size() > 0) {
-                RTree curSubRTree = subRTree.get(curIndex);
-                rTree.Insert(curSubRTree.getRoot().getRect(), curSubRTree.getRoot().getSum(), curSubRTree.getRoot().getCount(), curIndex, 0, 0);
-                curIndex ++;
+        if (size == GlobalParams.FATHER_TREE_BLOCK_SIZE) {
+            if (curIndex > 0) {
+                RTree curSubRTree = subRTree[curIndex - 1];
+                rTree.Insert(curSubRTree.getRoot().getRect(), curSubRTree.getRoot().getSum(), curSubRTree.getRoot().getCount(), curIndex - 1, 0, 0);
             }
+            subRTree[curIndex++] = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
             size = 0;
-            RTree tmp = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
-            subRTree.add(tmp);
         }
         Rect rect = new Rect(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
         size++;
         long s1 = System.nanoTime();
-        subRTree.get(curIndex).Insert(rect, block.getSum(), block.getMessageAmount(), posT, posA, posB);
+        subRTree[curIndex - 1].Insert(rect, block.getSum(), block.getMessageAmount(), posT, posA, posB);
         long s2 = System.nanoTime();
         totalMsgAmount += block.getMessageAmount();
         if (s2 - s1 > 50 * 1000 || size % 10000 == 0) {
-            System.out.println("now block size:" + size + ", inserted msg amount:" + totalMsgAmount + ", insert cost time:" + (s2 - s1));
+            System.out.println("now block size:" + (curIndex * GlobalParams.FATHER_TREE_BLOCK_SIZE + size) + ", inserted msg amount:" + totalMsgAmount + ", insert cost time:" + (s2 - s1));
         }
     }
 
@@ -84,14 +85,12 @@ public class MyHash {
 
         long totalCost = 0;
 //        long s1 = System.currentTimeMillis();
-        for(Entry node : nodes) {
-
-            ArrayList<Entry>entries = subRTree.get((int)node.posT).Search(range);
+        for (Entry node : nodes) {
+            ArrayList<Entry> entries = subRTree[(int) node.posT].Search(range);
             for (Entry entry : entries) {
                 long[] tList = HelpUtil.readT(entry.posT, entry.count);
                 long[] aList = HelpUtil.readA(entry.posA, entry.count);
                 byte[][] bodyList = HelpUtil.readBody(entry.posB, entry.count);
-
                 for (int j = 0; j < entry.count && aList[j] <= maxA; ++j) {
                     if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                         Message message = new Message(aList[j], tList[j], bodyList[j]);
@@ -144,13 +143,12 @@ public class MyHash {
 
         int total = 0;
         long s3 = System.currentTimeMillis();
-        for(Entry entry : result.getResult()) {
-
-            AverageResult subRes = subRTree.get((int)entry.posT).SearchAverage(range);
+        for (Entry entry : result.getResult()) {
+            AverageResult subRes = subRTree[(int) entry.posT].SearchAverage(range);
             res += subRes.getSum();
             cnt += subRes.getCnt();
             total += subRes.getResult().size();
-           for (Entry node : subRes.getResult()) {
+            for (Entry node : subRes.getResult()) {
                 long[] aList = HelpUtil.readA(node.posA, node.count);
                 if (minT <= node.rect.minT && node.rect.maxT <= maxT) {
                     for (int i = 0; i < node.count && aList[i] <= maxA; ++i) {
@@ -171,29 +169,14 @@ public class MyHash {
             }
         }
         long s4 = System.currentTimeMillis();
-        if(res % 50 ==0) {
-            System.out.println("Step4 外层相交块:" + result.getResult().size() + ",内层相交块个数:" + total + ", cost time:" + (s4 - s3) + " rtree search time:" + (s2 - s1));
+        if (res % 50 == 0) {
+            System.out.println("Step3 外层相交块:" + result.getResult().size() + ",内层相交块个数:" + total + ", cost time:" + (s4 - s3) + " rtree search time:" + (s2 - s1));
         }
-//        for (Entry node : result.getResult()) {
-//            long[] aList = HelpUtil.readA(node.posA, node.count);
-//            if (minT <= node.rect.minT && node.rect.maxT <= maxT) {
-//                for (int i = 0; i < node.count && aList[i] <= maxA; ++i) {
-//                    if (minA <= aList[i]) {
-//                        res += aList[i];
-//                        cnt++;
-//                    }
-//                }
-//            } else {
-//                long[] tList = HelpUtil.readT(node.posT, node.count);
-//                for (int i = 0; i < node.count && aList[i] <= maxA; ++i) {
-//                    if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
-//                        res += aList[i];
-//                        cnt++;
-//                    }
-//                }
-//            }
-//        }
         return cnt == 0 ? 0 : Math.floorDiv(res, cnt);
+    }
+
+    public int getBlockCount() {
+        return (curIndex * GlobalParams.FATHER_TREE_BLOCK_SIZE + size);
     }
 
 }
