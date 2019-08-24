@@ -43,9 +43,9 @@ public class MyHash {
         // RTree 插入
         Rect rect = new Rect(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
         size++;
-//        long s1 = System.nanoTime();
+        long s1 = System.nanoTime();
         rTree.Insert(rect, block.getSum(), block.getMessageAmount(), posT, posA, posB);
-//        long s2 = System.nanoTime();
+        long s2 = System.nanoTime();
         totalMsgAmount += block.getMessageAmount();
 //        if (s2 - s1 > 50 * 1000 || size % 10000 == 0) {
 //            System.out.println("now block size:" + size + ", inserted msg amount:" + totalMsgAmount + ", insert cost time:" + (s2 - s1));
@@ -53,14 +53,27 @@ public class MyHash {
     }
 
     public List<Message> easyFind2(long minT, long maxT, long minA, long maxA) {
+        long s3 = System.currentTimeMillis();
         ArrayList<Entry> nodes = rTree.Search(new Rect(minT, maxT, minA, maxA));
+        long s4 = System.currentTimeMillis();
         List<Message> res = new ArrayList<>();
         long s1 = System.currentTimeMillis();
         for (Entry node : nodes) {
             long[] tList = HelpUtil.readT(node.posT, node.count);
             long[] aList = HelpUtil.readA(node.posA, node.count);
             byte[][] bodyList = HelpUtil.readBody(node.posB, node.count);
-            for (int j = 0; j < node.count && aList[j] <= maxA; ++j) {
+
+            int l= 0, r = node.count;
+
+            while(l<r) {
+                int m = (l+r)>>1;
+                if(aList[m] < minA) {
+                    l= m +1;
+                } else {
+                    r = m;
+                }
+            }
+            for (int j = r; j < node.count && aList[j] <= maxA; ++j) {
                 if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                     Message message = new Message(aList[j], tList[j], bodyList[j]);
                     res.add(message);
@@ -69,7 +82,7 @@ public class MyHash {
         }
         long s2 = System.currentTimeMillis();
         if (s2 - s1 > 200) {
-            System.out.println("Step2 node size:" + nodes.size() + ",Res size:" + res.size() + ", cost time:" + (s2 - s1));
+            System.out.println("Step2 node size:" + nodes.size() + ",Res size:" + res.size() + ", cost time:" + (s2 - s1)+ " rtree search time:" + (s4-s3));
         }
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
