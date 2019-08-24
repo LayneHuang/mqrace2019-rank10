@@ -21,7 +21,7 @@ public class MyHash {
 
     private static MyHash ins = new MyHash();
 
-    private int size = 2048;
+    private int size = 4096;
     private int curIndex = 0;
 
     private RTree rTree = new RTree(GlobalParams.MAX_R_TREE_CHILDREN_AMOUNT);
@@ -50,10 +50,11 @@ public class MyHash {
             subRTree.add(tmp);
             curIndex ++;
         }
+        System.out.println("rtree size high" +  rTree.getHeight());
     }
     public synchronized void easyInsert(MyBlock block, long posT, long posA, long posB) {
         // RTree 插入
-        if(size == 2048) {
+        if(size == 4096) {
             if(subRTree.size() > 0) {
                 RTree curSubRTree = subRTree.get(curIndex);
                 rTree.Insert(curSubRTree.getRoot().getRect(), curSubRTree.getRoot().getSum(), curSubRTree.getRoot().getCount(), curIndex, 0, 0);
