@@ -76,13 +76,13 @@ public class MyHash {
 
     public List<Message> easyFind2(long minT, long maxT, long minA, long maxA) {
         Rect range = new Rect(minT, maxT, minA, maxA);
-        long s3 = System.currentTimeMillis();
+//        long s3 = System.currentTimeMillis();
         ArrayList<Entry> nodes = rTree.Search(range);
-        long s4 = System.currentTimeMillis();
+//        long s4 = System.currentTimeMillis();
         List<Message> res = new ArrayList<>();
 
         long totalCost = 0;
-        long s1 = System.currentTimeMillis();
+//        long s1 = System.currentTimeMillis();
         for(Entry node : nodes) {
 
             ArrayList<Entry>entries = subRTree.get((int)node.posT).Search(range);
@@ -123,9 +123,9 @@ public class MyHash {
 //                }
 //            }
 //        }
-        long s2 = System.currentTimeMillis();
+//        long s2 = System.currentTimeMillis();
 //        if (s2 - s1 > 200) {
-            System.out.println("Step2 node size:" + nodes.size() + ",Res size:" + res.size() + ", cost time:" + (s2 - s1)+ " rtree search time:" + (s4-s3));
+//            System.out.println("Step2 node size:" + nodes.size() + ",Res size:" + res.size() + ", cost time:" + (s2 - s1)+ " rtree search time:" + (s4-s3));
 //        }
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
@@ -135,16 +135,20 @@ public class MyHash {
         Rect range = new Rect(minT, maxT, minA, maxA);
         long res = 0;
         long cnt = 0;
+        long s1 = System.currentTimeMillis();
         AverageResult result = rTree.SearchAverage(range);
+        long s2 = System.currentTimeMillis();
         res += result.getSum();
         cnt += result.getCnt();
 
+        int total = 0;
+        long s3 = System.currentTimeMillis();
         for(Entry entry : result.getResult()) {
 
             AverageResult subRes = subRTree.get((int)entry.posT).SearchAverage(range);
             res += subRes.getSum();
             cnt += subRes.getCnt();
-
+            total += subRes.getResult().size();
            for (Entry node : subRes.getResult()) {
                 long[] aList = HelpUtil.readA(node.posA, node.count);
                 if (minT <= node.rect.minT && node.rect.maxT <= maxT) {
@@ -164,6 +168,10 @@ public class MyHash {
                     }
                 }
             }
+        }
+        long s4 = System.currentTimeMillis();
+        if(res % 50 ==0) {
+            System.out.println("Step4 外层相交块:" + result.getResult().size() + ",内层相交块个数:" + total + ", cost time:" + (s4 - s3) + " rtree search time:" + (s2 - s1));
         }
 //        for (Entry node : result.getResult()) {
 //            long[] aList = HelpUtil.readA(node.posA, node.count);
