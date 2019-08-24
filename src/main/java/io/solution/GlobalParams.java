@@ -23,7 +23,7 @@ public class GlobalParams {
     /**
      * 提交个数
      */
-    public static final int BLOCK_COMMIT_COUNT_LIMIT = 1024;
+    public static final int BLOCK_COMMIT_COUNT_LIMIT = 256;
 
     /**
      * 写文件拥塞队列大小
