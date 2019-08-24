@@ -133,6 +133,7 @@ class BufferHolder {
                 solve(block);
             }
         }
+        MyHash.getIns().flush();
     }
 
     /**
@@ -146,9 +147,9 @@ class BufferHolder {
             long posA = channelA.position();
             long posT = channelT.position();
 
-            executor.execute(() -> {
+//            executor.execute(() -> {
                 MyHash.getIns().easyInsert(block, posT, posA, posBody);
-            });
+//            });
 
             // 写文件
             for (int i = 0; i < block.getMessageAmount(); ++i) {
