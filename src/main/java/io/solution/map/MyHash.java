@@ -70,9 +70,9 @@ public class MyHash {
         subRTree.get(curIndex).Insert(rect, block.getSum(), block.getMessageAmount(), posT, posA, posB);
         long s2 = System.nanoTime();
         totalMsgAmount += block.getMessageAmount();
-//        if (s2 - s1 > 50 * 1000 || size % 10000 == 0) {
-//            System.out.println("now block size:" + size + ", inserted msg amount:" + totalMsgAmount + ", insert cost time:" + (s2 - s1));
-//        }
+        if (s2 - s1 > 50 * 1000 || size % 10000 == 0) {
+            System.out.println("now block size:" + size + ", inserted msg amount:" + totalMsgAmount + ", insert cost time:" + (s2 - s1));
+        }
     }
 
     public List<Message> easyFind2(long minT, long maxT, long minA, long maxA) {
