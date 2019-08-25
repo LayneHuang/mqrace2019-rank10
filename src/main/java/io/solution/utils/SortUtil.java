@@ -71,23 +71,6 @@ public class SortUtil {
 
         }
 
-        // 结果集
-//        List<MyBlock> result = new ArrayList<>();
-//
-//        int tempSize = 0;
-//        for (int i = 0; i < totalSize; ++i) {
-//            if (tempSize == 0) {
-//                MyBlock block = new MyBlock();
-//                result.add(block);
-//            }
-//            result.get(result.size() - 1).addMessage(messages[i]);
-//            tempSize++;
-//            if (tempSize == GlobalParams.getBlockMessageLimit()) {
-//                tempSize = 0;
-//            }
-//        }
-//
-//        return result;
         return sortByA(messages, nowSize);
     }
 
@@ -124,21 +107,6 @@ public class SortUtil {
             }
         }
 
-//        List<MyBlock> result = new ArrayList<>();
-//
-//        int tempSize = 0;
-//        for (int i = 0; i < totalSize; ++i) {
-//            if (tempSize == 0) {
-//                MyBlock block = new MyBlock();
-//                result.add(block);
-//            }
-//            result.get(result.size() - 1).addMessage(messages[i]);
-//            tempSize++;
-//            if (tempSize == GlobalParams.getBlockMessageLimit()) {
-//                tempSize = 0;
-//            }
-//        }
-//        return result;
         return sortByA(messages, nowSize);
     }
 
@@ -149,7 +117,6 @@ public class SortUtil {
         for (int i = 0; i < size; ++i) {
             sortMessages.add(new SortMessage(i, messages[i].getA()));
         }
-
         sortMessages.sort(Comparator.comparingLong(o -> o.a));
 
         List<MyBlock> result = new ArrayList<>();
@@ -167,7 +134,71 @@ public class SortUtil {
                 tempSize = 0;
             }
         }
+        return result;
+    }
 
+    static List<MyBlock> sortByA(List<MyBlock> blocks) {
+
+        List<SortMessage> sortMessages = new ArrayList<>();
+
+        int inB = 0;
+        for (MyBlock block : blocks) {
+            for (int i = 0; i < block.getMessageAmount(); ++i) {
+                sortMessages.add(new SortMessage(inB, i, block.getMessages()[i].getA()));
+            }
+            inB++;
+        }
+
+        sortMessages.sort(Comparator.comparingLong(o -> o.a));
+
+        List<MyBlock> result = new ArrayList<>();
+
+        int tempSize = 0;
+        for (SortMessage sortMessage : sortMessages) {
+            if (tempSize == 0) {
+                MyBlock block = new MyBlock();
+                result.add(block);
+            }
+            result.get(result.size() - 1).addMessage(blocks.get(sortMessage.inB).getMessages()[sortMessage.idx]);
+            tempSize++;
+            if (tempSize == GlobalParams.getBlockMessageLimit()) {
+                tempSize = 0;
+            }
+        }
+        return result;
+    }
+
+    static List<MyBlock> sortByA(ArrayList<Queue<Message>> heaps) {
+
+        List<Message> messages = new ArrayList<>();
+
+        for (Queue<Message> queue : heaps) {
+            while (!queue.isEmpty()) {
+                messages.add(queue.poll());
+            }
+        }
+
+        List<SortMessage> sortMessages = new ArrayList<>();
+
+        for (int i = 0; i < messages.size(); ++i) {
+            sortMessages.add(new SortMessage(i, messages.get(i).getA()));
+        }
+
+        sortMessages.sort(Comparator.comparingLong(o -> o.a));
+        List<MyBlock> result = new ArrayList<>();
+        int tempSize = 0;
+
+        for (SortMessage sortMessage : sortMessages) {
+            if (tempSize == 0) {
+                MyBlock block = new MyBlock();
+                result.add(block);
+            }
+            result.get(result.size() - 1).addMessage(messages.get(sortMessage.idx));
+            tempSize++;
+            if (tempSize == GlobalParams.getBlockMessageLimit()) {
+                tempSize = 0;
+            }
+        }
         return result;
     }
 

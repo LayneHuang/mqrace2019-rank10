@@ -94,10 +94,9 @@ public class HeapHolder {
         synchronized (this) {
             if (!GlobalParams.isStepOneFinished()) {
 //                System.out.println("heap holder flush");
-                List<MyBlock> blocks = SortUtil.myMergeSort(heaps);
-                for (MyBlock block : blocks) {
-                    BlockHolder.getIns().commit(block);
-                }
+                List<MyBlock> blocks = SortUtil.sortByA(heaps);
+                BufferHolder.getIns().commit(blocks);
+
                 BlockHolder.getIns().flush();
                 BufferHolder.getIns().flush();
                 MyHash.getIns().flush();
