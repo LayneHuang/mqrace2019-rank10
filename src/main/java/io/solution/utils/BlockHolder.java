@@ -75,6 +75,7 @@ public class BlockHolder {
             // 归并
             blocks = SortUtil.sortByA(blocks);
             BufferHolder.getIns().commit(blocks);
+            blockQueue = null;
         }
         isFinish = true;
     }

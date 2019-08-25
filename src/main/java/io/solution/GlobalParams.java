@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 8);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 4);
 
     /**
      * 消息总数
@@ -73,7 +73,7 @@ public class GlobalParams {
         return path;
     }
 
-    public static int getMessageSize() {
+    private static int getMessageSize() {
         return IS_DEBUG ? 24 : 50;
     }
 
@@ -81,16 +81,17 @@ public class GlobalParams {
         return IS_DEBUG ? 8 : 34;
     }
 
-    public static int getPageMessageCount() {
+    private static int getPageMessageCount() {
         return Math.floorDiv(PAGE_SIZE, getMessageSize());
     }
 
-    public static int getBlockPageLimit() {
+    private static int getBlockPageLimit() {
         return Math.floorDiv(BLOCK_SIZE, PAGE_SIZE);
     }
 
     public static int getBlockMessageLimit() {
-        return getBlockPageLimit() * getPageMessageCount();
+//        return getBlockPageLimit() * getPageMessageCount();
+        return Math.floorDiv(BLOCK_SIZE, getMessageSize());
     }
 
     public static final int MAX_R_TREE_CHILDREN_AMOUNT = 8;

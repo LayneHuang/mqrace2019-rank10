@@ -109,7 +109,6 @@ class BufferHolder {
                 MyBlock block = blockQueue.poll(5, TimeUnit.SECONDS);
                 if (block == null) {
                     isFinish = true;
-                    System.out.println("BufferHolder write file 结束~");
                     break;
                 } else {
                     solve(block);
@@ -119,6 +118,10 @@ class BufferHolder {
             }
         }
         try {
+            if (channelT != null) {
+                channelT.close();
+                channelT = null;
+            }
             if (channelA != null) {
                 channelA.close();
                 channelA = null;
@@ -127,6 +130,10 @@ class BufferHolder {
                 channelB.close();
                 channelB = null;
             }
+            aBuffer = null;
+            tBuffer = null;
+            bBuffer = null;
+            System.out.println("BufferHolder write file 结束~");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -170,7 +177,6 @@ class BufferHolder {
         try {
 
             MyHash.getIns().easyInsert(block, totalPosT, totalPosA, totalPosB);
-
             // 写文件
             for (int i = 0; i < block.getMessageAmount(); ++i) {
                 tBuffer.putLong(block.getMessages()[i].getT());
