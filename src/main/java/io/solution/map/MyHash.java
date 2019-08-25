@@ -67,24 +67,20 @@ public class MyHash {
         }
         Rect rect = new Rect(block.getMinT(), block.getMaxT(), block.getMinA(), block.getMaxA());
         size++;
-        long s1 = System.nanoTime();
+//        long s1 = System.nanoTime();
         subRTree[curIndex - 1].Insert(rect, block.getSum(), block.getMessageAmount(), posT, posA, posB);
-        long s2 = System.nanoTime();
+//        long s2 = System.nanoTime();
         totalMsgAmount += block.getMessageAmount();
-        if (s2 - s1 > 50 * 1000 || size % 10000 == 0) {
-            System.out.println("now block size:" + (curIndex * GlobalParams.FATHER_TREE_BLOCK_SIZE + size) + ", inserted msg amount:" + totalMsgAmount + ", insert cost time:" + (s2 - s1));
-        }
+//        if (s2 - s1 > 50 * 1000 || getBlockCount() % 10000 == 0) {
+//            System.out.println("now block size:" + getBlockCount() + ", inserted msg amount:" + totalMsgAmount + ", insert cost time:" + (s2 - s1));
+//        }
     }
 
     public List<Message> easyFind2(long minT, long maxT, long minA, long maxA) {
         Rect range = new Rect(minT, maxT, minA, maxA);
-//        long s3 = System.currentTimeMillis();
         ArrayList<Entry> nodes = rTree.Search(range);
-//        long s4 = System.currentTimeMillis();
         List<Message> res = new ArrayList<>();
 
-        long totalCost = 0;
-//        long s1 = System.currentTimeMillis();
         for (Entry node : nodes) {
             ArrayList<Entry> entries = subRTree[(int) node.posT].Search(range);
             for (Entry entry : entries) {
@@ -99,37 +95,11 @@ public class MyHash {
                 }
             }
         }
-
-//        long s1 = System.currentTimeMillis();
-//        for (Entry node : nodes) {
-//            long[] tList = HelpUtil.readT(node.posT, node.count);
-//            long[] aList = HelpUtil.readA(node.posA, node.count);
-//            byte[][] bodyList = HelpUtil.readBody(node.posB, node.count);
-//
-//            int l= 0, r = node.count;
-//
-//            while(l<r) {
-//                int m = (l+r)>>1;
-//                if(aList[m] < minA) {
-//                    l= m +1;
-//                } else {
-//                    r = m;
-//                }
-//            }
-//            for (int j = r; j < node.count && aList[j] <= maxA; ++j) {
-//                if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
-//                    Message message = new Message(aList[j], tList[j], bodyList[j]);
-//                    res.add(message);
-//                }
-//            }
-//        }
-//        long s2 = System.currentTimeMillis();
-//        if (s2 - s1 > 200) {
-//            System.out.println("Step2 node size:" + nodes.size() + ",Res size:" + res.size() + ", cost time:" + (s2 - s1)+ " rtree search time:" + (s4-s3));
-//        }
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
     }
+
+    private boolean isFirst = true;
 
     public long easyFind3(long minT, long maxT, long minA, long maxA) {
         Rect range = new Rect(minT, maxT, minA, maxA);
@@ -169,8 +139,17 @@ public class MyHash {
             }
         }
         long s4 = System.currentTimeMillis();
-        if (res % 50 == 0) {
+        if (res % 50 == 0 && total > 500 && isFirst) {
+            isFirst = false;
             System.out.println("Step3 外层相交块:" + result.getResult().size() + ",内层相交块个数:" + total + ", cost time:" + (s4 - s3) + " rtree search time:" + (s2 - s1));
+            System.out.println("Query: " + minT + " " + maxT + " " + minA + " " + maxA);
+            for (Entry entry : result.getResult()) {
+                System.out.println("Fat Block: " + entry.rect.minT + " " + entry.rect.maxT + " " + entry.rect.minA + " " + entry.rect.maxA);
+                AverageResult subRes = subRTree[(int) entry.posT].SearchAverage(range);
+                for (Entry node : subRes.getResult()) {
+                    System.out.println("Son Block: " + node.rect.minT + " " + node.rect.maxT + " " + node.rect.minA + " " + node.rect.maxA);
+                }
+            }
         }
         return cnt == 0 ? 0 : Math.floorDiv(res, cnt);
     }

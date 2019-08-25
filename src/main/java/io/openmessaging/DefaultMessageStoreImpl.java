@@ -25,7 +25,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         HeapHolder.getIns().flush();
-//        List<Message> res = MyHash.getIns().find2(tMin, tMax, aMin, aMax);
+//        List<Message> res = MyHash.getIns().easyFind2(tMin, tMax, aMin, aMax);
 //        System.out.println("step2: " + res.size());
 //        return res;
 //        return MyHash.getIns().force2(tMin, tMax, aMin, aMax);

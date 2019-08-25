@@ -18,7 +18,7 @@ public class GlobalParams {
     /**
      * 消息总数
      */
-    private static long MSG_COUNT = (IS_DEBUG ? 200_000_000L : 2_100_000_000L);
+    private static long MSG_COUNT = (IS_DEBUG ? 20_000_000L : 2_100_000_000L);
 
     /**
      * 拥塞队列的大小
@@ -38,7 +38,7 @@ public class GlobalParams {
     /**
      * 提交个数
      */
-    public static final int WRITE_COMMIT_COUNT_LIMIT = 2;
+    public static final int WRITE_COMMIT_COUNT_LIMIT = 1024;         // min = 4k / 50 * 8 * this
 
     private static boolean isStepOneFinished = false;
 

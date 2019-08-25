@@ -10,8 +10,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -31,21 +29,26 @@ class BufferHolder {
 
     private FileChannel channelA;
     private FileChannel channelT;
-    private FileChannel channelBody;
+    private FileChannel channelB;
 
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(
-            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit()
+    private ByteBuffer bBuffer = ByteBuffer.allocateDirect(
+            GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
     private ByteBuffer aBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit()
+            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
     private ByteBuffer tBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit()
+            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
-    private ExecutorService executor = Executors.newFixedThreadPool(2);
+    /**
+     * 总文件偏移量
+     */
+    private long totalPosT;
+    private long totalPosA;
+    private long totalPosB;
 
     private BufferHolder() {
         try {
@@ -57,7 +60,6 @@ class BufferHolder {
                     StandardOpenOption.APPEND
             );
 
-
             Path pathA = GlobalParams.getPath(1);
             channelA = FileChannel.open(
                     pathA,
@@ -66,11 +68,16 @@ class BufferHolder {
             );
 
             Path pathBody = GlobalParams.getPath(2);
-            channelBody = FileChannel.open(
+            channelB = FileChannel.open(
                     pathBody,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.APPEND
             );
+
+            totalPosT = channelT.position();
+            totalPosA = channelA.position();
+            totalPosB = channelB.position();
+
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -116,9 +123,9 @@ class BufferHolder {
                 channelA.close();
                 channelA = null;
             }
-            if (channelBody != null) {
-                channelBody.close();
-                channelBody = null;
+            if (channelB != null) {
+                channelB.close();
+                channelB = null;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -133,6 +140,25 @@ class BufferHolder {
                 solve(block);
             }
         }
+
+        if (bBuffer.position() > 0) {
+            try {
+                tBuffer.flip();
+                channelT.write(tBuffer);
+                tBuffer.clear();
+
+                aBuffer.flip();
+                channelA.write(aBuffer);
+                aBuffer.clear();
+
+                bBuffer.flip();
+                channelB.write(bBuffer);
+                bBuffer.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     /**
@@ -142,32 +168,34 @@ class BufferHolder {
     private synchronized void solve(MyBlock block) {
 
         try {
-            long posBody = channelBody.position();
-            long posA = channelA.position();
-            long posT = channelT.position();
 
-//            executor.execute(() -> {
-            MyHash.getIns().easyInsert(block, posT, posA, posBody);
-//            });
+            MyHash.getIns().easyInsert(block, totalPosT, totalPosA, totalPosB);
 
             // 写文件
             for (int i = 0; i < block.getMessageAmount(); ++i) {
-                aBuffer.putLong(block.getMessages()[i].getA());
                 tBuffer.putLong(block.getMessages()[i].getT());
-                buffer.put(block.getMessages()[i].getBody());
+                aBuffer.putLong(block.getMessages()[i].getA());
+                bBuffer.put(block.getMessages()[i].getBody());
             }
 
-            buffer.flip();
-            channelBody.write(buffer);
-            buffer.clear();
+            totalPosT += 8 * block.getMessageAmount();
+            totalPosA += 8 * block.getMessageAmount();
+            totalPosB += GlobalParams.getBodySize() * block.getMessageAmount();
 
-            aBuffer.flip();
-            channelA.write(aBuffer);
-            aBuffer.clear();
+            if (bBuffer.position() == bBuffer.capacity()) {
 
-            tBuffer.flip();
-            channelT.write(tBuffer);
-            tBuffer.clear();
+                tBuffer.flip();
+                channelT.write(tBuffer);
+                tBuffer.clear();
+
+                aBuffer.flip();
+                channelA.write(aBuffer);
+                aBuffer.clear();
+
+                bBuffer.flip();
+                channelB.write(bBuffer);
+                bBuffer.clear();
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
