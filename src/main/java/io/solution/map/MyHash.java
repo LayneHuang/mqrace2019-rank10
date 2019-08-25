@@ -144,10 +144,10 @@ public class MyHash {
             System.out.println("Step3 外层相交块:" + result.getResult().size() + ",内层相交块个数:" + total + ", cost time:" + (s4 - s3) + " rtree search time:" + (s2 - s1));
             System.out.println("Query: " + minT + " " + maxT + " " + minA + " " + maxA);
             for (Entry entry : result.getResult()) {
-                System.out.println("Fat Block: " + entry.rect.minT + " " + entry.rect.maxT + " " + entry.rect.minA + " " + entry.rect.maxA);
+                System.out.println("Fat Block: " + (entry.rect.minT - minT) + " " + (entry.rect.maxT - maxT) + " " + (entry.rect.minA - minA) + " " + (entry.rect.maxA - maxA));
                 AverageResult subRes = subRTree[(int) entry.posT].SearchAverage(range);
                 for (Entry node : subRes.getResult()) {
-                    System.out.println("Son Block: " + node.rect.minT + " " + node.rect.maxT + " " + node.rect.minA + " " + node.rect.maxA);
+                    System.out.println("Son Block: " + (node.rect.minT - minT) + " " + (node.rect.maxT - maxT) + " " + (node.rect.minA - minA) + " " + (node.rect.maxA - maxA));
                 }
             }
         }

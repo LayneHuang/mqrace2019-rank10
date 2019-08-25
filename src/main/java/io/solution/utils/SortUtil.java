@@ -147,10 +147,10 @@ public class SortUtil {
 
         List<SortMessage> sortMessages = new ArrayList<>();
         for (int i = 0; i < size; ++i) {
-            sortMessages.add(new SortMessage(i / GlobalParams.getBlockMessageLimit(), i, messages[i].getA()));
+            sortMessages.add(new SortMessage(i, messages[i].getA()));
         }
 
-        sortMessages.sort(Comparator.comparingInt((SortMessage o) -> o.inB).thenComparingLong(o -> o.a));
+        sortMessages.sort(Comparator.comparingLong(o -> o.a));
 
         List<MyBlock> result = new ArrayList<>();
 
