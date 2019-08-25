@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 4);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 8);
 
     /**
      * 消息总数
@@ -33,7 +33,7 @@ public class GlobalParams {
     /**
      * 写文件拥塞队列大小
      */
-    public static final int WRITE_COUNT_LIMIT = 512;
+    public static final int WRITE_COUNT_LIMIT = 256;
 
     /**
      * 提交个数
@@ -96,7 +96,7 @@ public class GlobalParams {
 
     public static final int MAX_R_TREE_CHILDREN_AMOUNT = 8;
 
-    public static final int FATHER_TREE_BLOCK_SIZE = 4000;
+    public static final int FATHER_TREE_BLOCK_SIZE = 2000;
 
     public static int getRTreeSubTreeSize() {
         return (int) Math.floorDiv(MSG_COUNT, (long) getBlockMessageLimit() * FATHER_TREE_BLOCK_SIZE) + 10;
