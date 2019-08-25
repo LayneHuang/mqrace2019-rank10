@@ -145,7 +145,7 @@ public class MyHash {
         }
         long s4 = System.currentTimeMillis();
         maxIntersect = Math.max(maxIntersect, total);
-        if (total > 500 && isFirst) {
+        if (total > 400 && isFirst) {
             isFirst = false;
             System.out.println("Step3 外层相交块:" + result.getResult().size() + ",内层相交块个数:" + total + ", cost time:" + (s4 - s3) + " rtree search time:" + (s2 - s1));
             System.out.println("最大相交数:" + maxIntersect);

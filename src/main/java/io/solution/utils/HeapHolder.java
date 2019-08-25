@@ -87,45 +87,24 @@ public class HeapHolder {
     /**
      * 第二阶段开始前处理未落盘数据
      */
-    public void flush() {
+    public synchronized void flush() {
         if (GlobalParams.isStepOneFinished()) {
             return;
         }
-        synchronized (this) {
-            if (!GlobalParams.isStepOneFinished()) {
-//                System.out.println("heap holder flush");
-                List<MyBlock> blocks = SortUtil.sortByA(heaps);
-                BufferHolder.getIns().commit(blocks);
+        GlobalParams.setStepOneFinished();
+        List<MyBlock> blocks = SortUtil.sortByA(heaps);
+        BufferHolder.getIns().commit(blocks);
 
-                BlockHolder.getIns().flush();
-                BufferHolder.getIns().flush();
-                MyHash.getIns().flush();
-                // 打印个块的信息
-                // MyHash.getIns().showEachInfo();
-                // 清空
-                heaps = null;
-                indexMap.clear();
-                indexMap = null;
-//                System.gc();
-//                MyHash.getIns().showAllBlockInfo();
-                System.out.println("BlockInfo的Size:" + MyHash.getIns().getBlockCount());
-                System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
+        BlockHolder.getIns().flush();
+        BufferHolder.getIns().flush();
+        MyHash.getIns().flush();
 
-//                for (int i = 0; i < MyHash.getIns().getSize(); ++i) {
-//                    BlockInfo blockInfo = MyHash.getIns().getAll()[i];
-//                    System.out.println(
-//                            "i:" + i
-//                                    + " msg amount:" + blockInfo.getMessageAmount()
-//                                    + " minT:" + blockInfo.getMinT()
-//                                    + " maxT:" + blockInfo.getMaxT()
-//                                    + " minA:" + blockInfo.getMinA()
-//                                    + " maxA:" + blockInfo.getMaxA()
-//                    );
-//                }
+        // 清空
+        heaps = null;
+        indexMap.clear();
+        indexMap = null;
 
-                GlobalParams.setStepOneFinished();
-            }
-        }
+        System.out.println("BlockInfo的Size:" + MyHash.getIns().getBlockCount());
+        System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
     }
-
 }

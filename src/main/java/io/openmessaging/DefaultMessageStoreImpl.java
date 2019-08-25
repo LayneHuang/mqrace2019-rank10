@@ -1,5 +1,6 @@
 package io.openmessaging;
 
+import io.solution.GlobalParams;
 import io.solution.map.MyHash;
 import io.solution.utils.HeapHolder;
 
@@ -24,7 +25,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
-        HeapHolder.getIns().flush();
+        if (!GlobalParams.isStepOneFinished()) {
+            HeapHolder.getIns().flush();
+        }
 //        List<Message> res = MyHash.getIns().easyFind2(tMin, tMax, aMin, aMax);
 //        System.out.println("step2: " + res.size());
 //        return res;
