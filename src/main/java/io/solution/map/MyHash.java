@@ -100,6 +100,8 @@ public class MyHash {
     }
 
     private boolean isFirst = true;
+    // 单次查询最大块相交数
+    public int maxIntersect = 0;
 
     public long easyFind3(long minT, long maxT, long minA, long maxA) {
         Rect range = new Rect(minT, maxT, minA, maxA);
@@ -139,9 +141,11 @@ public class MyHash {
             }
         }
         long s4 = System.currentTimeMillis();
-        if (res % 50 == 0 && total > 500 && isFirst) {
+        maxIntersect = Math.max(maxIntersect, total);
+        if (res % 1000 == 0 && isFirst) {
             isFirst = false;
             System.out.println("Step3 外层相交块:" + result.getResult().size() + ",内层相交块个数:" + total + ", cost time:" + (s4 - s3) + " rtree search time:" + (s2 - s1));
+            System.out.println("最大相交数:" + maxIntersect);
             System.out.println("Query: " + minT + " " + maxT + " " + minA + " " + maxA);
             for (Entry entry : result.getResult()) {
                 System.out.println("Fat Block: " + (entry.rect.minT - minT) + " " + (entry.rect.maxT - maxT) + " " + (entry.rect.minA - minA) + " " + (entry.rect.maxA - maxA));

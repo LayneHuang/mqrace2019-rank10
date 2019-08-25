@@ -23,17 +23,17 @@ public class GlobalParams {
     /**
      * 拥塞队列的大小
      */
-    public static final int BLOCK_COUNT_LIMIT = 2048;
+    public static final int BLOCK_COUNT_LIMIT = 1024;
 
     /**
      * 提交个数
      */
-    public static final int BLOCK_COMMIT_COUNT_LIMIT = 512;
+    public static final int BLOCK_COMMIT_COUNT_LIMIT = 128;
 
     /**
      * 写文件拥塞队列大小
      */
-    public static final int WRITE_COUNT_LIMIT = 1024;
+    public static final int WRITE_COUNT_LIMIT = 512;
 
     /**
      * 提交个数
