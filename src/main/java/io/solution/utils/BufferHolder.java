@@ -1,5 +1,6 @@
 package io.solution.utils;
 
+import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
 import io.solution.map.MyHash;
@@ -83,7 +84,7 @@ class BufferHolder {
             e.printStackTrace();
         }
         blockQueue = new LinkedBlockingQueue<>(GlobalParams.WRITE_COUNT_LIMIT);
-        Thread workThread = new Thread(this::writeFile);
+        Thread workThread = new Thread(this::work);
         workThread.setName("BUFFER-HOLDER-THREAD");
         workThread.start();
     }
@@ -102,7 +103,7 @@ class BufferHolder {
         }
     }
 
-    private void writeFile() {
+    private void work() {
 //        System.out.println("BufferHolder write file 开始工作~");
         while (!isFinish) {
             try {
@@ -149,21 +150,7 @@ class BufferHolder {
         }
 
         if (bBuffer.position() > 0) {
-            try {
-                tBuffer.flip();
-                channelT.write(tBuffer);
-                tBuffer.clear();
-
-                aBuffer.flip();
-                channelA.write(aBuffer);
-                aBuffer.clear();
-
-                bBuffer.flip();
-                channelB.write(bBuffer);
-                bBuffer.clear();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            writeFile();
         }
 
     }
@@ -174,35 +161,38 @@ class BufferHolder {
 
     private synchronized void solve(MyBlock block) {
 
+        MyHash.getIns().easyInsert(block, totalPosT, totalPosA, totalPosB);
+
+        // 写文件
+
+        for (int i = 0; i < block.getMessageAmount(); ++i) {
+            Message message = block.getMessages()[i];
+            tBuffer.putLong(message.getT());
+            aBuffer.putLong(message.getA());
+            bBuffer.put(message.getBody());
+        }
+
+        totalPosT += 8 * block.getMessageAmount();
+        totalPosA += 8 * block.getMessageAmount();
+        totalPosB += GlobalParams.getBodySize() * block.getMessageAmount();
+        if (bBuffer.position() == bBuffer.limit()) {
+            writeFile();
+        }
+    }
+
+    private synchronized void writeFile() {
         try {
+            tBuffer.flip();
+            channelT.write(tBuffer);
+            tBuffer.clear();
 
-            MyHash.getIns().easyInsert(block, totalPosT, totalPosA, totalPosB);
-            // 写文件
-            for (int i = 0; i < block.getMessageAmount(); ++i) {
-                tBuffer.putLong(block.getMessages()[i].getT());
-                aBuffer.putLong(block.getMessages()[i].getA());
-                bBuffer.put(block.getMessages()[i].getBody());
-            }
+            aBuffer.flip();
+            channelA.write(aBuffer);
+            aBuffer.clear();
 
-            totalPosT += 8 * block.getMessageAmount();
-            totalPosA += 8 * block.getMessageAmount();
-            totalPosB += GlobalParams.getBodySize() * block.getMessageAmount();
-
-            if (bBuffer.position() == bBuffer.capacity()) {
-
-                tBuffer.flip();
-                channelT.write(tBuffer);
-                tBuffer.clear();
-
-                aBuffer.flip();
-                channelA.write(aBuffer);
-                aBuffer.clear();
-
-                bBuffer.flip();
-                channelB.write(bBuffer);
-                bBuffer.clear();
-            }
-
+            bBuffer.flip();
+            channelB.write(bBuffer);
+            bBuffer.clear();
         } catch (IOException e) {
             e.printStackTrace();
         }
