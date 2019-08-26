@@ -9,11 +9,11 @@ import io.solution.GlobalParams;
  */
 public class MyBlock {
 
-    private long minA;
-    private long maxA;
-    private long minT;
-    private long maxT;
-    private long sum;
+    public long minA;
+    public long maxA;
+    public long minT;
+    public long maxT;
+    public long sum;
 
     private Message[] messages;
 
@@ -56,34 +56,6 @@ public class MyBlock {
             maxT = Math.max(maxT, message.getT());
         }
         messages[messageAmount++] = message;
-    }
-
-    public long getMinA() {
-        return minA;
-    }
-
-    public long getMaxA() {
-        return maxA;
-    }
-
-    public long getMinT() {
-        return minT;
-    }
-
-    public long getMaxT() {
-        return maxT;
-    }
-
-    public long getSum() {
-        return sum;
-    }
-
-    public void setSum(long sum) {
-        this.sum = sum;
-    }
-
-    public void showSquare() {
-        System.out.println(minA + " " + maxA + " " + minT + " " + maxT);
     }
 
     public int getMessageAmount() {

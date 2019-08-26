@@ -3,6 +3,7 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
+import io.solution.map.MyHash;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -102,6 +103,9 @@ public class HeapHolder {
         indexMap.clear();
         indexMap = null;
 
+//        MyHash.getIns().check();
+
+        System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
     }
 }

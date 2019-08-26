@@ -39,10 +39,10 @@ public class HelpUtil {
         return a <= maxA && a >= minA && t <= maxT && t >= minT;
     }
 
-    public static long[] readT(long position, int messageCount) {
-        int size = messageCount * 8;
+    public static long[] readAT(long position, int messageCount) {
+        int size = messageCount * 16;
         FileChannel channel = null;
-        long[] res = new long[messageCount];
+        long[] res = new long[messageCount * 2];
 
         try {
             channel = FileChannel.open(
@@ -54,41 +54,7 @@ public class HelpUtil {
             buffer.flip();
 
             // trans
-            for (int i = 0; i < messageCount; ++i) {
-                res[i] = buffer.getLong();
-            }
-
-            buffer.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (channel != null) {
-                    channel.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return res;
-    }
-
-    public static long[] readA(long position, int messageCount) {
-        int size = messageCount * 8;
-        FileChannel channel = null;
-        long[] res = new long[messageCount];
-
-        try {
-            channel = FileChannel.open(
-                    GlobalParams.getPath(1),
-                    StandardOpenOption.READ
-            );
-            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
-            channel.read(buffer, position);
-            buffer.flip();
-
-            // trans
-            for (int i = 0; i < messageCount; ++i) {
+            for (int i = 0; i < messageCount * 2; ++i) {
                 res[i] = buffer.getLong();
             }
 

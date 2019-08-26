@@ -13,12 +13,12 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 8);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 1 : 16);
 
     /**
      * 消息总数
      */
-    private static long MSG_COUNT = (IS_DEBUG ? 20_000_000L : 2_100_000_000L);
+    private static int MSG_COUNT = (IS_DEBUG ? 20_000_000 : 2_080_000_000);
 
     /**
      * 拥塞队列的大小
@@ -57,11 +57,11 @@ public class GlobalParams {
         Path path;
         if (GlobalParams.IS_DEBUG) {
             if (d == 2) {
-                path = Paths.get(System.getProperty("user.dir"), "/data.b");
+                path = Paths.get(System.getProperty("user.dir"), "/d/data.b");
             } else if (d == 1) {
-                path = Paths.get(System.getProperty("user.dir"), "/data.a");
+                path = Paths.get(System.getProperty("user.dir"), "/d/data.a");
             } else {
-                path = Paths.get(System.getProperty("user.dir"), "/data.t");
+                path = Paths.get(System.getProperty("user.dir"), "/d/data.t");
             }
         } else {
             if (d == 2) {
@@ -93,6 +93,10 @@ public class GlobalParams {
 
     public static int getBlockMessageLimit() {
         return Math.floorDiv(BLOCK_SIZE, getMessageSize());
+    }
+
+    public static int getBlockInfoLimit() {
+        return Math.floorDiv(MSG_COUNT, getBlockMessageLimit());
     }
 
 }
