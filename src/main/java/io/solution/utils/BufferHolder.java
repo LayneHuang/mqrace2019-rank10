@@ -38,10 +38,6 @@ class BufferHolder {
             GlobalParams.getBodySize() * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
-    private ByteBuffer aBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
-    );
-
     private ByteBuffer atBuffer = ByteBuffer.allocateDirect(
             16 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
@@ -115,7 +111,6 @@ class BufferHolder {
                 channelB.close();
                 channelB = null;
             }
-            aBuffer = null;
             atBuffer = null;
             bBuffer = null;
             System.out.println("BufferHolder write file 结束~");
