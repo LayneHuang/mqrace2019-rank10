@@ -3,7 +3,6 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
-import io.solution.map.MyHash;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -92,19 +91,17 @@ public class HeapHolder {
             return;
         }
         GlobalParams.setStepOneFinished();
-        List<MyBlock> blocks = SortUtil.sortByA(heaps);
+        List<MyBlock> blocks = SortUtil.myMergeSort(heaps);
         BufferHolder.getIns().commit(blocks);
 
         BlockHolder.getIns().flush();
         BufferHolder.getIns().flush();
-        MyHash.getIns().flush();
 
         // 清空
         heaps = null;
         indexMap.clear();
         indexMap = null;
 
-        System.out.println("BlockInfo的Size:" + MyHash.getIns().getBlockCount());
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
     }
 }

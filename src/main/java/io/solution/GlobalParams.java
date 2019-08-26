@@ -40,6 +40,8 @@ public class GlobalParams {
      */
     public static final int WRITE_COMMIT_COUNT_LIMIT = 1024;         // min = 4k / 50 * 8 * this
 
+    public static final long MAX_A_VALUE = 3000000000000000L;
+
     private static boolean isStepOneFinished = false;
 
     public static void setStepOneFinished() {
@@ -90,16 +92,7 @@ public class GlobalParams {
     }
 
     public static int getBlockMessageLimit() {
-//        return getBlockPageLimit() * getPageMessageCount();
         return Math.floorDiv(BLOCK_SIZE, getMessageSize());
-    }
-
-    public static final int MAX_R_TREE_CHILDREN_AMOUNT = 8;
-
-    public static final int FATHER_TREE_BLOCK_SIZE = 2000;
-
-    public static int getRTreeSubTreeSize() {
-        return (int) Math.floorDiv(MSG_COUNT, (long) getBlockMessageLimit() * FATHER_TREE_BLOCK_SIZE) + 10;
     }
 
 }

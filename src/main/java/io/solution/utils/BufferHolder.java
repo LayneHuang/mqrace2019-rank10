@@ -3,7 +3,6 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
-import io.solution.map.MyHash;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -41,15 +40,9 @@ class BufferHolder {
     );
 
     private ByteBuffer tBuffer = ByteBuffer.allocateDirect(
-            8 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
+            16 * GlobalParams.getBlockMessageLimit() * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
-    /**
-     * 总文件偏移量
-     */
-    private long totalPosT;
-    private long totalPosA;
-    private long totalPosB;
 
     private BufferHolder() {
         try {
@@ -74,10 +67,6 @@ class BufferHolder {
                     StandardOpenOption.CREATE,
                     StandardOpenOption.APPEND
             );
-
-            totalPosT = channelT.position();
-            totalPosA = channelA.position();
-            totalPosB = channelB.position();
 
 
         } catch (IOException e) {
@@ -161,10 +150,7 @@ class BufferHolder {
 
     private synchronized void solve(MyBlock block) {
 
-        MyHash.getIns().easyInsert(block, totalPosT, totalPosA, totalPosB);
-
         // 写文件
-
         for (int i = 0; i < block.getMessageAmount(); ++i) {
             Message message = block.getMessages()[i];
             tBuffer.putLong(message.getT());

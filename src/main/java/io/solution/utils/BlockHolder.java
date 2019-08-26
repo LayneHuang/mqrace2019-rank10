@@ -44,7 +44,7 @@ public class BlockHolder {
 
             if (!blocks.isEmpty()) {
                 // 归并
-                blocks = SortUtil.sortByA(blocks);
+                blocks = SortUtil.myMergeSort(blocks);
                 BufferHolder.getIns().commit(blocks);
             }
         }
@@ -73,7 +73,7 @@ public class BlockHolder {
         }
         if (!blocks.isEmpty()) {
             // 归并
-            blocks = SortUtil.sortByA(blocks);
+            blocks = SortUtil.myMergeSort(blocks);
             BufferHolder.getIns().commit(blocks);
         }
         isFinish = true;
