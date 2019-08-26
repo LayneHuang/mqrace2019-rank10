@@ -106,6 +106,7 @@ public class HeapHolder {
 //        MyHash.getIns().check();
 
         System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
+        System.out.println("total msg:" + MyHash.getIns().totalMsg);
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
     }
 }

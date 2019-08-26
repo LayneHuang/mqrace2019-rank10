@@ -18,6 +18,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         long theadId = Thread.currentThread().getId();
         // 数据填入优先队列中
         HeapHolder.getIns().put(theadId, message);
+        HeapHolder.getIns().checkAndCommit(theadId);
     }
 
     @Override

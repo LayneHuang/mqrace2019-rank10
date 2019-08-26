@@ -31,11 +31,11 @@ public class MyHash {
     private int lastBlockMsgAmount = 0;
     private int lastBlockIdx = 0;
 
-    private MyHash() {
-
-    }
+    public int totalMsg = 0;
 
     public synchronized void insert(MyBlock block, long posAT, long posB) {
+
+        totalMsg += block.getMessageAmount();
 
         minTs[size] = block.minT;
         maxTs[size] = block.maxT;
