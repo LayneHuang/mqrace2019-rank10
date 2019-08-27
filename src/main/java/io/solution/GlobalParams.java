@@ -23,7 +23,7 @@ public class GlobalParams {
     /**
      * 拥塞队列的大小
      */
-    public static final int MSG_BLOCK_QUEUE_LIMIT = 1024 * 50;
+    public static final int MSG_BLOCK_QUEUE_LIMIT = 1024 * 1024;
 
     /**
      * 提交个数

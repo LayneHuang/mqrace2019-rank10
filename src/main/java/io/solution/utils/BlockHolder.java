@@ -86,7 +86,7 @@ public class BlockHolder {
     private void work() {
         System.out.println("Block holder worker 开始工作~");
         while (!isFinish) {
-            if (queueSize() > (GlobalParams.MSG_BLOCK_QUEUE_LIMIT / 2)) {
+            if (queueSize() > 2048) {
                 MyBlock block = new MyBlock();
                 for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
                     long s0 = System.nanoTime();
