@@ -23,7 +23,7 @@ public class BlockHolder {
     private BlockingQueue<MyMsg> writerQue;
 
     // 线程信号量
-    Semaphore[] semaphores = new Semaphore[20];
+    private Semaphore[] semaphores = new Semaphore[20];
 
     private static BlockHolder ins = new BlockHolder();
 
@@ -152,7 +152,7 @@ public class BlockHolder {
 
         BufferHolder.getIns().flush();
 
-//        MyHash.getIns().check();
+        MyHash.getIns().check();
 
 //        long totalMsg = 0;
 //        for (int i = 0; i < total; ++i) {
@@ -162,7 +162,7 @@ public class BlockHolder {
         System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
         System.out.println("BlockHolder提交等待时间:" + commitWaitTime);
         System.out.println("BlockHolder队列取等待时间:" + waitTime);
-        System.out.println("BufferHolder写文件队列取等待时间:" + waitTime);
+        System.out.println("BufferHolder写文件队列取等待时间:" + BufferHolder.getIns().waitTime);
         System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
         System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
         System.out.println("块合并次数:" + MyHash.getIns().exchangeCost);
@@ -178,12 +178,12 @@ public class BlockHolder {
 
     private static final String HEAP_CREATE_LOCK = "HEAP_CREATE_LOCK";
 
-    public int[] msgAmount = new int[20];
-
-    public void addCount(long threadId) {
-        int id = getIndex(threadId);
-        msgAmount[id]++;
-    }
+//    public int[] msgAmount = new int[20];
+//
+//    public void addCount(long threadId) {
+//        int id = getIndex(threadId);
+//        msgAmount[id]++;
+//    }
 
     private int getIndex(long threadId) {
         if (indexMap.containsKey(threadId)) {
@@ -194,7 +194,7 @@ public class BlockHolder {
                     return indexMap.get(threadId);
                 }
                 int index = total++;
-                msgAmount[index] = 0;
+//                msgAmount[index] = 0;
                 semaphores[index] = new Semaphore(GlobalParams.MSG_BLOCK_QUEUE_LIMIT / 12);
                 indexMap.put(threadId, index);
                 return index;

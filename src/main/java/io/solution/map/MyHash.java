@@ -213,7 +213,6 @@ public class MyHash {
             if (i + 1 < size && posATs[i] + 16 * msgAmount[i] != posATs[i + 1]) {
                 cont = false;
             }
-
         }
         System.out.println("cnt1:" + cnt1 + ",cnt2:" + cnt2 + (cont ? " 偏移连续" : " 偏移出问题!!"));
     }
