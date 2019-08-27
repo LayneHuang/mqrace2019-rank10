@@ -3,6 +3,8 @@ package io.solution.map;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
+import io.solution.utils.BlockHolder;
+import io.solution.utils.BufferHolder;
 import io.solution.utils.HelpUtil;
 
 import java.util.ArrayList;
@@ -29,6 +31,9 @@ public class MyHash {
     private long[] posBs = new long[GlobalParams.getBlockInfoLimit()];
     private int[] msgAmount = new int[GlobalParams.getBlockInfoLimit()];
 
+    private int lastBlockMsgAmount = 0;
+    private int lastBlockIdx = 0;
+
     public int totalMsg = 0;
     public int exchangeCount = 0;
     public int exchangeCost = 0;
@@ -46,29 +51,35 @@ public class MyHash {
         posATs[size] = posAT;
         posBs[size] = posB;
         msgAmount[size] = block.getMessageAmount();
-//
-//        long s0 = System.currentTimeMillis();
-//        for (int i = size; i >= 1 && (minTs[i] < minTs[i - 1] || maxTs[i - 1] > maxTs[i]); --i) {
-//            minTs[i - 1] = Math.min(minTs[i - 1], minTs[i]);
-//            maxTs[i - 1] = Math.max(maxTs[i - 1], maxTs[i]);
-//            minAs[i - 1] = Math.min(minAs[i - 1], minAs[i]);
-//            maxAs[i - 1] = Math.max(maxAs[i - 1], maxAs[i]);
-//            sums[i - 1] += sums[i];
-//            msgAmount[i - 1] += msgAmount[i];
-//            exchangeCount++;
-//            size--;
-//        }
-//        exchangeCost += (System.currentTimeMillis() - s0);
+
+        long s0 = System.currentTimeMillis();
+
+        for (int i = size; i >= 1 && (minTs[i] < minTs[i - 1] || maxTs[i - 1] > maxTs[i]); --i) {
+            minTs[i - 1] = Math.min(minTs[i - 1], minTs[i]);
+            maxTs[i - 1] = Math.max(maxTs[i - 1], maxTs[i]);
+            minAs[i - 1] = Math.min(minAs[i - 1], minAs[i]);
+            maxAs[i - 1] = Math.max(maxAs[i - 1], maxAs[i]);
+            sums[i - 1] += sums[i];
+            if (posATs[i - 1] + 16 * msgAmount[i - 1] != posATs[i]) {
+                System.out.println("fuck!!!~" + posATs[i - 1] + " " + posATs[i]);
+            }
+            msgAmount[i - 1] += msgAmount[i];
+            exchangeCount++;
+            size--;
+        }
 
         maxMsgAmount = Math.max(maxMsgAmount, msgAmount[size]);
+
+        exchangeCost += (System.currentTimeMillis() - s0);
         size++;
 
 //        if (size % 10000 == 0) {
 //            System.out.println(
 //                    "插入消息:" + totalMsg
+//                            + " block等待时间:" + BlockHolder.getIns().waitTime
+//                            + " buffer等待时间:" + BufferHolder.getIns().waitTime
 //                            + " exchange次数:" + exchangeCount
 //                            + " exchange耗时:" + exchangeCost
-//                            + " 最大消息数:" + maxMsgAmount
 //            );
 //        }
     }
@@ -77,16 +88,14 @@ public class MyHash {
         return ins;
     }
 
-
     public List<Message> easyFind2(long minT, long maxT, long minA, long maxA) {
-        int cont = 0;
+//        int cont = 0;
         List<Message> res = new ArrayList<>();
         int l = findLeft(minT);
         int r = findRight(maxT);
         if (l == -1 || r == -1) {
             return res;
         }
-
 
         for (int i = l; i <= r; ++i) {
             long[] atList = HelpUtil.readAT(posATs[i], msgAmount[i]);
@@ -100,19 +109,18 @@ public class MyHash {
 
 //        int tMsgAmount = 0;
 //        int sIdx = -1;
+
 //        for (int i = l; i <= r; ++i) {
-//
 //            tMsgAmount += msgAmount[i];
 //            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]) {
 //                if (sIdx == -1) {
 //                    sIdx = i;
 //                }
-//                cont++;
+////                cont++;
 //                continue;
 //            } else if (sIdx == -1) {
 //                sIdx = i;
 //            }
-//
 //            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
 //            byte[][] bodyList = HelpUtil.readBody(posBs[sIdx], tMsgAmount);
 //            for (int j = 0; j < tMsgAmount; ++j) {
@@ -124,9 +132,9 @@ public class MyHash {
 //            sIdx = -1;
 //        }
 
-        if (res.size() % 100 == 0) {
-            System.out.println("continue count:" + cont);
-        }
+//        if (res.size() % 100 == 0) {
+//            System.out.println("continue count:" + cont);
+//        }
 
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
@@ -134,7 +142,6 @@ public class MyHash {
 
     public long easyFind3(long minT, long maxT, long minA, long maxA) {
 
-//        int insCount = 0;
         long res = 0;
         int cnt = 0;
 
@@ -144,43 +151,47 @@ public class MyHash {
             return res;
         }
 
-//        long s1 = System.currentTimeMillis();
-        int tMsgAmount = 0;
-        int sIdx = -1;
-
         for (int i = l; i <= r; ++i) {
-            tMsgAmount += msgAmount[i];
-            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]) {
-                if (sIdx == -1) {
-                    sIdx = i;
-                }
-                continue;
-            } else if (sIdx == -1) {
-                if (HelpUtil.intersect(minT, maxT, minA, maxA, minTs[i], maxTs[i], minAs[i], maxAs[i])) {
-                    res += sums[i];
-                    cnt += msgAmount[i];
-//                    insCount++;
-                } else {
-                    sIdx = i;
+
+            long[] atList = HelpUtil.readAT(posATs[i], msgAmount[i]);
+            for (int j = 0; j < msgAmount[i]; ++j) {
+                if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
+                    res += atList[j * 2 + 1];
+                    cnt++;
                 }
             }
-            if (sIdx != -1) {
-                long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
-                for (int j = 0; j < tMsgAmount; ++j) {
-                    if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
-                        res += atList[j * 2 + 1];
-                        cnt++;
-                    }
-                }
-            }
-            tMsgAmount = 0;
-            sIdx = -1;
         }
 
-//        long s2 = System.currentTimeMillis();
-//        if (res % 100 == 0) {
-//            System.out.println("包含块:" + insCount + " 相交块:" + (r - l + 1 - insCount) + " 耗时:" + (s2 - s1));
+
+//        int tMsgAmount = 0;
+//        int sIdx = -1;
+
+//        for (int i = 1; i <= size - 1; ++i) {
+//
+//
+//
+//
+//            tMsgAmount += msgAmount[i];
+//            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]) {
+//                if (sIdx == -1) {
+//                    sIdx = i;
+//                }
+//                continue;
+//            } else if (sIdx == -1) {
+//                sIdx = i;
+//            }
+//
+//            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
+//            for (int j = 0; j < tMsgAmount; ++j) {
+//                if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
+//                    res += atList[j * 2 + 1];
+//                    cnt++;
+//                }
+//            }
+//            tMsgAmount = 0;
+//            sIdx = -1;
 //        }
+
         return cnt == 0 ? 0 : Math.floorDiv(res, (long) cnt);
     }
 
@@ -231,8 +242,9 @@ public class MyHash {
     public void check() {
         int cnt1 = 0;
         int cnt2 = 0;
+        boolean cont = true;
         for (int i = 0; i < size; ++i) {
-//            System.out.println(i + " " + minTs[i] + " " + maxTs[i] + " " + msgAmount[i]);
+//            System.out.println(i + " " + minTs[i] + " " + maxTs[i]);
             if (i > 1 && (minTs[i] < minTs[i - 1] || maxTs[i - 1] > maxTs[i])) {
 //                System.out.println("fuck!!!! " + i + " " + minTs[i - 1] + " " + minTs[i] + " " + maxTs[i - 1] + " " + maxTs[i]);
 //                break;
@@ -240,8 +252,13 @@ public class MyHash {
             } else {
                 cnt2++;
             }
+
+            if (i + 1 < size && posATs[i] + 16 * msgAmount[i] != posATs[i + 1]) {
+                cont = false;
+            }
+
         }
-        System.out.println("cnt1:" + cnt1 + ",cnt2:" + cnt2);
+        System.out.println("cnt1:" + cnt1 + ",cnt2:" + cnt2 + (cont ? " 偏移连续" : " 偏移出问题!!"));
     }
 
 }

@@ -2,7 +2,7 @@ package io.openmessaging;
 
 import io.solution.GlobalParams;
 import io.solution.map.MyHash;
-import io.solution.utils.HeapHolder;
+import io.solution.utils.BlockHolder;
 
 import java.util.List;
 
@@ -15,16 +15,15 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public void put(Message message) {
-        long theadId = Thread.currentThread().getId();
+//        long theadId = Thread.currentThread().getId();
         // 数据填入优先队列中
-        HeapHolder.getIns().put(theadId, message);
-        HeapHolder.getIns().checkAndCommit(theadId);
+        BlockHolder.getIns().commit(message);
     }
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         if (!GlobalParams.isStepOneFinished()) {
-            HeapHolder.getIns().flush();
+            BlockHolder.getIns().flush();
         }
 //        List<Message> res = MyHash.getIns().easyFind2(tMin, tMax, aMin, aMax);
 //        System.out.println("step2");

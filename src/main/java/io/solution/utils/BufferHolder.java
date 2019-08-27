@@ -10,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -20,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * @Author: laynehuang
  * @CreatedAt: 2019/8/5 0005
  */
-class BufferHolder {
+public class BufferHolder {
 
     private boolean isFinish = false;
 
@@ -54,7 +53,6 @@ class BufferHolder {
                     StandardOpenOption.APPEND
             );
 
-
             Path pathBody = GlobalParams.getPath(2);
             channelB = FileChannel.open(
                     pathBody,
@@ -73,25 +71,29 @@ class BufferHolder {
         workThread.start();
     }
 
-    static BufferHolder getIns() {
+    public static BufferHolder getIns() {
         return ins;
     }
 
-    void commit(List<MyBlock> blocks) {
+    void commit(MyBlock block) {
+//        System.out.println("buffer 提交 " + block.getMessageAmount() + " " + GlobalParams.getBlockMessageLimit());
         try {
-            for (MyBlock block : blocks) {
-                blockQueue.put(block);
-            }
+            blockQueue.put(block);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
+    public long waitTime = 0;
+
     private void work() {
         System.out.println("BufferHolder write file 开始工作~");
         while (!isFinish) {
             try {
+                long s0 = System.nanoTime();
                 MyBlock block = blockQueue.poll(5, TimeUnit.SECONDS);
+                waitTime += System.nanoTime() - s0;
+//                System.out.println("buffer 提取" + blockQueue.size());
                 if (block == null) {
                     isFinish = true;
                     break;
@@ -132,7 +134,6 @@ class BufferHolder {
             nowWriteCount = 0;
             writeFile();
         }
-
     }
 
     /**
@@ -162,6 +163,7 @@ class BufferHolder {
     }
 
     private synchronized void writeFile() {
+//        System.out.println("Write File~");
         try {
             atBuffer.flip();
             channelAT.write(atBuffer);
