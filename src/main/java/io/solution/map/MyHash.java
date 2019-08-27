@@ -68,15 +68,15 @@ public class MyHash {
 
         size++;
 
-//        if (size % 10000 == 0) {
-//            System.out.println(
-//                    "插入消息:" + totalMsg
-//                            + " block等待时间:" + BlockHolder.getIns().waitTime
-//                            + " buffer等待时间:" + BufferHolder.getIns().waitTime
-//                            + " exchange次数:" + exchangeCount
-//                            + " exchange耗时:" + exchangeCost
-//            );
-//        }
+        if (size % 10000 == 0) {
+            System.out.println(
+                    "插入消息:" + totalMsg
+                            + " block等待时间:" + BlockHolder.getIns().waitTime
+                            + " buffer等待时间:" + BufferHolder.getIns().waitTime
+                            + " exchange次数:" + exchangeCount
+                            + " exchange耗时:" + exchangeCost
+            );
+        }
     }
 
     public static MyHash getIns() {

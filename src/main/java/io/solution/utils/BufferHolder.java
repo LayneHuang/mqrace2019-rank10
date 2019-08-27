@@ -71,7 +71,7 @@ public class BufferHolder {
         workThread.start();
     }
 
-    static BufferHolder getIns() {
+    public static BufferHolder getIns() {
         return ins;
     }
 
