@@ -15,8 +15,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public void put(Message message) {
+        long threadId = Thread.currentThread().getId();
         // 数据填入优先队列中
-        BlockHolder.getIns().commit(message);
+        BlockHolder.getIns().commit(threadId , message);
     }
 
     @Override

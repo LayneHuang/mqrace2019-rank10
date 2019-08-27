@@ -48,7 +48,7 @@ public class MyHash {
         posATs[size] = posAT;
         posBs[size] = posB;
         msgAmount[size] = block.getMessageAmount();
-        long s0 = System.currentTimeMillis();
+        long s0 = System.nanoTime();
         for (int i = size; i >= 1 && (minTs[i] < minTs[i - 1] || maxTs[i - 1] > maxTs[i]); --i) {
             minTs[i - 1] = Math.min(minTs[i - 1], minTs[i]);
             maxTs[i - 1] = Math.max(maxTs[i - 1], maxTs[i]);
@@ -62,7 +62,7 @@ public class MyHash {
             exchangeCount++;
             size--;
         }
-        exchangeCost += (System.currentTimeMillis() - s0);
+        exchangeCost += (System.nanoTime() - s0);
 
         maxMsgAmount = Math.max(maxMsgAmount, msgAmount[size]);
 

@@ -23,7 +23,7 @@ public class GlobalParams {
     /**
      * 拥塞队列的大小
      */
-    public static final int MSG_BLOCK_QUEUE_LIMIT = 1024 * 1024;
+    public static final int MSG_BLOCK_QUEUE_LIMIT = 1024 * 100;
 
     /**
      * 提交个数
@@ -38,7 +38,7 @@ public class GlobalParams {
     /**
      * 提交个数
      */
-    public static final int WRITE_COMMIT_COUNT_LIMIT = 1024;         // min = 4k / 50 * 8 * this
+    public static final int WRITE_COMMIT_COUNT_LIMIT = 512;         // min = 4k / 50 * 8 * this
 
     public static final long MAX_A_VALUE = 3000000000000000L;
 

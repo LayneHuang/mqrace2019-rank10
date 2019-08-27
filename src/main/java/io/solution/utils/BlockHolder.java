@@ -3,6 +3,7 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
+import io.solution.data.MyMsg;
 import io.solution.map.MyHash;
 
 import java.util.Comparator;
@@ -16,26 +17,26 @@ public class BlockHolder {
 
     private boolean isFinish = false;
 
-    private LinkedBlockingQueue<Integer> lockQueue;
 
     // 双缓冲队列
+    private BlockingQueue<MyMsg> readerQue;
+    private BlockingQueue<MyMsg> writerQue;
 
-    private BlockingQueue<Message> readerQue;
-    private BlockingQueue<Message> writerQue;
+    // 线程信号量
+    Semaphore[] semaphores = new Semaphore[20];
 
     private static BlockHolder ins = new BlockHolder();
 
     private BlockHolder() {
-
-        lockQueue = new LinkedBlockingQueue<>(GlobalParams.MSG_BLOCK_QUEUE_LIMIT);
+        indexMap = new ConcurrentHashMap<>();
 
         readerQue = new PriorityBlockingQueue<>(
                 GlobalParams.MSG_BLOCK_QUEUE_LIMIT,
-                Comparator.comparingLong(t0 -> t0.getT())
+                Comparator.comparingLong(t0 -> t0.msg.getT())
         );
         writerQue = new PriorityBlockingQueue<>(
                 GlobalParams.MSG_BLOCK_QUEUE_LIMIT,
-                Comparator.comparingLong(t0 -> t0.getT())
+                Comparator.comparingLong(t0 -> t0.msg.getT())
         );
 
         Thread workThread = new Thread(this::work);
@@ -48,31 +49,22 @@ public class BlockHolder {
         return ins;
     }
 
-    private void myPut(Message message) {
-        try {
-            lockQueue.put(0);
-            writerQue.put(message);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     private Message myPoll() {
         if (readerQue.isEmpty()) {
-            BlockingQueue<Message> temp = readerQue;
+            BlockingQueue<MyMsg> temp = readerQue;
             readerQue = writerQue;
             writerQue = temp;
         }
-        Message message = null;
+        MyMsg myMsg = null;
         try {
-            message = readerQue.poll(5, TimeUnit.SECONDS);
-            if (message != null) {
-                lockQueue.poll();
+            myMsg = readerQue.poll(5, TimeUnit.SECONDS);
+            if (myMsg != null) {
+                semaphores[myMsg.idx].release();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return message;
+        return myMsg == null ? null : myMsg.msg;
     }
 
     private int queueSize() {
@@ -86,7 +78,7 @@ public class BlockHolder {
     private void work() {
         System.out.println("Block holder worker 开始工作~");
         while (!isFinish) {
-            if (queueSize() > 2048) {
+            if (queueSize() > GlobalParams.MSG_BLOCK_QUEUE_LIMIT / 2) {
                 MyBlock block = new MyBlock();
                 for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
                     long s0 = System.nanoTime();
@@ -104,9 +96,15 @@ public class BlockHolder {
         System.out.println("Block holder worker 结束工作~");
     }
 
-    public void commit(Message message) {
+    public void commit(long threadId, Message message) {
         long s0 = System.nanoTime();
-        myPut(message);
+        try {
+            int idx = getIndex(threadId);
+            semaphores[idx].acquire();
+            writerQue.put(new MyMsg(message, idx));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         commitWaitTime += System.nanoTime() - s0;
     }
 
@@ -121,7 +119,7 @@ public class BlockHolder {
         int msgSize = 0;
 
         while (readerQue.size() > 0) {
-            Message message = readerQue.poll();
+            Message message = readerQue.poll().msg;
             if (message != null) {
                 messages[msgSize++] = message;
                 if (msgSize == GlobalParams.getBlockMessageLimit()) {
@@ -134,7 +132,7 @@ public class BlockHolder {
         }
 
         while (writerQue.size() > 0) {
-            Message message = writerQue.poll();
+            Message message = writerQue.poll().msg;
             if (message != null) {
                 messages[msgSize++] = message;
                 if (msgSize == GlobalParams.getBlockMessageLimit()) {
@@ -174,32 +172,33 @@ public class BlockHolder {
 
     }
 
-//    private int total = 0;
-//
-//    private ConcurrentHashMap<Long, Integer> indexMap;
-//
-//    private static final String HEAP_CREATE_LOCK = "HEAP_CREATE_LOCK";
-//
-//    public int[] msgAmount = new int[20];
-//
-//    public void addCount(long threadId) {
-//        int id = getIndex(threadId);
-//        msgAmount[id]++;
-//    }
-//
-//    private int getIndex(long threadId) {
-//        if (indexMap.containsKey(threadId)) {
-//            return indexMap.get(threadId);
-//        } else {
-//            synchronized (HEAP_CREATE_LOCK) {
-//                if (indexMap.containsKey(threadId)) {
-//                    return indexMap.get(threadId);
-//                }
-//                int index = total++;
-//                msgAmount[index] = 0;
-//                indexMap.put(threadId, index);
-//                return index;
-//            }
-//        }
-//    }
+    private int total = 0;
+
+    private ConcurrentHashMap<Long, Integer> indexMap;
+
+    private static final String HEAP_CREATE_LOCK = "HEAP_CREATE_LOCK";
+
+    public int[] msgAmount = new int[20];
+
+    public void addCount(long threadId) {
+        int id = getIndex(threadId);
+        msgAmount[id]++;
+    }
+
+    private int getIndex(long threadId) {
+        if (indexMap.containsKey(threadId)) {
+            return indexMap.get(threadId);
+        } else {
+            synchronized (HEAP_CREATE_LOCK) {
+                if (indexMap.containsKey(threadId)) {
+                    return indexMap.get(threadId);
+                }
+                int index = total++;
+                msgAmount[index] = 0;
+                semaphores[index] = new Semaphore(GlobalParams.MSG_BLOCK_QUEUE_LIMIT / 12);
+                indexMap.put(threadId, index);
+                return index;
+            }
+        }
+    }
 }
