@@ -136,18 +136,8 @@ public class MyHash {
         int sIdx = -1;
 
         for (int i = l; i <= r; ++i) {
-            if (HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs[i], maxTs[i], minAs[i], maxAs[i])) {
-                res += sums[i];
-                cnt += msgAmount[i];
-            } else {
-
-            }
-        }
-
-
-        for (int i = l; i <= r; ++i) {
             tMsgAmount += msgAmount[i];
-            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1] && tMsgAmount < 1024) {
+            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]) {
                 if (sIdx == -1) {
                     sIdx = i;
                 }
@@ -168,7 +158,6 @@ public class MyHash {
 
         return cnt == 0 ? 0 : Math.floorDiv(res, (long) cnt);
     }
-
 
     private int findLeft(long value) {
         int l = 0, r = size - 1;

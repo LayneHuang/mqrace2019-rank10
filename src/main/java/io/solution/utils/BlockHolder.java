@@ -26,7 +26,6 @@ public class BlockHolder {
     private static BlockHolder ins = new BlockHolder();
 
     private BlockHolder() {
-//        indexMap = new ConcurrentHashMap<>();
 
         lockQueue = new LinkedBlockingQueue<>(GlobalParams.MSG_BLOCK_QUEUE_LIMIT);
 
@@ -163,6 +162,10 @@ public class BlockHolder {
 //        }
 
         System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
+        System.out.println("BlockHolder提交等待时间:" + commitWaitTime);
+        System.out.println("BlockHolder队列取等待时间:" + waitTime);
+        System.out.println("BufferHolder写文件队列取等待时间:" + waitTime);
+        System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
         System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
         System.out.println("块合并次数:" + MyHash.getIns().exchangeCost);
 //        System.out.println("接收消息数:" + totalMsg);
