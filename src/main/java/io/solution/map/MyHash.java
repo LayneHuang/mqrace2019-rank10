@@ -27,11 +27,12 @@ public class MyHash {
     // a,t文件位移
     private long[] posATs = new long[GlobalParams.getBlockInfoLimit()];
     private long[] posBs = new long[GlobalParams.getBlockInfoLimit()];
-
-    private int lastBlockMsgAmount = 0;
-    private int lastBlockIdx = 0;
+    private int[] msgAmount = new int[GlobalParams.getBlockInfoLimit()];
 
     public int totalMsg = 0;
+    public int exchangeCount = 0;
+    public int exchangeCost = 0;
+    public int maxMsgAmount = 0;
 
     public synchronized void insert(MyBlock block, long posAT, long posB) {
 
@@ -44,42 +45,32 @@ public class MyHash {
         sums[size] = block.sum;
         posATs[size] = posAT;
         posBs[size] = posB;
+        msgAmount[size] = block.getMessageAmount();
+//
+//        long s0 = System.currentTimeMillis();
+//        for (int i = size; i >= 1 && (minTs[i] < minTs[i - 1] || maxTs[i - 1] > maxTs[i]); --i) {
+//            minTs[i - 1] = Math.min(minTs[i - 1], minTs[i]);
+//            maxTs[i - 1] = Math.max(maxTs[i - 1], maxTs[i]);
+//            minAs[i - 1] = Math.min(minAs[i - 1], minAs[i]);
+//            maxAs[i - 1] = Math.max(maxAs[i - 1], maxAs[i]);
+//            sums[i - 1] += sums[i];
+//            msgAmount[i - 1] += msgAmount[i];
+//            exchangeCount++;
+//            size--;
+//        }
+//        exchangeCost += (System.currentTimeMillis() - s0);
 
-        if (block.getMessageAmount() < GlobalParams.getBlockMessageLimit()) {
-            lastBlockIdx = size;
-            lastBlockMsgAmount = block.getMessageAmount();
-        }
-
-        for (int i = size; i >= 1 && minTs[i] < minTs[i - 1]; --i) {
-            long tMinTs = minTs[i];
-            long tMaxTs = maxTs[i];
-            long tMinAs = minAs[i];
-            long tMaxAs = maxAs[i];
-            long tSum = sums[i];
-            long tPosAT = posATs[i];
-            long tPosB = posBs[i];
-
-            minTs[i] = minTs[i - 1];
-            maxTs[i] = maxTs[i - 1];
-            minAs[i] = minAs[i - 1];
-            maxAs[i] = maxAs[i - 1];
-            sums[i] = sums[i - 1];
-            posATs[i] = posATs[i - 1];
-            posBs[i] = posBs[i - 1];
-
-
-            minTs[i - 1] = tMinTs;
-            maxTs[i - 1] = tMaxTs;
-            minAs[i - 1] = tMinAs;
-            maxAs[i - 1] = tMaxAs;
-            sums[i - 1] = tSum;
-            posATs[i - 1] = tPosAT;
-            posBs[i - 1] = tPosB;
-            if (lastBlockIdx == i) {
-                lastBlockIdx--;
-            }
-        }
+        maxMsgAmount = Math.max(maxMsgAmount, msgAmount[size]);
         size++;
+
+//        if (size % 10000 == 0) {
+//            System.out.println(
+//                    "插入消息:" + totalMsg
+//                            + " exchange次数:" + exchangeCount
+//                            + " exchange耗时:" + exchangeCost
+//                            + " 最大消息数:" + maxMsgAmount
+//            );
+//        }
     }
 
     public static MyHash getIns() {
@@ -96,35 +87,42 @@ public class MyHash {
             return res;
         }
 
-        int tMsgAmount = 0;
-        int sIdx = -1;
 
         for (int i = l; i <= r; ++i) {
-
-            int msgAmount = GlobalParams.getBlockMessageLimit();
-            if (i == lastBlockIdx) msgAmount = lastBlockMsgAmount;
-
-            tMsgAmount += msgAmount;
-            if (i < r && posATs[i] + msgAmount * 16 == posATs[i + 1]) {
-                if (sIdx == -1) {
-                    sIdx = i;
-                }
-                cont++;
-                continue;
-            } else if (sIdx == -1) {
-                sIdx = i;
-            }
-
-            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
-            byte[][] bodyList = HelpUtil.readBody(posBs[sIdx], tMsgAmount);
-            for (int j = 0; j < tMsgAmount; ++j) {
+            long[] atList = HelpUtil.readAT(posATs[i], msgAmount[i]);
+            byte[][] bodyList = HelpUtil.readBody(posBs[i], msgAmount[i]);
+            for (int j = 0; j < msgAmount[i]; ++j) {
                 if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
                     res.add(new Message(atList[j * 2], atList[j * 2 + 1], bodyList[j]));
                 }
             }
-            tMsgAmount = 0;
-            sIdx = -1;
         }
+
+//        int tMsgAmount = 0;
+//        int sIdx = -1;
+//        for (int i = l; i <= r; ++i) {
+//
+//            tMsgAmount += msgAmount[i];
+//            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]) {
+//                if (sIdx == -1) {
+//                    sIdx = i;
+//                }
+//                cont++;
+//                continue;
+//            } else if (sIdx == -1) {
+//                sIdx = i;
+//            }
+//
+//            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
+//            byte[][] bodyList = HelpUtil.readBody(posBs[sIdx], tMsgAmount);
+//            for (int j = 0; j < tMsgAmount; ++j) {
+//                if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
+//                    res.add(new Message(atList[j * 2], atList[j * 2 + 1], bodyList[j]));
+//                }
+//            }
+//            tMsgAmount = 0;
+//            sIdx = -1;
+//        }
 
         if (res.size() % 100 == 0) {
             System.out.println("continue count:" + cont);
@@ -151,10 +149,8 @@ public class MyHash {
         int sIdx = -1;
 
         for (int i = l; i <= r; ++i) {
-            int msgAmount = GlobalParams.getBlockMessageLimit();
-            if (i == lastBlockIdx) msgAmount = lastBlockMsgAmount;
-            tMsgAmount += msgAmount;
-            if (i < r && posATs[i] + msgAmount * 16 == posATs[i + 1]) {
+            tMsgAmount += msgAmount[i];
+            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]) {
                 if (sIdx == -1) {
                     sIdx = i;
                 }
@@ -162,7 +158,7 @@ public class MyHash {
             } else if (sIdx == -1) {
                 if (HelpUtil.intersect(minT, maxT, minA, maxA, minTs[i], maxTs[i], minAs[i], maxAs[i])) {
                     res += sums[i];
-                    cnt += msgAmount;
+                    cnt += msgAmount[i];
 //                    insCount++;
                 } else {
                     sIdx = i;
@@ -236,9 +232,9 @@ public class MyHash {
         int cnt1 = 0;
         int cnt2 = 0;
         for (int i = 0; i < size; ++i) {
-            System.out.println(i + " " + minTs[i] + " " + maxTs[i]);
+//            System.out.println(i + " " + minTs[i] + " " + maxTs[i] + " " + msgAmount[i]);
             if (i > 1 && (minTs[i] < minTs[i - 1] || maxTs[i - 1] > maxTs[i])) {
-                System.out.println("fuck!!!! " + i + " " + minTs[i - 1] + " " + minTs[i] + " " + maxTs[i - 1] + " " + maxTs[i]);
+//                System.out.println("fuck!!!! " + i + " " + minTs[i - 1] + " " + minTs[i] + " " + maxTs[i - 1] + " " + maxTs[i]);
 //                break;
                 cnt1++;
             } else {

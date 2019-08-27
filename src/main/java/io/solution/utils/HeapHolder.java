@@ -103,7 +103,7 @@ public class HeapHolder {
         indexMap.clear();
         indexMap = null;
 
-//        MyHash.getIns().check();
+        MyHash.getIns().check();
 
         System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
         System.out.println("total msg:" + MyHash.getIns().totalMsg);
