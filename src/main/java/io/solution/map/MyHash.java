@@ -31,9 +31,6 @@ public class MyHash {
     private long[] posBs = new long[GlobalParams.getBlockInfoLimit()];
     private int[] msgAmount = new int[GlobalParams.getBlockInfoLimit()];
 
-    private int lastBlockMsgAmount = 0;
-    private int lastBlockIdx = 0;
-
     public int totalMsg = 0;
     public int exchangeCount = 0;
     public int exchangeCost = 0;
@@ -51,26 +48,24 @@ public class MyHash {
         posATs[size] = posAT;
         posBs[size] = posB;
         msgAmount[size] = block.getMessageAmount();
-
         long s0 = System.currentTimeMillis();
-
         for (int i = size; i >= 1 && (minTs[i] < minTs[i - 1] || maxTs[i - 1] > maxTs[i]); --i) {
             minTs[i - 1] = Math.min(minTs[i - 1], minTs[i]);
             maxTs[i - 1] = Math.max(maxTs[i - 1], maxTs[i]);
             minAs[i - 1] = Math.min(minAs[i - 1], minAs[i]);
             maxAs[i - 1] = Math.max(maxAs[i - 1], maxAs[i]);
             sums[i - 1] += sums[i];
-            if (posATs[i - 1] + 16 * msgAmount[i - 1] != posATs[i]) {
-                System.out.println("fuck!!!~" + posATs[i - 1] + " " + posATs[i]);
-            }
+//            if (posATs[i - 1] + 16 * msgAmount[i - 1] != posATs[i]) {
+//                System.out.println("fuck!!!~" + posATs[i - 1] + " " + posATs[i]);
+//            }
             msgAmount[i - 1] += msgAmount[i];
             exchangeCount++;
             size--;
         }
+        exchangeCost += (System.currentTimeMillis() - s0);
 
         maxMsgAmount = Math.max(maxMsgAmount, msgAmount[size]);
 
-        exchangeCost += (System.currentTimeMillis() - s0);
         size++;
 
 //        if (size % 10000 == 0) {
@@ -89,52 +84,38 @@ public class MyHash {
     }
 
     public List<Message> easyFind2(long minT, long maxT, long minA, long maxA) {
-//        int cont = 0;
+
         List<Message> res = new ArrayList<>();
+
         int l = findLeft(minT);
         int r = findRight(maxT);
         if (l == -1 || r == -1) {
             return res;
         }
 
+        int tMsgAmount = 0;
+        int sIdx = -1;
+
         for (int i = l; i <= r; ++i) {
-            long[] atList = HelpUtil.readAT(posATs[i], msgAmount[i]);
-            byte[][] bodyList = HelpUtil.readBody(posBs[i], msgAmount[i]);
-            for (int j = 0; j < msgAmount[i]; ++j) {
+            tMsgAmount += msgAmount[i];
+            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1] && totalMsg < 16 * 1024) {
+                if (sIdx == -1) {
+                    sIdx = i;
+                }
+                continue;
+            } else if (sIdx == -1) {
+                sIdx = i;
+            }
+            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
+            byte[][] bodyList = HelpUtil.readBody(posBs[sIdx], tMsgAmount);
+            for (int j = 0; j < tMsgAmount; ++j) {
                 if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
                     res.add(new Message(atList[j * 2], atList[j * 2 + 1], bodyList[j]));
                 }
             }
+            tMsgAmount = 0;
+            sIdx = -1;
         }
-
-//        int tMsgAmount = 0;
-//        int sIdx = -1;
-
-//        for (int i = l; i <= r; ++i) {
-//            tMsgAmount += msgAmount[i];
-//            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]) {
-//                if (sIdx == -1) {
-//                    sIdx = i;
-//                }
-////                cont++;
-//                continue;
-//            } else if (sIdx == -1) {
-//                sIdx = i;
-//            }
-//            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
-//            byte[][] bodyList = HelpUtil.readBody(posBs[sIdx], tMsgAmount);
-//            for (int j = 0; j < tMsgAmount; ++j) {
-//                if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
-//                    res.add(new Message(atList[j * 2], atList[j * 2 + 1], bodyList[j]));
-//                }
-//            }
-//            tMsgAmount = 0;
-//            sIdx = -1;
-//        }
-
-//        if (res.size() % 100 == 0) {
-//            System.out.println("continue count:" + cont);
-//        }
 
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
@@ -151,46 +132,39 @@ public class MyHash {
             return res;
         }
 
-        for (int i = l; i <= r; ++i) {
+        int tMsgAmount = 0;
+        int sIdx = -1;
 
-            long[] atList = HelpUtil.readAT(posATs[i], msgAmount[i]);
-            for (int j = 0; j < msgAmount[i]; ++j) {
+        for (int i = l; i <= r; ++i) {
+            if (HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs[i], maxTs[i], minAs[i], maxAs[i])) {
+                res += sums[i];
+                cnt += msgAmount[i];
+            } else {
+
+            }
+        }
+
+
+        for (int i = l; i <= r; ++i) {
+            tMsgAmount += msgAmount[i];
+            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1] && tMsgAmount < 1024) {
+                if (sIdx == -1) {
+                    sIdx = i;
+                }
+                continue;
+            } else if (sIdx == -1) {
+                sIdx = i;
+            }
+            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
+            for (int j = 0; j < tMsgAmount; ++j) {
                 if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
                     res += atList[j * 2 + 1];
                     cnt++;
                 }
             }
+            tMsgAmount = 0;
+            sIdx = -1;
         }
-
-
-//        int tMsgAmount = 0;
-//        int sIdx = -1;
-
-//        for (int i = 1; i <= size - 1; ++i) {
-//
-//
-//
-//
-//            tMsgAmount += msgAmount[i];
-//            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]) {
-//                if (sIdx == -1) {
-//                    sIdx = i;
-//                }
-//                continue;
-//            } else if (sIdx == -1) {
-//                sIdx = i;
-//            }
-//
-//            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
-//            for (int j = 0; j < tMsgAmount; ++j) {
-//                if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
-//                    res += atList[j * 2 + 1];
-//                    cnt++;
-//                }
-//            }
-//            tMsgAmount = 0;
-//            sIdx = -1;
-//        }
 
         return cnt == 0 ? 0 : Math.floorDiv(res, (long) cnt);
     }
@@ -206,7 +180,6 @@ public class MyHash {
         }
 
         while (l <= r) {
-//            System.out.println("l:" + l + " r:" + r);
             int mid = (l + r) >> 1;
             if (minTs[mid] >= value) {
                 r = mid - 1;
@@ -227,7 +200,6 @@ public class MyHash {
         }
 
         while (l <= r) {
-//            System.out.println("l:" + l + " r:" + r);
             int mid = (l + r) >> 1;
             if (maxTs[mid] >= value) {
                 r = mid - 1;
@@ -238,16 +210,12 @@ public class MyHash {
         return l + 1;
     }
 
-
     public void check() {
         int cnt1 = 0;
         int cnt2 = 0;
         boolean cont = true;
         for (int i = 0; i < size; ++i) {
-//            System.out.println(i + " " + minTs[i] + " " + maxTs[i]);
             if (i > 1 && (minTs[i] < minTs[i - 1] || maxTs[i - 1] > maxTs[i])) {
-//                System.out.println("fuck!!!! " + i + " " + minTs[i - 1] + " " + minTs[i] + " " + maxTs[i - 1] + " " + maxTs[i]);
-//                break;
                 cnt1++;
             } else {
                 cnt2++;

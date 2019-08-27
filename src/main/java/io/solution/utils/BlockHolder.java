@@ -6,8 +6,6 @@ import io.solution.data.MyBlock;
 import io.solution.map.MyHash;
 
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.*;
 
 /**
@@ -21,24 +19,22 @@ public class BlockHolder {
     private LinkedBlockingQueue<Integer> lockQueue;
 
     // 双缓冲队列
-    private BlockingQueue<Message> msgQueue1;
-    private BlockingQueue<Message> msgQueue2;
 
     private BlockingQueue<Message> readerQue;
     private BlockingQueue<Message> writerQue;
 
     private static BlockHolder ins = new BlockHolder();
 
-
     private BlockHolder() {
 //        indexMap = new ConcurrentHashMap<>();
+
         lockQueue = new LinkedBlockingQueue<>(GlobalParams.MSG_BLOCK_QUEUE_LIMIT);
 
-        readerQue = msgQueue1 = new PriorityBlockingQueue<>(
+        readerQue = new PriorityBlockingQueue<>(
                 GlobalParams.MSG_BLOCK_QUEUE_LIMIT,
                 Comparator.comparingLong(t0 -> t0.getT())
         );
-        writerQue = msgQueue2 = new PriorityBlockingQueue<>(
+        writerQue = new PriorityBlockingQueue<>(
                 GlobalParams.MSG_BLOCK_QUEUE_LIMIT,
                 Comparator.comparingLong(t0 -> t0.getT())
         );
@@ -67,7 +63,6 @@ public class BlockHolder {
             BlockingQueue<Message> temp = readerQue;
             readerQue = writerQue;
             writerQue = temp;
-            writerQue.clear();
         }
         Message message = null;
         try {
@@ -160,11 +155,48 @@ public class BlockHolder {
 
         BufferHolder.getIns().flush();
 
-        MyHash.getIns().check();
+//        MyHash.getIns().check();
+
+//        long totalMsg = 0;
+//        for (int i = 0; i < total; ++i) {
+//            totalMsg += msgAmount[i];
+//        }
+
         System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
         System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
-        System.out.println("total msg:" + MyHash.getIns().totalMsg + " exchange count:" + MyHash.getIns().exchangeCount);
+        System.out.println("块合并次数:" + MyHash.getIns().exchangeCost);
+//        System.out.println("接收消息数:" + totalMsg);
+        System.out.println("插入消息数:" + MyHash.getIns().totalMsg + " exchange count:" + MyHash.getIns().exchangeCount);
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
+
     }
 
+//    private int total = 0;
+//
+//    private ConcurrentHashMap<Long, Integer> indexMap;
+//
+//    private static final String HEAP_CREATE_LOCK = "HEAP_CREATE_LOCK";
+//
+//    public int[] msgAmount = new int[20];
+//
+//    public void addCount(long threadId) {
+//        int id = getIndex(threadId);
+//        msgAmount[id]++;
+//    }
+//
+//    private int getIndex(long threadId) {
+//        if (indexMap.containsKey(threadId)) {
+//            return indexMap.get(threadId);
+//        } else {
+//            synchronized (HEAP_CREATE_LOCK) {
+//                if (indexMap.containsKey(threadId)) {
+//                    return indexMap.get(threadId);
+//                }
+//                int index = total++;
+//                msgAmount[index] = 0;
+//                indexMap.put(threadId, index);
+//                return index;
+//            }
+//        }
+//    }
 }
