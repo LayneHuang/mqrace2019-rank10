@@ -168,15 +168,15 @@ public class MyHash {
             return l;
         }
 
-        while (l <= r) {
+        while (l + 1 < r) {
             int mid = (l + r) >> 1;
-            if (minTs[mid] >= value) {
-                r = mid - 1;
+            if (maxTs[mid] < value) {
+                l = mid;
             } else {
-                l = mid + 1;
+                r = mid;
             }
         }
-        return r - 1;
+        return l + 1;
     }
 
     private int findRight(long value) {
@@ -188,15 +188,15 @@ public class MyHash {
             return r;
         }
 
-        while (l <= r) {
+        while (l + 1 < r) {
             int mid = (l + r) >> 1;
-            if (maxTs[mid] >= value) {
-                r = mid - 1;
+            if (minTs[mid] > value) {
+                r = mid;
             } else {
-                l = mid + 1;
+                l = mid;
             }
         }
-        return l + 1;
+        return r - 1;
     }
 
     public void check() {
