@@ -90,9 +90,9 @@ public class MyHash {
         int l = findLeft(minT);
         int r = findRight(maxT);
 
-        System.out.println("qMinT:" + minT + "qMaxT:" + maxT + " l:" + l + " r:" + r
-                + " minL:" + (l == -1 ? -1 : minTs[l]) + " maxR:" + (r == -1 ? -1 : maxTs[r])
-        );
+//        System.out.println("qMinT:" + minT + "qMaxT:" + maxT + " l:" + l + " r:" + r
+//                + " minL:" + (l == -1 ? -1 : minTs[l]) + " maxR:" + (r == -1 ? -1 : maxTs[r])
+//        );
 
         if (l == -1 || r == -1) {
             return res;
