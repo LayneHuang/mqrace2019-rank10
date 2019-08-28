@@ -31,14 +31,14 @@ public class MyHash {
     private long[] posBs = new long[GlobalParams.getBlockInfoLimit()];
     private int[] msgAmount = new int[GlobalParams.getBlockInfoLimit()];
 
-    public int totalMsg = 0;
+//    public int totalMsg = 0;
     public int exchangeCount = 0;
-    public int exchangeCost = 0;
+//    public int exchangeCost = 0;
     public int maxMsgAmount = 0;
 
     public synchronized void insert(MyBlock block, long posAT, long posB) {
 
-        totalMsg += block.getMessageAmount();
+//        totalMsg += block.getMessageAmount();
 
         minTs[size] = block.minT;
         maxTs[size] = block.maxT;
@@ -62,21 +62,21 @@ public class MyHash {
             exchangeCount++;
             size--;
         }
-        exchangeCost += (System.nanoTime() - s0);
+//        exchangeCost += (System.nanoTime() - s0);
 
         maxMsgAmount = Math.max(maxMsgAmount, msgAmount[size]);
 
         size++;
 
-        if (size % 10000 == 0) {
-            System.out.println(
-                    "插入消息:" + totalMsg
-                            + " block等待时间:" + BlockHolder.getIns().waitTime
-                            + " buffer等待时间:" + BufferHolder.getIns().waitTime
-                            + " exchange次数:" + exchangeCount
-                            + " exchange耗时:" + exchangeCost
-            );
-        }
+//        if (size % 10000 == 0) {
+//            System.out.println(
+//                    "插入消息:" + totalMsg
+//                            + " block等待时间:" + BlockHolder.getIns().waitTime
+//                            + " buffer等待时间:" + BufferHolder.getIns().waitTime
+//                            + " exchange次数:" + exchangeCount
+//                            + " exchange耗时:" + exchangeCost
+//            );
+//        }
     }
 
     public static MyHash getIns() {
@@ -90,31 +90,16 @@ public class MyHash {
         int l = findLeft(minT);
         int r = findRight(maxT);
 
-//        System.out.println("qMinT:" + minT + "qMaxT:" + maxT + " l:" + l + " r:" + r
-//                + " minL:" + (l == -1 ? -1 : minTs[l]) + " maxR:" + (r == -1 ? -1 : maxTs[r])
-//        );
-
         if (l == -1 || r == -1) {
             return res;
         }
-
-
-//        for (int i = l; i <= r; ++i) {
-//            long[] atList = HelpUtil.readAT(posATs[i], msgAmount[i]);
-//            byte[][] bodyList = HelpUtil.readBody(posBs[i], msgAmount[i]);
-//            for (int j = 0; j < msgAmount[i]; ++j) {
-//                if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
-//                    res.add(new Message(atList[j * 2], atList[j * 2 + 1], bodyList[j]));
-//                }
-//            }
-//        }
 
         int tMsgAmount = 0;
         int sIdx = -1;
 
         for (int i = l; i <= r; ++i) {
             tMsgAmount += msgAmount[i];
-            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1] && totalMsg < 16 * 1024) {
+            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1] && tMsgAmount < 16 * 1024) {
                 if (sIdx == -1) {
                     sIdx = i;
                 }

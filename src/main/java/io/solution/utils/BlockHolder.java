@@ -4,7 +4,6 @@ import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
 import io.solution.data.MyMsg;
-import io.solution.map.MyHash;
 
 import java.util.Comparator;
 import java.util.concurrent.*;
@@ -71,19 +70,19 @@ public class BlockHolder {
         return readerQue.size() + writerQue.size();
     }
 
-    public long commitWaitTime = 0;
+//    public long commitWaitTime = 0;
 
-    public long waitTime = 0;
+//    public long waitTime = 0;
 
     private void work() {
-        System.out.println("Block holder worker 开始工作~");
+//        System.out.println("Block holder worker 开始工作~");
         while (!isFinish) {
             if (queueSize() > GlobalParams.MSG_BLOCK_QUEUE_LIMIT / 2) {
                 MyBlock block = new MyBlock();
                 for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
-                    long s0 = System.nanoTime();
+//                    long s0 = System.nanoTime();
                     Message message = myPoll();
-                    waitTime += System.nanoTime() - s0;
+//                    waitTime += System.nanoTime() - s0;
                     if (message != null) {
                         block.addMessage(message);
                     }
@@ -93,11 +92,11 @@ public class BlockHolder {
                 }
             }
         }
-        System.out.println("Block holder worker 结束工作~");
+//        System.out.println("Block holder worker 结束工作~");
     }
 
     public void commit(long threadId, Message message) {
-        long s0 = System.nanoTime();
+//        long s0 = System.nanoTime();
         try {
             int idx = getIndex(threadId);
             semaphores[idx].acquire();
@@ -105,7 +104,7 @@ public class BlockHolder {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        commitWaitTime += System.nanoTime() - s0;
+//        commitWaitTime += System.nanoTime() - s0;
     }
 
     public synchronized void flush() {
@@ -151,22 +150,22 @@ public class BlockHolder {
 
         BufferHolder.getIns().flush();
 
-        MyHash.getIns().check();
+//        MyHash.getIns().check();
 
 //        long totalMsg = 0;
 //        for (int i = 0; i < total; ++i) {
 //            totalMsg += msgAmount[i];
 //        }
 
-        System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
-        System.out.println("BlockHolder提交等待时间:" + commitWaitTime);
-        System.out.println("BlockHolder队列取等待时间:" + waitTime);
-        System.out.println("BufferHolder写文件队列取等待时间:" + BufferHolder.getIns().waitTime);
-        System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
-        System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
-        System.out.println("块合并次数:" + MyHash.getIns().exchangeCost);
+//        System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
+//        System.out.println("BlockHolder提交等待时间:" + commitWaitTime);
+//        System.out.println("BlockHolder队列取等待时间:" + waitTime);
+//        System.out.println("BufferHolder写文件队列取等待时间:" + BufferHolder.getIns().waitTime);
+//        System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
+//        System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
+//        System.out.println("块合并次数:" + MyHash.getIns().exchangeCost);
 //        System.out.println("接收消息数:" + totalMsg);
-        System.out.println("插入消息数:" + MyHash.getIns().totalMsg + " exchange count:" + MyHash.getIns().exchangeCount);
+//        System.out.println("插入消息数:" + MyHash.getIns().totalMsg + " exchange count:" + MyHash.getIns().exchangeCount);
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
 
         readerQue = null;
