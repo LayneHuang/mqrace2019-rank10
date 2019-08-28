@@ -16,7 +16,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
     @Override
     public void put(Message message) {
         long threadId = Thread.currentThread().getId();
-        // 数据填入优先队列中
         BlockHolder.getIns().commit(threadId , message);
     }
 
@@ -26,23 +25,11 @@ public class DefaultMessageStoreImpl extends MessageStore {
         if (!GlobalParams.isStepOneFinished()) {
             BlockHolder.getIns().flush(threadId);
         }
-//        List<Message> res = MyHash.getIns().easyFind2(tMin, tMax, aMin, aMax);
-//        System.out.println("step2");
-//        System.out.println("step2: " + res.size());
-//        return res;
-//        return MyHash.getIns().force2(tMin, tMax, aMin, aMax);
-//        return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
         return MyHash.getIns().easyFind2(tMin, tMax, aMin, aMax);
     }
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-//        long s1 = System.currentTimeMillis();
-//        long res = MyHash.getIns().easyFind3(tMin, tMax, aMin, aMax);
-//        long s2 = System.currentTimeMillis();
-//        System.out.println("step3: " + res + " " + (s2 - s1));
-//        return MyHash.getIns().force3(tMin, tMax, aMin, aMax);
-//        return res;
         return MyHash.getIns().find3(tMin, tMax, aMin, aMax);
     }
 

@@ -93,7 +93,7 @@ public class GlobalParams {
         if (GlobalParams.IS_DEBUG) {
             path = Paths.get(System.getProperty("user.dir"), "/d/info.a");
         } else {
-            path = Paths.get("/alidata1/race2019/info.a");
+            path = Paths.get("/alidata1/race2019/data/info.a");
         }
         return path;
     }

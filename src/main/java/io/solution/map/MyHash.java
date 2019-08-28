@@ -38,7 +38,7 @@ public class MyHash {
 
     //    public int totalMsg = 0;
     public int exchangeCount = 0;
-    //    public int exchangeCost = 0;
+    public int exchangeCost = 0;
     public int maxMsgAmount = 0;
 
     public synchronized void insert(MyBlock block, long posAT, long posB) {
@@ -64,7 +64,7 @@ public class MyHash {
             exchangeCount++;
             size--;
         }
-//        exchangeCost += (System.nanoTime() - s0);
+        exchangeCost += (System.nanoTime() - s0);
 
         // 维护值域
         aNowMaxValue = Math.max(aNowMaxValue, maxAs[size]);
