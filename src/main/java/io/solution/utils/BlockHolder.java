@@ -112,7 +112,6 @@ public class BlockHolder {
         if (GlobalParams.isStepOneFinished()) {
             return;
         }
-        GlobalParams.setStepOneFinished();
 
         isFinish = true;
         Message[] messages = new Message[GlobalParams.getBlockMessageLimit()];
@@ -169,6 +168,11 @@ public class BlockHolder {
 //        System.out.println("接收消息数:" + totalMsg);
         System.out.println("插入消息数:" + MyHash.getIns().totalMsg + " exchange count:" + MyHash.getIns().exchangeCount);
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
+
+        readerQue = null;
+        writerQue = null;
+
+        GlobalParams.setStepOneFinished();
 
     }
 
