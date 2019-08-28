@@ -99,40 +99,39 @@ public class MyHash {
         }
 
 
-        for (int i = l; i <= r; ++i) {
-            long[] atList = HelpUtil.readAT(posATs[i], msgAmount[i]);
-            byte[][] bodyList = HelpUtil.readBody(posBs[i], msgAmount[i]);
-            for (int j = 0; j < msgAmount[i]; ++j) {
-                if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
-                    res.add(new Message(atList[j * 2], atList[j * 2 + 1], bodyList[j]));
-                }
-            }
-        }
-
-//
-//        int tMsgAmount = 0;
-//        int sIdx = -1;
-//
 //        for (int i = l; i <= r; ++i) {
-//            tMsgAmount += msgAmount[i];
-//            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1] && totalMsg < 16 * 1024) {
-//                if (sIdx == -1) {
-//                    sIdx = i;
-//                }
-//                continue;
-//            } else if (sIdx == -1) {
-//                sIdx = i;
-//            }
-//            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
-//            byte[][] bodyList = HelpUtil.readBody(posBs[sIdx], tMsgAmount);
-//            for (int j = 0; j < tMsgAmount; ++j) {
+//            long[] atList = HelpUtil.readAT(posATs[i], msgAmount[i]);
+//            byte[][] bodyList = HelpUtil.readBody(posBs[i], msgAmount[i]);
+//            for (int j = 0; j < msgAmount[i]; ++j) {
 //                if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
 //                    res.add(new Message(atList[j * 2], atList[j * 2 + 1], bodyList[j]));
 //                }
 //            }
-//            tMsgAmount = 0;
-//            sIdx = -1;
 //        }
+
+        int tMsgAmount = 0;
+        int sIdx = -1;
+
+        for (int i = l; i <= r; ++i) {
+            tMsgAmount += msgAmount[i];
+            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1] && totalMsg < 16 * 1024) {
+                if (sIdx == -1) {
+                    sIdx = i;
+                }
+                continue;
+            } else if (sIdx == -1) {
+                sIdx = i;
+            }
+            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
+            byte[][] bodyList = HelpUtil.readBody(posBs[sIdx], tMsgAmount);
+            for (int j = 0; j < tMsgAmount; ++j) {
+                if (HelpUtil.inSide(atList[j * 2], atList[j * 2 + 1], minT, maxT, minA, maxA)) {
+                    res.add(new Message(atList[j * 2 + 1], atList[j * 2], bodyList[j]));
+                }
+            }
+            tMsgAmount = 0;
+            sIdx = -1;
+        }
 
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
@@ -164,7 +163,7 @@ public class MyHash {
             }
             long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
             for (int j = 0; j < tMsgAmount; ++j) {
-                if (HelpUtil.inSide(atList[j * 2 + 1], atList[j * 2], minT, maxT, minA, maxA)) {
+                if (HelpUtil.inSide(atList[j * 2], atList[j * 2 + 1], minT, maxT, minA, maxA)) {
                     res += atList[j * 2 + 1];
                     cnt++;
                 }
