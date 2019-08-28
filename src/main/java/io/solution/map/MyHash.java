@@ -31,9 +31,9 @@ public class MyHash {
     private long[] posBs = new long[GlobalParams.getBlockInfoLimit()];
     private int[] msgAmount = new int[GlobalParams.getBlockInfoLimit()];
 
-//    public int totalMsg = 0;
+    //    public int totalMsg = 0;
     public int exchangeCount = 0;
-//    public int exchangeCost = 0;
+    //    public int exchangeCost = 0;
     public int maxMsgAmount = 0;
 
     public synchronized void insert(MyBlock block, long posAT, long posB) {
@@ -138,19 +138,27 @@ public class MyHash {
 
         for (int i = l; i <= r; ++i) {
             tMsgAmount += msgAmount[i];
-            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]) {
+            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]
+                    && !HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs[i], maxTs[i], minAs[i], maxAs[i])
+                    && tMsgAmount < 16 * 1024) {
                 if (sIdx == -1) {
                     sIdx = i;
                 }
                 continue;
+            } else if (HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs[i], maxTs[i], minAs[i], maxAs[i])) {
+                res += sums[i];
+                cnt += msgAmount[i];
+                tMsgAmount -= msgAmount[i];
             } else if (sIdx == -1) {
                 sIdx = i;
             }
-            long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
-            for (int j = 0; j < tMsgAmount; ++j) {
-                if (HelpUtil.inSide(atList[j * 2], atList[j * 2 + 1], minT, maxT, minA, maxA)) {
-                    res += atList[j * 2 + 1];
-                    cnt++;
+            if (sIdx != -1) {
+                long[] atList = HelpUtil.readAT(posATs[sIdx], tMsgAmount);
+                for (int j = 0; j < tMsgAmount; ++j) {
+                    if (HelpUtil.inSide(atList[j * 2], atList[j * 2 + 1], minT, maxT, minA, maxA)) {
+                        res += atList[j * 2 + 1];
+                        cnt++;
+                    }
                 }
             }
             tMsgAmount = 0;
