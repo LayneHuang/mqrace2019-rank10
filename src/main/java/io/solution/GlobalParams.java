@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 8);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 32);
 
     /**
      * 消息总数
@@ -40,7 +40,7 @@ public class GlobalParams {
      */
     public static final int WRITE_COMMIT_COUNT_LIMIT = 512;         // min = 4k / 50 * 8 * this
 
-    public static final int A_RANGE = (IS_DEBUG ? 40 : 1000);
+    public static final int A_RANGE = (IS_DEBUG ? 40 : 500);
 
     public static final int EIGHT_K = 8 * 1024;
 
@@ -54,24 +54,22 @@ public class GlobalParams {
         return isStepOneFinished;
     }
 
+    private static String PRE_PATH = "/alidata1/race2019/data";
+
     // 0 -> t , 1 -> a , 2 -> body
     public static Path getPath(int d) {
         Path path;
         if (GlobalParams.IS_DEBUG) {
             if (d == 2) {
                 path = Paths.get(System.getProperty("user.dir"), "/d/data.b");
-            } else if (d == 1) {
-                path = Paths.get(System.getProperty("user.dir"), "/d/data.a");
             } else {
                 path = Paths.get(System.getProperty("user.dir"), "/d/data.t");
             }
         } else {
             if (d == 2) {
-                path = Paths.get("/alidata1/race2019/data/mydata.b");
-            } else if (d == 1) {
-                path = Paths.get("/alidata1/race2019/data/mydata.a");
+                path = Paths.get(PRE_PATH + "/mydata.b");
             } else {
-                path = Paths.get("/alidata1/race2019/data/mydata.t");
+                path = Paths.get(PRE_PATH + "/mydata.t");
             }
         }
         return path;
@@ -83,7 +81,7 @@ public class GlobalParams {
             path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".a");
 
         } else {
-            path = Paths.get("/alidata1/race2019/data/" + d + ".a");
+            path = Paths.get(PRE_PATH + "/mydata" + d + ".a");
         }
         return path;
     }
@@ -93,7 +91,7 @@ public class GlobalParams {
         if (GlobalParams.IS_DEBUG) {
             path = Paths.get(System.getProperty("user.dir"), "/d/info.a");
         } else {
-            path = Paths.get("/alidata1/race2019/data/info.a");
+            path = Paths.get(PRE_PATH + "/info.i");
         }
         return path;
     }

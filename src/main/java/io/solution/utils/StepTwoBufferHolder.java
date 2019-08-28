@@ -85,9 +85,10 @@ public class StepTwoBufferHolder {
             return;
         }
         long s0 = System.currentTimeMillis();
-        distance = Math.floorDiv(MyHash.getIns().aNowMaxValue, GlobalParams.A_RANGE) + 1;
+        distance = (MyHash.getIns().aNowMaxValue / GlobalParams.A_RANGE) + 1;
         try {
             for (int i = 0; i < MyHash.getIns().size; ++i) {
+                System.out.println("处理第" + i + "块~");
                 // 前缀
                 MyHash.getIns().infoPos[i] = infoPos;
                 infoPos += GlobalParams.INFO_SIZE * GlobalParams.A_RANGE;
