@@ -9,7 +9,7 @@ import java.nio.file.Paths;
  */
 public class GlobalParams {
 
-    private static boolean IS_DEBUG = Boolean.valueOf(System.getProperty("debug", "false"));
+    public static boolean IS_DEBUG = Boolean.valueOf(System.getProperty("debug", "false"));
 
     private static final int PAGE_SIZE = 1024;
 
@@ -40,7 +40,9 @@ public class GlobalParams {
      */
     public static final int WRITE_COMMIT_COUNT_LIMIT = 512;         // min = 4k / 50 * 8 * this
 
-    public static final long MAX_A_VALUE = 3000000000000000L;
+    public static final int A_RANGE = (IS_DEBUG ? 40 : 1000);
+
+    public static final int EIGHT_K = 8 * 1024;
 
     private static boolean isStepOneFinished = false;
 
@@ -75,6 +77,27 @@ public class GlobalParams {
         return path;
     }
 
+    public static Path getAPath(int d) {
+        Path path;
+        if (GlobalParams.IS_DEBUG) {
+            path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".a");
+
+        } else {
+            path = Paths.get("/alidata1/race2019/data/" + d + ".a");
+        }
+        return path;
+    }
+
+    public static Path getInfoPath() {
+        Path path;
+        if (GlobalParams.IS_DEBUG) {
+            path = Paths.get(System.getProperty("user.dir"), "/d/info.a");
+        } else {
+            path = Paths.get("/alidata1/race2019/info.a");
+        }
+        return path;
+    }
+
     private static int getMessageSize() {
         return IS_DEBUG ? 24 : 50;
     }
@@ -91,4 +114,5 @@ public class GlobalParams {
         return Math.floorDiv(MSG_COUNT, getBlockMessageLimit());
     }
 
+    public static int INFO_SIZE = 24;
 }

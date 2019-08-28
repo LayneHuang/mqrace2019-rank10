@@ -22,8 +22,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+        long threadId = Thread.currentThread().getId();
         if (!GlobalParams.isStepOneFinished()) {
-            BlockHolder.getIns().flush();
+            BlockHolder.getIns().flush(threadId);
         }
 //        List<Message> res = MyHash.getIns().easyFind2(tMin, tMax, aMin, aMax);
 //        System.out.println("step2");
@@ -42,7 +43,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 //        System.out.println("step3: " + res + " " + (s2 - s1));
 //        return MyHash.getIns().force3(tMin, tMax, aMin, aMax);
 //        return res;
-        return MyHash.getIns().easyFind3(tMin, tMax, aMin, aMax);
+        return MyHash.getIns().find3(tMin, tMax, aMin, aMax);
     }
 
 }

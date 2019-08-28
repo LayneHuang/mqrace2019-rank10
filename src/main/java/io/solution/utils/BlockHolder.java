@@ -7,6 +7,7 @@ import io.solution.data.MyMsg;
 
 import java.util.Comparator;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @Author: laynehuang
@@ -107,7 +108,16 @@ public class BlockHolder {
 //        commitWaitTime += System.nanoTime() - s0;
     }
 
-    public synchronized void flush() {
+
+    private long ftId = -1;
+
+    private ReentrantLock lock = new ReentrantLock();
+
+    public void flush(long tId) {
+
+        lock.lock();
+
+        ftId = tId;
         if (GlobalParams.isStepOneFinished()) {
             return;
         }
@@ -172,7 +182,11 @@ public class BlockHolder {
         writerQue = null;
 
         GlobalParams.setStepOneFinished();
+        lock.unlock();
 
+        if (tId == ftId) {
+            StepTwoBufferHolder.getIns().work();
+        }
     }
 
     private int total = 0;

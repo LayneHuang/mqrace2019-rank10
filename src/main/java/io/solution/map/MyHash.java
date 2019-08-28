@@ -2,10 +2,10 @@ package io.solution.map;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
+import io.solution.data.LineInfo;
 import io.solution.data.MyBlock;
-import io.solution.utils.BlockHolder;
-import io.solution.utils.BufferHolder;
 import io.solution.utils.HelpUtil;
+import io.solution.utils.StepTwoBufferHolder;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,6 +17,9 @@ import java.util.List;
  */
 public class MyHash {
 
+    public long aNowMaxValue = Long.MIN_VALUE;
+//    public long aNowMinValue = Long.MAX_VALUE;
+
     private static MyHash ins = new MyHash();
 
     public int size = 0;
@@ -27,9 +30,11 @@ public class MyHash {
     private long[] sums = new long[GlobalParams.getBlockInfoLimit()];
 
     // a,t文件位移
-    private long[] posATs = new long[GlobalParams.getBlockInfoLimit()];
+    public long[] posATs = new long[GlobalParams.getBlockInfoLimit()];
     private long[] posBs = new long[GlobalParams.getBlockInfoLimit()];
-    private int[] msgAmount = new int[GlobalParams.getBlockInfoLimit()];
+    public int[] msgAmount = new int[GlobalParams.getBlockInfoLimit()];
+
+    public long[] infoPos = new long[GlobalParams.getBlockInfoLimit()];
 
     //    public int totalMsg = 0;
     public int exchangeCount = 0;
@@ -49,23 +54,22 @@ public class MyHash {
         posBs[size] = posB;
         msgAmount[size] = block.getMessageAmount();
         long s0 = System.nanoTime();
-        for (int i = size; i >= 1 && (minTs[i] < minTs[i - 1] || maxTs[i - 1] > maxTs[i]); --i) {
+        for (int i = size; i >= 1 && maxTs[i - 1] > minTs[i]; --i) {
             minTs[i - 1] = Math.min(minTs[i - 1], minTs[i]);
             maxTs[i - 1] = Math.max(maxTs[i - 1], maxTs[i]);
             minAs[i - 1] = Math.min(minAs[i - 1], minAs[i]);
             maxAs[i - 1] = Math.max(maxAs[i - 1], maxAs[i]);
             sums[i - 1] += sums[i];
-//            if (posATs[i - 1] + 16 * msgAmount[i - 1] != posATs[i]) {
-//                System.out.println("fuck!!!~" + posATs[i - 1] + " " + posATs[i]);
-//            }
             msgAmount[i - 1] += msgAmount[i];
             exchangeCount++;
             size--;
         }
 //        exchangeCost += (System.nanoTime() - s0);
 
+        // 维护值域
+        aNowMaxValue = Math.max(aNowMaxValue, maxAs[size]);
+//        aNowMinValue = Math.max(aNowMinValue, minAs[size]);
         maxMsgAmount = Math.max(maxMsgAmount, msgAmount[size]);
-
         size++;
 
 //        if (size % 10000 == 0) {
@@ -86,7 +90,6 @@ public class MyHash {
     public List<Message> easyFind2(long minT, long maxT, long minA, long maxA) {
 
         List<Message> res = new ArrayList<>();
-
         int l = findLeft(minT);
         int r = findRight(maxT);
 
@@ -99,7 +102,7 @@ public class MyHash {
 
         for (int i = l; i <= r; ++i) {
             tMsgAmount += msgAmount[i];
-            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1] && tMsgAmount < 16 * 1024) {
+            if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1] && tMsgAmount < 1024) {
                 if (sIdx == -1) {
                     sIdx = i;
                 }
@@ -122,17 +125,19 @@ public class MyHash {
         return res;
     }
 
+
     public long easyFind3(long minT, long maxT, long minA, long maxA) {
-
-        long res = 0;
-        int cnt = 0;
-
         int l = findLeft(minT);
         int r = findRight(maxT);
         if (l == -1 || r == -1) {
-            return res;
+            return 0;
         }
+        return easyFind3(minT, maxT, minA, maxA, l, r);
+    }
 
+    private long easyFind3(long minT, long maxT, long minA, long maxA, int l, int r) {
+        long res = 0;
+        int cnt = 0;
         int tMsgAmount = 0;
         int sIdx = -1;
 
@@ -140,7 +145,7 @@ public class MyHash {
             tMsgAmount += msgAmount[i];
             if (i < r && posATs[i] + msgAmount[i] * 16 == posATs[i + 1]
                     && !HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs[i], maxTs[i], minAs[i], maxAs[i])
-                    && tMsgAmount < 16 * 1024) {
+                    && tMsgAmount < 1024) {
                 if (sIdx == -1) {
                     sIdx = i;
                 }
@@ -164,8 +169,80 @@ public class MyHash {
             tMsgAmount = 0;
             sIdx = -1;
         }
+        return cnt == 0 ? 0 : res / cnt;
+    }
 
-        return cnt == 0 ? 0 : Math.floorDiv(res, (long) cnt);
+    public long find3(long minT, long maxT, long minA, long maxA) {
+        int l = findLeft(minT);
+        int r = findRight(maxT);
+        if (l == -1 || r == -1) {
+            return 0;
+        }
+        if (r - l + 1 < 6) {
+            return easyFind3(minT, maxT, minA, maxA, l, r);
+        }
+        long res = 0;
+        int cnt = 0;
+        long distance = StepTwoBufferHolder.getIns().distance;
+        int btPos = (int) Math.floorDiv(minA, distance);
+        int tpPos = (int) Math.floorDiv(maxA, distance);
+        tpPos = Math.min(tpPos, GlobalParams.A_RANGE - 1);
+        LineInfo[] leftLineInfos = HelpUtil.readLineInfo(infoPos[l + 1]);
+        LineInfo[] rightLineInfos = HelpUtil.readLineInfo(infoPos[r]);
+
+        // 中间
+        for (int i = btPos + 1; i <= tpPos - 1; ++i) {
+            long sum = rightLineInfos[i].bs - leftLineInfos[i].bs;
+            if (sum < 0) {
+                sum = Long.MAX_VALUE + sum;
+            }
+            int dCnt = rightLineInfos[i].cntSum - leftLineInfos[i].cntSum;
+            res += sum;
+            cnt += dCnt;
+        }
+
+        // 上下边界
+        if (btPos < tpPos) {
+            int bAmount = (int) ((rightLineInfos[btPos].aPos - leftLineInfos[btPos].aPos) / 8);
+            if (bAmount > 0) {
+                long[] baList = HelpUtil.readA(btPos, leftLineInfos[btPos].aPos, bAmount);
+                for (int i = 0; i < bAmount; ++i) {
+                    if (minA <= baList[i] && baList[i] <= maxA) {
+                        res += baList[i];
+                        cnt++;
+                    }
+                }
+            }
+        }
+
+        int tAmount = (int) ((rightLineInfos[tpPos].aPos - leftLineInfos[tpPos].aPos) / 8);
+        if (tAmount > 0) {
+            long[] taList = HelpUtil.readA(tpPos, leftLineInfos[tpPos].aPos, tAmount);
+            for (int i = 0; i < tAmount; ++i) {
+                if (minA <= taList[i] && taList[i] <= maxA) {
+                    res += taList[i];
+                    cnt++;
+                }
+            }
+        }
+
+        // 左右边界
+        long[] latList = HelpUtil.readAT(posATs[l], msgAmount[l]);
+        for (int j = 0; j < msgAmount[l]; ++j) {
+            if (HelpUtil.inSide(latList[j * 2], latList[j * 2 + 1], minT, maxT, minA, maxA)) {
+                res += latList[j * 2 + 1];
+                cnt++;
+            }
+        }
+
+        long[] ratList = HelpUtil.readAT(posATs[r], msgAmount[r]);
+        for (int j = 0; j < msgAmount[r]; ++j) {
+            if (HelpUtil.inSide(ratList[j * 2], ratList[j * 2 + 1], minT, maxT, minA, maxA)) {
+                res += ratList[j * 2 + 1];
+                cnt++;
+            }
+        }
+        return cnt == 0 ? 0 : res / cnt;
     }
 
     private int findLeft(long value) {
