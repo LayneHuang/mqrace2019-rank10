@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 16);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 8);
 
     /**
      * 消息总数
@@ -38,11 +38,13 @@ public class GlobalParams {
     /**
      * 提交个数
      */
-    public static final int WRITE_COMMIT_COUNT_LIMIT = 512;         // min = 4k / 50 * 8 * this
+    public static final int WRITE_COMMIT_COUNT_LIMIT = 50;         // min = 4k / 50 * 8 * this
 
-    public static final int A_MOD = (IS_DEBUG ? 39 : 499);
+    public static final int MAX_THREAD_AMOUNT = 20;
 
-    public static final int A_RANGE = (IS_DEBUG ? 40 : 500);
+    public static final int A_MOD = (IS_DEBUG ? 9 : 199);
+
+    public static final int A_RANGE = (IS_DEBUG ? 10 : 200);
 
     public static final int EIGHT_K = 8 * 1024;
 
@@ -77,13 +79,32 @@ public class GlobalParams {
         return path;
     }
 
-    public static Path getAPath(int d) {
+    public static Path getTPath(int d) {
         Path path;
         if (GlobalParams.IS_DEBUG) {
-            path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".a");
+            path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".t");
+        } else {
+            path = Paths.get(PRE_PATH + "/mydata" + d + ".t");
+        }
+        return path;
+    }
 
+    public static Path getAPath(int d, boolean w) {
+        Path path;
+        if (GlobalParams.IS_DEBUG) {
+            path = Paths.get(System.getProperty("user.dir"), "/d/data" + (w ? "_w" : "_h") + d + ".a");
         } else {
             path = Paths.get(PRE_PATH + "/mydata" + d + ".a");
+        }
+        return path;
+    }
+
+    public static Path getBPath(int d) {
+        Path path;
+        if (GlobalParams.IS_DEBUG) {
+            path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".b");
+        } else {
+            path = Paths.get(PRE_PATH + "/mydata" + d + ".b");
         }
         return path;
     }

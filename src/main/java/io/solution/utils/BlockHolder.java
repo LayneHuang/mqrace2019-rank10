@@ -4,7 +4,6 @@ import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
 import io.solution.data.MyMsg;
-import io.solution.map.MyHash;
 
 import java.util.Comparator;
 import java.util.concurrent.*;
@@ -29,7 +28,6 @@ public class BlockHolder {
     private static BlockHolder ins = new BlockHolder();
 
     private BlockHolder() {
-        indexMap = new ConcurrentHashMap<>();
 
         readerQue = new PriorityBlockingQueue<>(
                 GlobalParams.MSG_BLOCK_QUEUE_LIMIT,
@@ -168,13 +166,13 @@ public class BlockHolder {
 //            totalMsg += msgAmount[i];
 //        }
 
-        System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
+//        System.out.println("block info size:" + MyHash.getIns().size + " limit:" + GlobalParams.getBlockInfoLimit());
 //        System.out.println("BlockHolder提交等待时间:" + commitWaitTime);
 //        System.out.println("BlockHolder队列取等待时间:" + waitTime);
 //        System.out.println("BufferHolder写文件队列取等待时间:" + BufferHolder.getIns().waitTime);
-        System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
-        System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
-        System.out.println("块合并次数:" + MyHash.getIns().exchangeCost);
+//        System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
+//        System.out.println("块最大消息数:" + MyHash.getIns().maxMsgAmount);
+//        System.out.println("块合并次数:" + MyHash.getIns().exchangeCost);
 //        System.out.println("接收消息数:" + totalMsg);
 //        System.out.println("插入消息数:" + MyHash.getIns().totalMsg + " exchange count:" + MyHash.getIns().exchangeCount);
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
@@ -186,13 +184,13 @@ public class BlockHolder {
         lock.unlock();
 
         if (tId == ftId) {
-            PretreatmentHolder.getIns().work();
+            PretreatmentHolder0.getIns().work();
         }
     }
 
     private int total = 0;
 
-    private ConcurrentHashMap<Long, Integer> indexMap;
+    private ConcurrentHashMap<Long, Integer> indexMap = new ConcurrentHashMap<>();
 
     private static final String HEAP_CREATE_LOCK = "HEAP_CREATE_LOCK";
 

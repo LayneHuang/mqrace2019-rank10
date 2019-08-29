@@ -2,7 +2,7 @@ package io.solution.utils;
 
 import io.solution.GlobalParams;
 import io.solution.data.LineInfo;
-import io.solution.map.MyHash;
+import io.solution.map.MyHash0;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -79,7 +79,7 @@ public class HelpUtil {
      * 只写入body的情况
      * 读取Block 中 message 列表
      */
-    public static byte[][] readBody(long position, int messageCount) {
+    public static byte[][] readBody2(long position, int messageCount) {
         int size = messageCount * GlobalParams.getBodySize();
         FileChannel channel = null;
         byte[][] res = new byte[messageCount][GlobalParams.getBodySize()];
@@ -153,13 +153,47 @@ public class HelpUtil {
         return res;
     }
 
-    public static long[] readA(int range, long position, int count) {
+    public static long[] readT(int idx, long position, int messageCount) {
+        int size = messageCount * 8;
+        FileChannel channel = null;
+        long[] res = new long[messageCount];
+
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getTPath(idx),
+                    StandardOpenOption.READ
+            );
+            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            channel.read(buffer, position);
+            buffer.flip();
+
+            // trans
+            for (int i = 0; i < messageCount; ++i) {
+                res[i] = buffer.getLong();
+            }
+
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
+
+    public static long[] readA(boolean w, int idx, long position, int count) {
         int size = count * 8;
         FileChannel channel = null;
         long[] res = new long[count];
         try {
             channel = FileChannel.open(
-                    GlobalParams.getAPath(range),
+                    GlobalParams.getAPath(idx, w),
                     StandardOpenOption.READ
             );
             ByteBuffer buffer = ByteBuffer.allocateDirect(size);
@@ -184,15 +218,59 @@ public class HelpUtil {
         return res;
     }
 
+    public static byte[][] readBody(int idx, long position, int messageCount) {
+        int size = messageCount * GlobalParams.getBodySize();
+        FileChannel channel = null;
+        byte[][] res = new byte[messageCount][GlobalParams.getBodySize()];
+
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getBPath(idx),
+                    StandardOpenOption.READ
+            );
+            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            channel.read(buffer, position);
+            buffer.flip();
+
+            // trans
+            for (int i = 0; i < messageCount; ++i) {
+                buffer.get(res[i], 0, GlobalParams.getBodySize());
+            }
+
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
+
     private static final long MAX_VALUE = 300000000000000L;
 
-    public static int getPosition(long a) {
-        long distance = Math.floorDiv(
-                (GlobalParams.IS_DEBUG ? MyHash.getIns().aNowMaxValue : MAX_VALUE),
-                GlobalParams.A_MOD
-        ) + 1;
+    public static int getPosition2(long a) {
+        long distance =
+                Math.floorDiv(
+                        (GlobalParams.IS_DEBUG ? MyHash0.getIns().aNowMaxValue : MAX_VALUE),
+                        GlobalParams.A_MOD
+                ) + 1;
 
         return Math.min((int) (a / distance), GlobalParams.A_RANGE - 1);
+    }
+
+    public static int getPosition(long a) {
+        for (int i = GlobalParams.A_RANGE - 1; i >= 0; --i) {
+            if (a > AyscBufferHolder.getIns().wLines[i]) {
+                return i;
+            }
+        }
+        return 0;
     }
 
 }

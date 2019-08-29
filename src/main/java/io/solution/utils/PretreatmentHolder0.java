@@ -2,6 +2,7 @@ package io.solution.utils;
 
 import io.solution.GlobalParams;
 import io.solution.map.MyHash;
+import io.solution.map.MyHash0;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,9 +14,9 @@ import java.nio.file.StandardOpenOption;
  * @Author: laynehuang
  * @CreatedAt: 2019/8/28 0028
  */
-public class PretreatmentHolder {
+public class PretreatmentHolder0 {
 
-    private static PretreatmentHolder ins = new PretreatmentHolder();
+    private static PretreatmentHolder0 ins = new PretreatmentHolder0();
 
     public boolean isFinish = false;
 
@@ -44,7 +45,7 @@ public class PretreatmentHolder {
             GlobalParams.INFO_SIZE * GlobalParams.A_RANGE * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
-    private PretreatmentHolder() {
+    private PretreatmentHolder0() {
         try {
             infoChannel = FileChannel.open(
                     GlobalParams.getInfoPath(),
@@ -58,7 +59,7 @@ public class PretreatmentHolder {
 
         for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
             aBuffers[i] = ByteBuffer.allocateDirect(GlobalParams.EIGHT_K * 2);
-            Path path = GlobalParams.getAPath(i);
+            Path path = GlobalParams.getAPath(i, true);
             try {
                 channels[i] = FileChannel.open(
                         path,
@@ -72,7 +73,7 @@ public class PretreatmentHolder {
         }
     }
 
-    public static PretreatmentHolder getIns() {
+    public static PretreatmentHolder0 getIns() {
         return ins;
     }
 
@@ -87,7 +88,7 @@ public class PretreatmentHolder {
             try {
                 for (int i = 0; i < MyHash.getIns().size; ++i) {
                     // 前缀
-                    MyHash.getIns().infoPos[i] = infoPos;
+                    MyHash0.getIns().infoPos[i] = infoPos;
                     infoPos += GlobalParams.INFO_SIZE * GlobalParams.A_RANGE;
                     for (int j = 0; j < GlobalParams.A_RANGE; ++j) {
                         lineInfoBuffer.putLong(aPos[j]);
@@ -106,11 +107,11 @@ public class PretreatmentHolder {
                             e.printStackTrace();
                         }
                     }
-                    int cnt = MyHash.getIns().msgAmount[i];
-                    long[] ats = HelpUtil.readAT(MyHash.getIns().posATs[i], cnt);
+                    int cnt = MyHash0.getIns().msgAmount[i];
+                    long[] ats = HelpUtil.readAT(MyHash0.getIns().posATs[i], cnt);
                     for (int j = 0; j < cnt; ++j) {
                         long a = ats[j * 2 + 1];
-                        int pos = HelpUtil.getPosition(a);
+                        int pos = HelpUtil.getPosition2(a);
                         aBuffers[pos].putLong(a);
                         aBufferSize[pos]++;
                         if (aBufferSize[pos] == 1024) {

@@ -3,7 +3,7 @@ package io.solution.utils;
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
 import io.solution.data.MyBlock;
-import io.solution.map.MyHash;
+import io.solution.map.MyHash0;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -142,7 +142,7 @@ public class BufferHolder {
 
     private synchronized void solve(MyBlock block) {
 
-        MyHash.getIns().insert(block, totalPosAT, totalPosB);
+        MyHash0.getIns().insert(block, totalPosAT, totalPosB);
 
         // 写文件
         for (int i = 0; i < block.getMessageAmount(); ++i) {
