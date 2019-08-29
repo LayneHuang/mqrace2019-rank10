@@ -1,8 +1,6 @@
 package io.solution.utils;
 
 import io.solution.GlobalParams;
-import io.solution.data.LineInfo;
-import io.solution.map.MyHash0;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -39,118 +37,6 @@ public class HelpUtil {
                                  long minT, long maxT, long minA, long maxA
     ) {
         return a <= maxA && a >= minA && t <= maxT && t >= minT;
-    }
-
-    public static long[] readAT(long position, int messageCount) {
-        int size = messageCount * 16;
-        FileChannel channel = null;
-        long[] res = new long[messageCount * 2];
-
-        try {
-            channel = FileChannel.open(
-                    GlobalParams.getPath(0),
-                    StandardOpenOption.READ
-            );
-            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
-            channel.read(buffer, position);
-            buffer.flip();
-
-            // trans
-            for (int i = 0; i < messageCount * 2; ++i) {
-                res[i] = buffer.getLong();
-            }
-
-            buffer.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (channel != null) {
-                    channel.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return res;
-    }
-
-    /**
-     * 只写入body的情况
-     * 读取Block 中 message 列表
-     */
-    public static byte[][] readBody2(long position, int messageCount) {
-        int size = messageCount * GlobalParams.getBodySize();
-        FileChannel channel = null;
-        byte[][] res = new byte[messageCount][GlobalParams.getBodySize()];
-
-        try {
-            channel = FileChannel.open(
-                    GlobalParams.getPath(2),
-                    StandardOpenOption.READ
-            );
-            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
-            channel.read(buffer, position);
-            buffer.flip();
-
-            // trans
-            for (int i = 0; i < messageCount; ++i) {
-                buffer.get(res[i], 0, GlobalParams.getBodySize());
-            }
-
-            buffer.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (channel != null) {
-                    channel.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return res;
-    }
-
-    public static LineInfo[] readLineInfo(long position) {
-        FileChannel channel = null;
-        LineInfo[] res = new LineInfo[GlobalParams.A_RANGE];
-
-        try {
-            channel = FileChannel.open(
-                    GlobalParams.getInfoPath(),
-                    StandardOpenOption.READ
-            );
-
-            ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
-            channel.read(buffer, position);
-            buffer.flip();
-//            System.out.println("buffer limit:" + buffer.limit() + " " + (24 * GlobalParams.A_RANGE));
-
-            // trans
-            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
-                LineInfo lineInfo = new LineInfo();
-                lineInfo.aPos = buffer.getLong();
-                lineInfo.cntSum = buffer.getInt();
-                lineInfo.ks = buffer.getInt();
-                lineInfo.bs = buffer.getLong();
-                res[i] = lineInfo;
-            }
-
-            buffer.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (channel != null) {
-                    channel.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return res;
     }
 
     public static long[] readT(int idx, long position, int messageCount) {
@@ -250,27 +136,6 @@ public class HelpUtil {
             }
         }
         return res;
-    }
-
-    private static final long MAX_VALUE = 300000000000000L;
-
-    public static int getPosition2(long a) {
-        long distance =
-                Math.floorDiv(
-                        (GlobalParams.IS_DEBUG ? MyHash0.getIns().aNowMaxValue : MAX_VALUE),
-                        GlobalParams.A_MOD
-                ) + 1;
-
-        return Math.min((int) (a / distance), GlobalParams.A_RANGE - 1);
-    }
-
-    public static int getPosition(long a) {
-        for (int i = GlobalParams.A_RANGE - 1; i >= 0; --i) {
-            if (a > AyscBufferHolder.getIns().wLines[i]) {
-                return i;
-            }
-        }
-        return 0;
     }
 
 }

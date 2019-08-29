@@ -60,25 +60,6 @@ public class GlobalParams {
 
     private static String PRE_PATH = "/alidata1/race2019/data";
 
-    // 0 -> t , 1 -> a , 2 -> body
-    public static Path getPath(int d) {
-        Path path;
-        if (GlobalParams.IS_DEBUG) {
-            if (d == 2) {
-                path = Paths.get(System.getProperty("user.dir"), "/d/data.b");
-            } else {
-                path = Paths.get(System.getProperty("user.dir"), "/d/data.t");
-            }
-        } else {
-            if (d == 2) {
-                path = Paths.get(PRE_PATH + "/mydata.b");
-            } else {
-                path = Paths.get(PRE_PATH + "/mydata.t");
-            }
-        }
-        return path;
-    }
-
     public static Path getTPath(int d) {
         Path path;
         if (GlobalParams.IS_DEBUG) {
