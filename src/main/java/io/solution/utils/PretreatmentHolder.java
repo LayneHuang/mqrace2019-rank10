@@ -13,9 +13,9 @@ import java.nio.file.StandardOpenOption;
  * @Author: laynehuang
  * @CreatedAt: 2019/8/28 0028
  */
-public class StepTwoBufferHolder {
+public class PretreatmentHolder {
 
-    private static StepTwoBufferHolder ins = new StepTwoBufferHolder();
+    private static PretreatmentHolder ins = new PretreatmentHolder();
 
     public boolean isFinish = false;
 
@@ -44,7 +44,7 @@ public class StepTwoBufferHolder {
             GlobalParams.INFO_SIZE * GlobalParams.A_RANGE * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
-    private StepTwoBufferHolder() {
+    private PretreatmentHolder() {
         try {
             infoChannel = FileChannel.open(
                     GlobalParams.getInfoPath(),
@@ -72,7 +72,7 @@ public class StepTwoBufferHolder {
         }
     }
 
-    public static StepTwoBufferHolder getIns() {
+    public static PretreatmentHolder getIns() {
         return ins;
     }
 

@@ -186,7 +186,7 @@ public class BlockHolder {
         lock.unlock();
 
         if (tId == ftId) {
-            StepTwoBufferHolder.getIns().work();
+            PretreatmentHolder.getIns().work();
         }
     }
 

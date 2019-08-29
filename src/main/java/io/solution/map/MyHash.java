@@ -5,7 +5,6 @@ import io.solution.GlobalParams;
 import io.solution.data.LineInfo;
 import io.solution.data.MyBlock;
 import io.solution.utils.HelpUtil;
-import io.solution.utils.StepTwoBufferHolder;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -184,7 +183,7 @@ public class MyHash {
         long res = 0;
         int cnt = 0;
 
-//        long distance = StepTwoBufferHolder.getIns().distance;
+//        long distance = PretreatmentHolder.getIns().distance;
         int btPos = HelpUtil.getPosition(minA);
         int tpPos = HelpUtil.getPosition(maxA);
 
