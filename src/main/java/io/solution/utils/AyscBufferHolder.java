@@ -222,7 +222,7 @@ public class AyscBufferHolder {
             System.out.print(wLines[i] + ",");
         }
         System.out.println("]");
-        System.out.println("flush 结束~");
+        System.out.println("flush 结束~ " + System.currentTimeMillis());
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
 
         GlobalParams.setStepOneFinished();
