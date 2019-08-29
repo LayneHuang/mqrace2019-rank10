@@ -89,9 +89,12 @@ public class MyHash {
                     sIdx = i;
                 }
 
-                long tPos = AyscBufferHolder.getIns().tPos[idx] + sIdx * GlobalParams.getBlockMessageLimit() * 8;
-                long aPos = AyscBufferHolder.getIns().aPos[idx] + sIdx * GlobalParams.getBlockMessageLimit() * 8;
-                long bPos = AyscBufferHolder.getIns().bPos[idx] + sIdx * GlobalParams.getBlockMessageLimit() * GlobalParams.getBodySize();
+                long tPos = AyscBufferHolder.getIns().tPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
+                long aPos = AyscBufferHolder.getIns().aPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
+                long bPos = AyscBufferHolder.getIns().bPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * GlobalParams.getBodySize();
+                if (bPos < 0) {
+                    System.out.println("GG body pos 小于0 s:" + AyscBufferHolder.getIns().bPos[idx] + " sIdx:" + sIdx + " block msg limit:" + GlobalParams.getBlockMessageLimit() + " body size:" + GlobalParams.getBodySize() + " bPos:" + bPos);
+                }
                 long[] tList = HelpUtil.readT(idx, tPos, tMsgAmount);
                 long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);
