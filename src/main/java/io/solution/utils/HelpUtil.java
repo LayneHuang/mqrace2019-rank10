@@ -2,6 +2,7 @@ package io.solution.utils;
 
 import io.solution.GlobalParams;
 import io.solution.data.LineInfo;
+import io.solution.map.MyHash;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -182,4 +183,16 @@ public class HelpUtil {
         }
         return res;
     }
+
+    private static final long MAX_VALUE = 300000000000000L;
+
+    public static int getPosition(long a) {
+        long distance = Math.floorDiv(
+                (GlobalParams.IS_DEBUG ? MyHash.getIns().aNowMaxValue : MAX_VALUE),
+                GlobalParams.A_MOD
+        ) + 1;
+
+        return Math.min((int) (a / distance), GlobalParams.A_RANGE - 1);
+    }
+
 }

@@ -16,7 +16,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     @Override
     public void put(Message message) {
         long threadId = Thread.currentThread().getId();
-        BlockHolder.getIns().commit(threadId , message);
+        BlockHolder.getIns().commit(threadId, message);
     }
 
     @Override

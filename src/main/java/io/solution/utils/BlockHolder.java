@@ -79,7 +79,7 @@ public class BlockHolder {
     private void work() {
 //        System.out.println("Block holder worker 开始工作~");
         while (!isFinish) {
-            if (queueSize() > GlobalParams.MSG_BLOCK_QUEUE_LIMIT / 2) {
+            if (queueSize() > GlobalParams.MSG_BLOCK_QUEUE_LIMIT / 3) {
                 MyBlock block = new MyBlock();
                 for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
 //                    long s0 = System.nanoTime();
@@ -122,7 +122,7 @@ public class BlockHolder {
         if (GlobalParams.isStepOneFinished()) {
             return;
         }
-
+        System.out.println("第二阶段开始:" + System.currentTimeMillis());
         isFinish = true;
         Message[] messages = new Message[GlobalParams.getBlockMessageLimit()];
         int msgSize = 0;
@@ -212,6 +212,9 @@ public class BlockHolder {
                     return indexMap.get(threadId);
                 }
                 int index = total++;
+                if (index == 0) {
+                    System.out.println("第一阶段开始:" + System.currentTimeMillis());
+                }
 //                msgAmount[index] = 0;
                 semaphores[index] = new Semaphore(GlobalParams.MSG_BLOCK_QUEUE_LIMIT / 12);
                 indexMap.put(threadId, index);

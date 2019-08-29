@@ -183,9 +183,11 @@ public class MyHash {
         }
         long res = 0;
         int cnt = 0;
-        long distance = StepTwoBufferHolder.getIns().distance;
-        int btPos = (int) Math.floorDiv(minA, distance);
-        int tpPos = (int) Math.floorDiv(maxA, distance);
+
+//        long distance = StepTwoBufferHolder.getIns().distance;
+        int btPos = HelpUtil.getPosition(minA);
+        int tpPos = HelpUtil.getPosition(maxA);
+
         tpPos = Math.min(tpPos, GlobalParams.A_RANGE - 1);
         LineInfo[] leftLineInfos = HelpUtil.readLineInfo(infoPos[l + 1]);
         LineInfo[] rightLineInfos = HelpUtil.readLineInfo(infoPos[r]);

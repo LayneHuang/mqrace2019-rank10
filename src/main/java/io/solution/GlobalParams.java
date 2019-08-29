@@ -18,7 +18,7 @@ public class GlobalParams {
     /**
      * 消息总数
      */
-    private static int MSG_COUNT = (IS_DEBUG ? 20_000_000 : 2_080_000_000);
+    private static int MSG_COUNT = (IS_DEBUG ? 200_000_000 : 2_080_000_000);
 
     /**
      * 拥塞队列的大小
@@ -39,6 +39,8 @@ public class GlobalParams {
      * 提交个数
      */
     public static final int WRITE_COMMIT_COUNT_LIMIT = 512;         // min = 4k / 50 * 8 * this
+
+    public static final int A_MOD = (IS_DEBUG ? 39 : 499);
 
     public static final int A_RANGE = (IS_DEBUG ? 40 : 500);
 
