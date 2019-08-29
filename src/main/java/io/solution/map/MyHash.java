@@ -77,7 +77,7 @@ public class MyHash {
                 int amount = GlobalParams.getBlockMessageLimit();
                 if (i == infoSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
-                if (i < r && tMsgAmount < 1024 * 16) {
+                if (i < r && tMsgAmount < 1024) {
                     if (sIdx == -1) {
                         sIdx = i;
                     }
@@ -92,6 +92,9 @@ public class MyHash {
                 long tPos = AyscBufferHolder.getIns().tPos[idx] + sIdx * GlobalParams.getBlockMessageLimit() * 8;
                 long aPos = AyscBufferHolder.getIns().aPos[idx] + sIdx * GlobalParams.getBlockMessageLimit() * 8;
                 long bPos = AyscBufferHolder.getIns().bPos[idx] + sIdx * GlobalParams.getBlockMessageLimit() * GlobalParams.getBodySize();
+                if (bPos < 0) {
+                    System.out.println("GG body pos 小于0 " + AyscBufferHolder.getIns().bPos[idx] + " sIdx:" + sIdx + " bPos:" + bPos);
+                }
                 long[] tList = HelpUtil.readT(idx, tPos, tMsgAmount);
                 long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);

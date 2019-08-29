@@ -27,18 +27,18 @@ public class AyscBufferHolder {
     private FileChannel[] aChannels = new FileChannel[MAX_THREAD_AMOUNT];
     private FileChannel[] bChannels = new FileChannel[MAX_THREAD_AMOUNT];
 
-    public long[] minT = new long[MAX_THREAD_AMOUNT];
-    public long[] maxT = new long[MAX_THREAD_AMOUNT];
-    public long[] minA = new long[MAX_THREAD_AMOUNT];
-    public long[] maxA = new long[MAX_THREAD_AMOUNT];
-    public long[] sums = new long[MAX_THREAD_AMOUNT];
+    private long[] minT = new long[MAX_THREAD_AMOUNT];
+    private long[] maxT = new long[MAX_THREAD_AMOUNT];
+    private long[] minA = new long[MAX_THREAD_AMOUNT];
+    private long[] maxA = new long[MAX_THREAD_AMOUNT];
+    private long[] sums = new long[MAX_THREAD_AMOUNT];
 
     public long[] tPos = new long[MAX_THREAD_AMOUNT];
     public long[] aPos = new long[MAX_THREAD_AMOUNT];
     public long[] bPos = new long[MAX_THREAD_AMOUNT];
 
     private int[] commitAmount = new int[MAX_THREAD_AMOUNT];
-    private int[] msgAmount = new int[MAX_THREAD_AMOUNT];
+//    private int[] msgAmount = new int[MAX_THREAD_AMOUNT];
 
     private ArrayList<ArrayList<Long>> aLists = new ArrayList<>();
 
@@ -132,7 +132,7 @@ public class AyscBufferHolder {
         minA[idx] = Math.min(minA[idx], message.getA());
         maxA[idx] = Math.max(maxA[idx], message.getA());
         sums[idx] += message.getA();
-        msgAmount[idx]++;
+//        msgAmount[idx]++;
         commitAmount[idx]++;
 
         if (commitAmount[idx] == getBlockMessageLimit()) {

@@ -94,7 +94,7 @@ public class GlobalParams {
         if (GlobalParams.IS_DEBUG) {
             path = Paths.get(System.getProperty("user.dir"), "/d/data" + (w ? "_w" : "_h") + d + ".a");
         } else {
-            path = Paths.get(PRE_PATH + "/mydata" + d + ".a");
+            path = Paths.get(PRE_PATH + "/mydata" + (w ? "_w" : "_h") + d + ".a");
         }
         return path;
     }
@@ -102,9 +102,9 @@ public class GlobalParams {
     public static Path getBPath(int d) {
         Path path;
         if (GlobalParams.IS_DEBUG) {
-            path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".b");
+            path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".body");
         } else {
-            path = Paths.get(PRE_PATH + "/mydata" + d + ".b");
+            path = Paths.get(PRE_PATH + "/mydata" + d + ".body");
         }
         return path;
     }
@@ -112,7 +112,7 @@ public class GlobalParams {
     public static Path getInfoPath() {
         Path path;
         if (GlobalParams.IS_DEBUG) {
-            path = Paths.get(System.getProperty("user.dir"), "/d/info.a");
+            path = Paths.get(System.getProperty("user.dir"), "/d/info.i");
         } else {
             path = Paths.get(PRE_PATH + "/info.i");
         }
