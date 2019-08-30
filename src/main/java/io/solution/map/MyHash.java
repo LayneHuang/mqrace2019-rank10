@@ -2,6 +2,7 @@ package io.solution.map;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
+import io.solution.data.HashData;
 import io.solution.utils.AyscBufferHolder;
 import io.solution.utils.HelpUtil;
 
@@ -24,6 +25,9 @@ public class MyHash {
     private ArrayList<ArrayList<Long>> minAs2 = new ArrayList<>();
     private ArrayList<ArrayList<Long>> maxAs2 = new ArrayList<>();
     private ArrayList<ArrayList<Long>> sums2 = new ArrayList<>();
+
+    private ArrayList<ArrayList<HashData>> hashInfos = new ArrayList<>();
+
     public int[] lastMsgAmount = new int[GlobalParams.MAX_THREAD_AMOUNT];
     private int size2 = 0;
 
@@ -36,6 +40,7 @@ public class MyHash {
             minAs2.add(new ArrayList<>());
             maxAs2.add(new ArrayList<>());
             sums2.add(new ArrayList<>());
+            hashInfos.add(new ArrayList<>());
         }
     }
 
@@ -82,7 +87,7 @@ public class MyHash {
                 int amount = GlobalParams.getBlockMessageLimit();
                 if (i == infoSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
-                if (i < r && tMsgAmount < 1024 * 32) {
+                if (i < r && tMsgAmount < 1024 * 64) {
                     if (sIdx == -1) {
                         sIdx = i;
                     }
@@ -94,15 +99,19 @@ public class MyHash {
                     sIdx = i;
                 }
 
-                long tPos = AyscBufferHolder.getIns().tPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
+//                long tPos = AyscBufferHolder.getIns().tPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
                 long aPos = AyscBufferHolder.getIns().aPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
                 long bPos = AyscBufferHolder.getIns().bPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * GlobalParams.getBodySize();
 //                if (bPos < 0) {
 //                    System.out.println("GG body pos 小于0 s:" + AyscBufferHolder.getIns().bPos[idx] + " sIdx:" + sIdx + " block msg limit:" + GlobalParams.getBlockMessageLimit() + " body size:" + GlobalParams.getBodySize() + " bPos:" + bPos);
 //                }
-                long[] tList = HelpUtil.readT(idx, tPos, tMsgAmount);
+                long[] tList = readT(idx, sIdx, i, tMsgAmount);
                 long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);
+//
+//                if (tList[0] != aList[0]) {
+//                    System.out.println("t[0]:" + tList[0] + " a[0]:" + aList[0]);
+//                }
                 readCount++;
                 for (int j = 0; j < tMsgAmount; ++j) {
                     if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
@@ -148,7 +157,7 @@ public class MyHash {
                 if (i == infoSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
                 if (i < r && !HelpUtil.intersect(minT, maxT, minA, maxA, minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i))
-                        && tMsgAmount < 1024 * 32) {
+                        && tMsgAmount < 1024 * 64) {
                     if (sIdx == -1) {
                         sIdx = i;
                     }
@@ -161,9 +170,10 @@ public class MyHash {
                     sIdx = i;
                 }
                 if (sIdx != -1) {
-                    long tPos = AyscBufferHolder.getIns().tPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
+//                    long tPos = AyscBufferHolder.getIns().tPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
                     long aPos = AyscBufferHolder.getIns().aPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
-                    long[] tList = HelpUtil.readT(idx, tPos, tMsgAmount);
+//                    long[] tList = HelpUtil.readT(idx, tPos, tMsgAmount);
+                    long[] tList = readT(idx, sIdx, i, tMsgAmount);
                     long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                     for (int j = 0; j < tMsgAmount; ++j) {
                         if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
@@ -221,4 +231,17 @@ public class MyHash {
         return r - 1;
     }
 
+
+    private long[] readT(int idx, int l, int r, int size) {
+        long[] tList = new long[size];
+        int tListSize = 0;
+        for (int j = l; j <= r; ++j) {
+            int amount = AyscBufferHolder.getIns().hashInfos.get(idx).get(j).size;
+            long[] tListSub = AyscBufferHolder.getIns().hashInfos.get(idx).get(j).readT();
+            for (int k = 0; k < amount; ++k) {
+                tList[tListSize++] = tListSub[k];
+            }
+        }
+        return tList;
+    }
 }
