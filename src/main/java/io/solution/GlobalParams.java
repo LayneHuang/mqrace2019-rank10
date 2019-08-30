@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 8);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 32);
 
     /**
      * 消息总数

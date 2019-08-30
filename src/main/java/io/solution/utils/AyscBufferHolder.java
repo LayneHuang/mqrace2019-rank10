@@ -130,6 +130,7 @@ public class AyscBufferHolder {
     }
 
     private long encodeCost = 0;
+    private long addCost = 0;
     private long writeCost = 0;
 
     private double avgDataSize = 0;
@@ -157,8 +158,12 @@ public class AyscBufferHolder {
                     + " msg amount:" + msgAmount[idx]
                     + " 目前写入a耗时:" + writeCost
                     + " hash t耗时:" + encodeCost
+                    + " add 耗时:" + addCost
                     + " avgDataTSize:" + avgDataSize
             );
+            System.out.println("Rest memory:"
+                    + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory())
+                            / (1024 * 1024) + "(M)");
         }
 
         if (commitAmount[idx] == getBlockMessageLimit()) {
@@ -179,14 +184,16 @@ public class AyscBufferHolder {
 
             blockSize++;
             try {
-                long s0 = System.nanoTime();
                 HashData data = new HashData();
+                long s0 = System.nanoTime();
                 int dataSize = data.encode(tList[idx], commitAmount[idx]);
-                hashInfos.get(idx).add(data);
                 long s1 = System.nanoTime();
+                hashInfos.get(idx).add(data);
+                long s2 = System.nanoTime();
                 if (idx == 0) {
                     avgDataSize = (avgDataSize * (msgAmount[idx] - 1) + dataSize) / msgAmount[idx];
                     encodeCost += (s1 - s0);
+                    addCost += (s2 - s1);
                 }
 
 //                tBuffers[idx].flip();
@@ -196,9 +203,9 @@ public class AyscBufferHolder {
                 aBuffers[idx].flip();
                 aChannels[idx].write(aBuffers[idx]);
                 aBuffers[idx].clear();
-                long s2 = System.nanoTime();
+                long s3 = System.nanoTime();
                 if (idx == 0) {
-                    writeCost += (s2 - s1);
+                    writeCost += (s3 - s2);
                 }
 
                 bBuffers[idx].flip();
