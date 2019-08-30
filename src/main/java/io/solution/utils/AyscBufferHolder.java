@@ -45,7 +45,7 @@ public class AyscBufferHolder {
 
     private long[][] tList = new long[MAX_THREAD_AMOUNT][getBlockMessageLimit()];
 
-    public ArrayList<ArrayList<HashData>> hashInfos = new ArrayList<>();
+    public ArrayList<ArrayList<HashData>> hashInfos = new ArrayList<>(MAX_THREAD_AMOUNT);
 
     private int blockSize = 0;
 
@@ -163,7 +163,7 @@ public class AyscBufferHolder {
             );
             System.out.println("Rest memory:"
                     + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory())
-                            / (1024 * 1024) + "(M)");
+                    / (1024 * 1024) + "(M)");
         }
 
         if (commitAmount[idx] == getBlockMessageLimit()) {

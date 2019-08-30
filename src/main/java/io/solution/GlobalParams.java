@@ -13,12 +13,12 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 32);
+    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 32);
 
     /**
      * 消息总数
      */
-    private static int MSG_COUNT = (IS_DEBUG ? 200_000_000 : 2_080_000_000);
+    public static int MSG_COUNT = (IS_DEBUG ? 200_000_000 : 2_080_000_000);
 
     /**
      * 拥塞队列的大小
