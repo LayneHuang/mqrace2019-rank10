@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 32);
+    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 50);
 
     /**
      * 消息总数
@@ -21,24 +21,9 @@ public class GlobalParams {
     public static int MSG_COUNT = (IS_DEBUG ? 200_000_000 : 2_080_000_000);
 
     /**
-     * 拥塞队列的大小
-     */
-    public static final int MSG_BLOCK_QUEUE_LIMIT = 1024 * 100;
-
-    /**
-     * 提交个数
-     */
-    public static final int BLOCK_COMMIT_COUNT_LIMIT = 256;
-
-    /**
      * 写文件拥塞队列大小
      */
-    public static final int WRITE_COUNT_LIMIT = 512;
-
-    /**
-     * 提交个数
-     */
-    public static final int WRITE_COMMIT_COUNT_LIMIT = 50;         // min = 4k / 50 * 8 * this
+    public static final int WRITE_COMMIT_COUNT_LIMIT = 1024;
 
     public static final int MAX_THREAD_AMOUNT = 20;
 

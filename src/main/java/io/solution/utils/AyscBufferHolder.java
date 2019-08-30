@@ -169,6 +169,7 @@ public class AyscBufferHolder {
         if (commitAmount[idx] == getBlockMessageLimit()) {
 
             MyHash.getIns().insert(idx, minT[idx], maxT[idx], minA[idx], maxA[idx], sums[idx]);
+//            MyHash.getIns().insert(idx, minT[idx], maxT[idx], minA[idx], maxA[idx]);
             minT[idx] = minA[idx] = Long.MAX_VALUE;
             maxT[idx] = maxA[idx] = Long.MIN_VALUE;
             sums[idx] = 0;
@@ -178,7 +179,7 @@ public class AyscBufferHolder {
             int distance = (size / A_RANGE);
             for (int i = 0; i < A_RANGE; ++i) {
                 int pos = i * distance;
-                wLines[i] = (wLines[i] * blockSize + aLists.get(idx).get(pos)) / (blockSize + 1);
+                wLines[i] = (long) ((1.0 * wLines[i] * blockSize + aLists.get(idx).get(pos)) / (1.0 + blockSize));
             }
             aLists.get(idx).clear();
 
@@ -237,6 +238,7 @@ public class AyscBufferHolder {
 
                     MyHash.getIns().lastMsgAmount[i] = commitAmount[i];
                     MyHash.getIns().insert(i, minT[i], maxT[i], minA[i], maxA[i], sums[i]);
+//                    MyHash.getIns().insert(i, minT[i], maxT[i], minA[i], maxA[i]);
 
 //                    tBuffers[i].flip();
 //                    tChannels[i].write(tBuffers[i]);

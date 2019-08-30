@@ -20,18 +20,22 @@ public class MyHash {
     private static MyHash ins = new MyHash();
 
     // 第二阶段
-    private ArrayList<ArrayList<Long>> minTs2 = new ArrayList<>();
+    public ArrayList<ArrayList<Long>> minTs2 = new ArrayList<>();
     private ArrayList<ArrayList<Long>> maxTs2 = new ArrayList<>();
     private ArrayList<ArrayList<Long>> minAs2 = new ArrayList<>();
     private ArrayList<ArrayList<Long>> maxAs2 = new ArrayList<>();
     private ArrayList<ArrayList<Long>> sums2 = new ArrayList<>();
 
-    private ArrayList<ArrayList<HashData>> hashInfos = new ArrayList<>();
-
     public int[] lastMsgAmount = new int[GlobalParams.MAX_THREAD_AMOUNT];
-    private int size2 = 0;
+    public int size2 = 0;
 
+    // 第3阶段
     public int size = 0;
+    public long[] minTs3 = new long[GlobalParams.getBlockMessageLimit()];
+    private long[] maxTs3 = new long[GlobalParams.getBlockMessageLimit()];
+    private long[] minAs3 = new long[GlobalParams.getBlockMessageLimit()];
+    private long[] maxAs3 = new long[GlobalParams.getBlockMessageLimit()];
+    private long[] sums3 = new long[GlobalParams.getBlockMessageLimit()];
 
     private MyHash() {
         for (int i = 0; i < GlobalParams.MAX_THREAD_AMOUNT; ++i) {
@@ -40,12 +44,19 @@ public class MyHash {
             minAs2.add(new ArrayList<>());
             maxAs2.add(new ArrayList<>());
             sums2.add(new ArrayList<>());
-            hashInfos.add(new ArrayList<>());
         }
     }
 
     public static MyHash getIns() {
         return ins;
+    }
+
+    public void insert(int idx, long minT, long maxT, long minA, long maxA) {
+        size2 = Math.max(size2, idx + 1);
+        minTs2.get(idx).add(minT);
+        maxTs2.get(idx).add(maxT);
+        minAs2.get(idx).add(minA);
+        maxAs2.get(idx).add(maxA);
     }
 
     public void insert(int idx, long minT, long maxT, long minA, long maxA, long sum) {
@@ -61,8 +72,8 @@ public class MyHash {
 
         List<Message> res = new ArrayList<>();
 
-        int readCount = 0;
-        long s0 = System.currentTimeMillis();
+//        int readCount = 0;
+//        long s0 = System.currentTimeMillis();
 
         for (int idx = 0; idx < size2; ++idx) {
             int l = findLeft2(idx, minT);
@@ -108,11 +119,10 @@ public class MyHash {
                 long[] tList = readT(idx, sIdx, i, tMsgAmount);
                 long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);
-//
 //                if (tList[0] != aList[0]) {
 //                    System.out.println("t[0]:" + tList[0] + " a[0]:" + aList[0]);
 //                }
-                readCount++;
+//                readCount++;
                 for (int j = 0; j < tMsgAmount; ++j) {
                     if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                         res.add(new Message(aList[j], tList[j], bodyList[j]));
@@ -122,9 +132,9 @@ public class MyHash {
                 sIdx = -1;
             }
         }
-        if (res.size() % 100 == 0) {
-            System.out.println("读盘次数:" + readCount + " 耗时:" + (System.currentTimeMillis() - s0));
-        }
+//        if (res.size() % 100 == 0) {
+//            System.out.println("读盘次数:" + readCount + " 耗时:" + (System.currentTimeMillis() - s0));
+//        }
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
     }
