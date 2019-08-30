@@ -2,7 +2,6 @@ package io.solution.map;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
-import io.solution.data.HashData;
 import io.solution.utils.AyscBufferHolder;
 import io.solution.utils.HelpUtil;
 
@@ -21,7 +20,7 @@ public class MyHash {
 
     // 第二阶段
     public ArrayList<ArrayList<Long>> minTs2 = new ArrayList<>();
-    private ArrayList<ArrayList<Long>> maxTs2 = new ArrayList<>();
+    public ArrayList<ArrayList<Long>> maxTs2 = new ArrayList<>();
     private ArrayList<ArrayList<Long>> minAs2 = new ArrayList<>();
     private ArrayList<ArrayList<Long>> maxAs2 = new ArrayList<>();
     private ArrayList<ArrayList<Long>> sums2 = new ArrayList<>();
@@ -242,7 +241,7 @@ public class MyHash {
     }
 
 
-    private long[] readT(int idx, int l, int r, int size) {
+    public static long[] readT(int idx, int l, int r, int size) {
         long[] tList = new long[size];
         int tListSize = 0;
         for (int j = l; j <= r; ++j) {

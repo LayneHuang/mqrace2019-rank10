@@ -52,9 +52,10 @@ public class AyscBufferHolder {
     public long[] wLines = new long[A_RANGE];
 
     private AyscBufferHolder() {
-        for (int i = 0; i < A_RANGE; ++i) {
+        for (int i = 0; i < A_MOD; ++i) {
             wLines[i] = 0;
         }
+        wLines[A_MOD] = Long.MAX_VALUE;
 
         for (int i = 0; i < MAX_THREAD_AMOUNT; ++i) {
 
@@ -62,7 +63,6 @@ public class AyscBufferHolder {
 
             hashInfos.add(new ArrayList<>());
 
-//            tBuffers[i] = ByteBuffer.allocateDirect(8 * getBlockMessageLimit());
             aBuffers[i] = ByteBuffer.allocateDirect(8 * getBlockMessageLimit());
             bBuffers[i] = ByteBuffer.allocateDirect(getBodySize() * getBlockMessageLimit());
 
@@ -70,14 +70,6 @@ public class AyscBufferHolder {
             maxT[i] = maxA[i] = Long.MIN_VALUE;
 
             try {
-
-//                Path pathT = GlobalParams.getTPath(i);
-//                tChannels[i] = FileChannel.open(
-//                        pathT,
-//                        StandardOpenOption.CREATE,
-//                        StandardOpenOption.APPEND
-//                );
-//                tPos[i] = tChannels[i].position();
 
                 Path pathA = GlobalParams.getAPath(i, false);
                 aChannels[i] = FileChannel.open(
@@ -139,7 +131,6 @@ public class AyscBufferHolder {
         int idx = getIndex(threadId);
         aLists.get(idx).add(message.getA());
 
-//        tBuffers[idx].putLong(message.getT());
         tList[idx][commitAmount[idx]] = message.getT();
 
         aBuffers[idx].putLong(message.getA());
@@ -176,11 +167,24 @@ public class AyscBufferHolder {
 
             aLists.get(idx).sort(Long::compare);
             int size = aLists.get(idx).size();
-            int distance = (size / A_RANGE);
-            for (int i = 0; i < A_RANGE; ++i) {
+            int distance = (size / A_MOD);
+
+            for (int i = 0; i < A_MOD; ++i) {
                 int pos = i * distance;
                 wLines[i] = (long) ((1.0 * wLines[i] * blockSize + aLists.get(idx).get(pos)) / (1.0 + blockSize));
+                if (idx == 0) {
+                    System.out.print(pos + " ");
+                }
             }
+            
+            if (idx == 0) {
+                System.out.println();
+                for (int i = 0; i < A_MOD; ++i) {
+                    System.out.print(wLines[i] + " ");
+                }
+                System.out.println();
+            }
+
             aLists.get(idx).clear();
 
             blockSize++;
@@ -288,9 +292,9 @@ public class AyscBufferHolder {
         GlobalParams.setStepOneFinished();
         lock.unlock();
 
-//        if (tId == ftId) {
-//            PretreatmentHolder.getIns().work();
-//        }
+        if (tId == ftId) {
+            PretreatmentHolder.getIns().work();
+        }
     }
 
 }

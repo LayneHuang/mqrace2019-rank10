@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 8 : 50);
+    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 24 : 50);
 
     /**
      * 消息总数
@@ -71,6 +71,16 @@ public class GlobalParams {
             path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".body");
         } else {
             path = Paths.get(PRE_PATH + "/mydata" + d + ".body");
+        }
+        return path;
+    }
+
+    public static Path getATPath() {
+        Path path;
+        if (GlobalParams.IS_DEBUG) {
+            path = Paths.get(System.getProperty("user.dir"), "/d/data.at");
+        } else {
+            path = Paths.get(PRE_PATH + "/mydata.at");
         }
         return path;
     }

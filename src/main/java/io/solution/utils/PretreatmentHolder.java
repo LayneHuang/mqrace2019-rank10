@@ -1,6 +1,7 @@
 package io.solution.utils;
 
 import io.solution.GlobalParams;
+import io.solution.data.MsgForThree;
 import io.solution.map.MyHash;
 
 import java.io.IOException;
@@ -8,6 +9,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
 /**
  * @Author: laynehuang
@@ -21,13 +24,16 @@ class PretreatmentHolder {
 
     private FileChannel infoChannel;
 
-    private long infoPos;
+    public long infoPos;
+
+    public long atPos;
 
     private ByteBuffer[] aBuffers = new ByteBuffer[GlobalParams.A_RANGE];
 
     private int[] aBufferSize = new int[GlobalParams.A_RANGE];
 
     private FileChannel[] channels = new FileChannel[GlobalParams.A_RANGE];
+    private FileChannel atChannel;
 
     private long[] aPos = new long[GlobalParams.A_RANGE];
 
@@ -40,19 +46,12 @@ class PretreatmentHolder {
 
     private int writeCount = 0;
 
+    private ByteBuffer atBuffer = ByteBuffer.allocateDirect(16 * GlobalParams.getBlockMessageLimit());
+
     private ByteBuffer lineInfoBuffer = ByteBuffer.allocateDirect(
             GlobalParams.INFO_SIZE * GlobalParams.A_RANGE * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
-    /**
-     * 每条线程消息处理了的块的数量
-     */
-    private int[] preDealSize = new int[GlobalParams.MAX_THREAD_AMOUNT];
-
-    /**
-     * 每条线程消息正在处理的块的消息便宜
-     */
-    private int[] nowDealSize = new int[GlobalParams.MAX_THREAD_AMOUNT];
 
     private PretreatmentHolder() {
         try {
@@ -62,6 +61,14 @@ class PretreatmentHolder {
                     StandardOpenOption.APPEND
             );
             infoPos = infoChannel.position();
+
+            atChannel = FileChannel.open(
+                    GlobalParams.getATPath(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+            atPos = atChannel.position();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -95,65 +102,127 @@ class PretreatmentHolder {
             long s0 = System.currentTimeMillis();
             try {
 
-                long sn = System.nanoTime();
                 int totalBlock = 0;
-                for (int i = 0; i < MyHash.getIns().size2; ++i) {
-                    totalBlock += MyHash.getIns().minTs2.size();
-                }
-                System.out.println("总块数:" + totalBlock + " 求和耗时:" + (System.nanoTime() - sn));
-                int nowSize = 0;
+                int threadAmount = MyHash.getIns().size2;
+                int[] blocksSize = new int[threadAmount];
+                // 每条线程消息处理了的块的数量
+                int[] preDealSize = new int[threadAmount];
+                // 每条线程消息正在处理的块的消息偏移
+                int[] nowDealPos = new int[threadAmount];
+                // t数据
 
-                while (nowSize < totalBlock) {
-
-
-                }
-
-
-                for (int i = 0; i < MyHash.getIns().size; ++i) {
-                    // 前缀
-//                    MyHash.getIns().infoPos[i] = infoPos;
-                    infoPos += GlobalParams.INFO_SIZE * GlobalParams.A_RANGE;
-                    for (int j = 0; j < GlobalParams.A_RANGE; ++j) {
-                        lineInfoBuffer.putLong(aPos[j]);
-                        lineInfoBuffer.putInt(cntSum[j]);
-                        lineInfoBuffer.putInt(ks[j]);
-                        lineInfoBuffer.putLong(bs[j]);
-                    }
-                    writeCount++;
-                    if (writeCount == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
-                        writeCount = 0;
-                        try {
-                            lineInfoBuffer.flip();
-                            infoChannel.write(lineInfoBuffer);
-                            lineInfoBuffer.clear();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-//                    int cnt = MyHash0.getIns().msgAmount[i];
-                    long[] ats = HelpUtil.readAT(MyHash0.getIns().posATs[i], cnt);
-
-                    for (int j = 0; j < cnt; ++j) {
-                        long a = ats[j * 2 + 1];
-                        int pos = HelpUtil.getPosition2(a);
-                        aBuffers[pos].putLong(a);
-                        aBufferSize[pos]++;
-                        if (aBufferSize[pos] == 1024) {
-                            aBuffers[pos].flip();
-                            channels[pos].write(aBuffers[pos]);
-                            aBuffers[pos].clear();
-                            aBufferSize[pos] = 0;
-                        }
-                        aPos[pos] += 8;
-                        cntSum[pos]++;
-                        if (Long.MAX_VALUE - bs[pos] < a) {
-                            ks[pos]++;
-                            bs[pos] = a - (Long.MAX_VALUE - bs[pos]);
-                        } else {
-                            bs[pos] += a;
-                        }
+                MsgForThree[][] at = new MsgForThree[threadAmount][GlobalParams.getBlockMessageLimit()];
+                for (int idx = 0; idx < threadAmount; ++idx) {
+                    int nowAmount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
+                    long[] tList = MyHash.readT(idx, 0, 0, nowAmount);
+                    long[] aList = HelpUtil.readA(false, idx, AyscBufferHolder.getIns().aPos[idx], nowAmount);
+                    for (int i = 0; i < nowAmount; ++i) {
+                        at[idx][i] = new MsgForThree(tList[i], aList[i]);
                     }
                 }
+
+                PriorityQueue<MsgForThree> queue = new PriorityQueue<>(Comparator.comparingLong(t0 -> t0.t));
+                for (int idx = 0; idx < threadAmount; ++idx) {
+                    blocksSize[idx] = MyHash.getIns().minTs2.get(idx).size();
+                    totalBlock += blocksSize[idx];
+                }
+                System.out.println("总块数:" + totalBlock);
+                int finishSize = 0;
+
+                while (finishSize < totalBlock) {
+                    // 选线程中最大值最小的块
+                    long minOfMaxT = Long.MAX_VALUE;
+                    for (int idx = 0; idx < threadAmount; ++idx) {
+                        int nowPos = preDealSize[idx];
+                        if (nowPos < blocksSize[idx]) {
+                            long maxT = MyHash.getIns().maxTs2.get(idx).get(nowPos);
+                            if (maxT < minOfMaxT) {
+                                minOfMaxT = maxT;
+                            }
+                        }
+                    }
+
+                    // 把所有小于这个minOfMax的t放进队列 (最多thread amount个块)
+                    for (int idx = 0; idx < threadAmount; ++idx) {
+                        int amount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
+                        while (nowDealPos[idx] < amount && at[idx][nowDealPos[idx]].t <= minOfMaxT) {
+                            queue.add(at[idx][nowDealPos[idx]]);
+                            nowDealPos[idx]++;
+                        }
+
+                        // 某块插入完了
+                        if (nowDealPos[idx] == amount) {
+                            finishSize++;
+                            nowDealPos[idx] = 0;
+                            preDealSize[idx]++;
+                            // 重新读入一块新块
+                            if (preDealSize[idx] < blocksSize[idx]) {
+                                int nowAmount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
+                                long[] tList = MyHash.readT(idx, preDealSize[idx], preDealSize[idx], nowAmount);
+                                long[] aList = HelpUtil.readA(false, idx, AyscBufferHolder.getIns().aPos[idx] + (long) preDealSize[idx] * GlobalParams.getBlockMessageLimit() * 8, nowAmount);
+                                for (int i = 0; i < nowAmount; ++i) {
+                                    at[idx][i].t = tList[i];
+                                    at[idx][i].a = aList[i];
+                                }
+                            }
+                        }
+                    }
+
+                    // 组成新块重新写
+                    while (queue.size() >= GlobalParams.getBlockMessageLimit()) {
+                        // 记录&处理竖线位置
+                        infoPos += GlobalParams.INFO_SIZE * GlobalParams.A_RANGE;
+                        for (int j = 0; j < GlobalParams.A_RANGE; ++j) {
+                            lineInfoBuffer.putLong(aPos[j]);
+                            lineInfoBuffer.putInt(cntSum[j]);
+                            lineInfoBuffer.putInt(ks[j]);
+                            lineInfoBuffer.putLong(bs[j]);
+                        }
+                        writeCount++;
+                        if (writeCount == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
+                            writeCount = 0;
+                            try {
+                                lineInfoBuffer.flip();
+                                infoChannel.write(lineInfoBuffer);
+                                lineInfoBuffer.clear();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
+                            MsgForThree msg = queue.poll();
+                            if (msg == null) continue;
+                            atBuffer.putLong(msg.t);
+                            atBuffer.putLong(msg.a);
+
+                            // 处理竖线数据
+                            int pos = HelpUtil.getPosition(msg.a);
+                            aBuffers[pos].putLong(msg.a);
+                            aBufferSize[pos]++;
+                            if (aBufferSize[pos] == 1024) {
+                                aBuffers[pos].flip();
+                                channels[pos].write(aBuffers[pos]);
+                                aBuffers[pos].clear();
+                                aBufferSize[pos] = 0;
+                            }
+                            aPos[pos] += 8;
+                            cntSum[pos]++;
+                            if (Long.MAX_VALUE - bs[pos] < msg.a) {
+                                ks[pos]++;
+                                bs[pos] = msg.a - (Long.MAX_VALUE - bs[pos]);
+                            } else {
+                                bs[pos] += msg.a;
+                            }
+
+                        }
+                        atBuffer.flip();
+                        atChannel.write(atBuffer);
+                        atBuffer.clear();
+                    }
+
+                }
+
                 for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
                     if (aBufferSize[i] > 0) {
                         aBuffers[i].flip();
@@ -162,6 +231,7 @@ class PretreatmentHolder {
                     }
                     aBuffers[i].clear();
                 }
+
                 if (writeCount > 0) {
                     lineInfoBuffer.flip();
                     infoChannel.write(lineInfoBuffer);
@@ -177,6 +247,7 @@ class PretreatmentHolder {
                         channels[i] = null;
                     }
                 }
+
                 isFinish = true;
                 System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms)");
                 System.out.print("[");

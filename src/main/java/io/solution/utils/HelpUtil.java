@@ -138,4 +138,13 @@ public class HelpUtil {
         return res;
     }
 
+
+    public static int getPosition(long a) {
+        for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+            if (a < AyscBufferHolder.getIns().wLines[i]) {
+                return i;
+            }
+        }
+        return GlobalParams.A_MOD;
+    }
 }
