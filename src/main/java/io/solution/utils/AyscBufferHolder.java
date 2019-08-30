@@ -132,6 +132,8 @@ public class AyscBufferHolder {
     private long encodeCost = 0;
     private long writeCost = 0;
 
+    private double avgDataSize = 0;
+
     public void commit(long threadId, Message message) {
         int idx = getIndex(threadId);
         aLists.get(idx).add(message.getA());
@@ -151,7 +153,12 @@ public class AyscBufferHolder {
         commitAmount[idx]++;
 
         if (idx == 0 && msgAmount[idx] % 500000 == 0) {
-            System.out.println(idx + " msg amount:" + msgAmount[idx] + " 目前写入a耗时:" + writeCost + " hash t耗时:" + encodeCost);
+            System.out.println(idx
+                    + " msg amount:" + msgAmount[idx]
+                    + " 目前写入a耗时:" + writeCost
+                    + " hash t耗时:" + encodeCost
+                    + " avgDataTSize:" + avgDataSize
+            );
         }
 
         if (commitAmount[idx] == getBlockMessageLimit()) {
@@ -174,10 +181,13 @@ public class AyscBufferHolder {
             try {
                 long s0 = System.nanoTime();
                 HashData data = new HashData();
-                data.encode(tList[idx], commitAmount[idx]);
+                int dataSize = data.encode(tList[idx], commitAmount[idx]);
                 hashInfos.get(idx).add(data);
                 long s1 = System.nanoTime();
-                encodeCost += (s1 - s0);
+                if (idx == 0) {
+                    avgDataSize = (avgDataSize * (msgAmount[idx] - 1) + dataSize) / msgAmount[idx];
+                    encodeCost += (s1 - s0);
+                }
 
 //                tBuffers[idx].flip();
 //                tChannels[idx].write(tBuffers[idx]);
@@ -186,9 +196,10 @@ public class AyscBufferHolder {
                 aBuffers[idx].flip();
                 aChannels[idx].write(aBuffers[idx]);
                 aBuffers[idx].clear();
-
                 long s2 = System.nanoTime();
-                writeCost += (s2 - s1);
+                if (idx == 0) {
+                    writeCost += (s2 - s1);
+                }
 
                 bBuffers[idx].flip();
                 bChannels[idx].write(bBuffers[idx]);

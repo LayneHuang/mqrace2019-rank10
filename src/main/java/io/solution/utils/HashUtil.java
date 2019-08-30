@@ -16,21 +16,20 @@ public class HashUtil {
 
     public static int readT(HashData data, MyCursor cursor) throws IOException {
         int pos = cursor.pos;
-        byte[] buf = data.dataT;
         int len = 1;
-        int b = buf[pos] & 0xff;
+        int b = data.dataT[pos] & 0xff;
         int n = b & 0x7f;
         if (b > 0x7f) {
-            b = buf[pos + len++] & 0xff;
+            b = data.dataT[pos + len++] & 0xff;
             n ^= (b & 0x7f) << 7;
             if (b > 0x7f) {
-                b = buf[pos + len++] & 0xff;
+                b = data.dataT[pos + len++] & 0xff;
                 n ^= (b & 0x7f) << 14;
                 if (b > 0x7f) {
-                    b = buf[pos + len++] & 0xff;
+                    b = data.dataT[pos + len++] & 0xff;
                     n ^= (b & 0x7f) << 21;
                     if (b > 0x7f) {
-                        b = buf[pos + len++] & 0xff;
+                        b = data.dataT[pos + len++] & 0xff;
                         n ^= (b & 0x7f) << 28;
                         if (b > 0x7f) {
                             throw new IOException("Invalid int encoding");
