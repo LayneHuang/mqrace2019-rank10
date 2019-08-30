@@ -53,7 +53,12 @@ public class MyHash {
     }
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
+
         List<Message> res = new ArrayList<>();
+
+        int readCount = 0;
+        long s0 = System.currentTimeMillis();
+
         for (int idx = 0; idx < size2; ++idx) {
             int l = findLeft2(idx, minT);
             int r = findRight2(idx, maxT);
@@ -77,7 +82,7 @@ public class MyHash {
                 int amount = GlobalParams.getBlockMessageLimit();
                 if (i == infoSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
-                if (i < r && tMsgAmount < 1024) {
+                if (i < r && tMsgAmount < 1024 * 32) {
                     if (sIdx == -1) {
                         sIdx = i;
                     }
@@ -98,7 +103,7 @@ public class MyHash {
                 long[] tList = HelpUtil.readT(idx, tPos, tMsgAmount);
                 long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);
-
+                readCount++;
                 for (int j = 0; j < tMsgAmount; ++j) {
                     if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                         res.add(new Message(aList[j], tList[j], bodyList[j]));
@@ -107,6 +112,9 @@ public class MyHash {
                 tMsgAmount = 0;
                 sIdx = -1;
             }
+        }
+        if (res.size() % 100 == 0) {
+            System.out.println("读盘次数:" + readCount + " 耗时:" + (System.currentTimeMillis() - s0));
         }
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
