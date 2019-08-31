@@ -22,12 +22,12 @@ public class DemoTester {
         int checkTime = 10 * 60 * 1000;
 
         //正确性检测的次数
-        int checkTimes2 = 1000;
+        int checkTimes2 = 5000;
         int checkTimes3 = 50000;
         //发送的线程数量
         int sendTsNum = 10;
         //查询的线程数量
-        int checkTsNum = 10;
+        int checkTsNum = 2;
         // 每次查询消息的最大跨度
         int maxMsgCheckSize = 423455;
         // 每次查询求平均的最大跨度
