@@ -103,6 +103,8 @@ public class AyscBufferHolder {
 
     private int total = 0;
 
+    private long beginTime = 0;
+
     private int getIndex(long threadId) {
         if (indexMap.containsKey(threadId)) {
             return indexMap.get(threadId);
@@ -113,7 +115,7 @@ public class AyscBufferHolder {
                 }
                 int index = total++;
                 if (index == 0) {
-                    System.out.println("第一阶段开始:" + System.currentTimeMillis());
+                    beginTime = System.currentTimeMillis();
                 }
                 indexMap.put(threadId, index);
                 return index;
@@ -298,15 +300,15 @@ public class AyscBufferHolder {
 //        }
 //        System.out.println("]");
 //        System.out.println("消息总量:" + totalMsgAmount);
-        System.out.println("flush 结束~ " + System.currentTimeMillis());
+        System.out.println("flush 结束~ 第一阶段耗时:" + (System.currentTimeMillis() - beginTime) + "(ms)");
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
 
         GlobalParams.setStepOneFinished();
         lock.unlock();
-
-        if (tId == ftId) {
-            PretreatmentHolder.getIns().work();
-        }
+//
+//        if (tId == ftId) {
+//            PretreatmentHolder.getIns().work();
+//        }
     }
 
 }

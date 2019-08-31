@@ -1,6 +1,7 @@
 package io.solution.utils;
 
 import io.solution.GlobalParams;
+import io.solution.data.LineInfo;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -154,6 +155,46 @@ public class HelpUtil {
             for (int i = 0; i < (count << 1); ++i) {
                 res[i] = buffer.getLong();
             }
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
+
+    public static LineInfo[] readLineInfo(long position) {
+        FileChannel channel = null;
+        LineInfo[] res = new LineInfo[GlobalParams.A_RANGE];
+
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getInfoPath(),
+                    StandardOpenOption.READ
+            );
+
+            ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
+            channel.read(buffer, position);
+            buffer.flip();
+//            System.out.println("buffer limit:" + buffer.limit() + " " + (24 * GlobalParams.A_RANGE));
+
+            // trans
+            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+                LineInfo lineInfo = new LineInfo();
+                lineInfo.aPos = buffer.getLong();
+                lineInfo.cntSum = buffer.getInt();
+                lineInfo.ks = buffer.getInt();
+                lineInfo.bs = buffer.getLong();
+                res[i] = lineInfo;
+            }
+
             buffer.clear();
         } catch (IOException e) {
             e.printStackTrace();

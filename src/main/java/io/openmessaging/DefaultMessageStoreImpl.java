@@ -21,7 +21,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private long s0 = 0;
     private int[] cnt = new int[GlobalParams.MAX_THREAD_AMOUNT];
-    private long cost = 0;
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
@@ -30,18 +29,15 @@ public class DefaultMessageStoreImpl extends MessageStore {
             s0 = System.currentTimeMillis();
             AyscBufferHolder.getIns().flush(threadId);
         }
-//        long s0 = System.nanoTime();
 //        List<Message> res = MyHash.getIns().find2(tMin, tMax, aMin, aMax);
-//        long s1 = System.nanoTime();
 //        int idx = MyHash.getIns().getIndex(threadId);
 //        cnt[idx]++;
 //        if (idx == 0) {
-//            cost += (s1 - s0);
-//            if (cnt[idx] % (GlobalParams.IS_DEBUG ? 50 : 500) == 0) {
-//                System.out.println("单线程解决" + cnt + "个查询耗时:" + cost);
+//            cnt++;
+//            if (cnt % (GlobalParams.IS_DEBUG ? 50 : 500) == 0) {
+//                System.out.println("单线程解决" + cnt + "个查询延时:" + (System.currentTimeMillis() - s0));
 //            }
 //        }
-//
 //        return res;
         return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
     }

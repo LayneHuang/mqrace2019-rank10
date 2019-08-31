@@ -2,8 +2,10 @@ package io.solution.map;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
+import io.solution.data.LineInfo;
 import io.solution.utils.AyscBufferHolder;
 import io.solution.utils.HelpUtil;
+import io.solution.utils.PretreatmentHolder;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -171,7 +173,16 @@ public class MyHash {
         return res;
     }
 
+//    private boolean isOutput = false;
+
     public long easyFind3Aysc(long minT, long maxT, long minA, long maxA) {
+//        if (!isOutput && !PretreatmentHolder.getIns().isFinish) {
+//            isOutput = true;
+//            System.out.println("pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
+//        }
+//        if (PretreatmentHolder.getIns().isFinish || (size3 > 0 && maxTs3[size3 - 1] > maxT)) {
+//            return find3(minT, maxT, minA, maxA);
+//        }
         long res = 0;
         int cnt = 0;
         for (int idx = 0; idx < size2; ++idx) {
@@ -234,6 +245,10 @@ public class MyHash {
     }
 
     public long easyFind3(long minT, long maxT, long minA, long maxA) {
+        if (!PretreatmentHolder.getIns().isFinish) {
+            System.out.println("pre deal is not finish. now size:" + size3);
+            return 0;
+        }
         int l = findLeft3(minT);
         int r = findRight3(maxT);
         if (l == -1 || r == -1) {
@@ -279,80 +294,86 @@ public class MyHash {
         return cnt == 0 ? 0 : res / cnt;
     }
 
-//    public long find3(long minT, long maxT, long minA, long maxA) {
-//        int l = findLeft3(minT);
-//        int r = findRight3(maxT);
-//        if (l == -1 || r == -1) {
-//            return 0;
-//        }
-//        if (r - l + 1 < 3) {
-//            return easyFind3(minT, maxT, minA, maxA, l, r);
-//        }
-//        long res = 0;
-//        int cnt = 0;
-//
-////        long distance = PretreatmentHolder.getIns().distance;
-//        int btPos = HelpUtil.getPosition(minA);
-//        int tpPos = HelpUtil.getPosition(maxA);
-//
-//        tpPos = Math.min(tpPos, GlobalParams.A_RANGE - 1);
-//        LineInfo[] leftLineInfos = HelpUtil.readLineInfo(infoPos[l + 1]);
-//        LineInfo[] rightLineInfos = HelpUtil.readLineInfo(infoPos[r]);
-//
-//        // 中间
-//        for (int i = btPos + 1; i <= tpPos - 1; ++i) {
-//            long sum = rightLineInfos[i].bs - leftLineInfos[i].bs;
-//            if (sum < 0) {
-//                sum = Long.MAX_VALUE + sum;
-//            }
-//            int dCnt = rightLineInfos[i].cntSum - leftLineInfos[i].cntSum;
-//            res += sum;
-//            cnt += dCnt;
-//        }
-//
-//        // 上下边界
-//        if (btPos < tpPos) {
-//            int bAmount = (int) ((rightLineInfos[btPos].aPos - leftLineInfos[btPos].aPos) / 8);
-//            if (bAmount > 0) {
-//                long[] baList = HelpUtil.readA(true, btPos, leftLineInfos[btPos].aPos, bAmount);
-//                for (int i = 0; i < bAmount; ++i) {
-//                    if (minA <= baList[i] && baList[i] <= maxA) {
-//                        res += baList[i];
-//                        cnt++;
-//                    }
-//                }
-//            }
-//        }
-//
-//        int tAmount = (int) ((rightLineInfos[tpPos].aPos - leftLineInfos[tpPos].aPos) / 8);
-//        if (tAmount > 0) {
-//            long[] taList = HelpUtil.readA(true, tpPos, leftLineInfos[tpPos].aPos, tAmount);
-//            for (int i = 0; i < tAmount; ++i) {
-//                if (minA <= taList[i] && taList[i] <= maxA) {
-//                    res += taList[i];
-//                    cnt++;
-//                }
-//            }
-//        }
-//
-//        // 左右边界
-//        long[] latList = HelpUtil.readAT(posATs[l], msgAmount[l]);
-//        for (int j = 0; j < msgAmount[l]; ++j) {
-//            if (HelpUtil.inSide(latList[j * 2], latList[j * 2 + 1], minT, maxT, minA, maxA)) {
-//                res += latList[j * 2 + 1];
-//                cnt++;
-//            }
-//        }
-//
-//        long[] ratList = HelpUtil.readAT(posATs[r], msgAmount[r]);
-//        for (int j = 0; j < msgAmount[r]; ++j) {
-//            if (HelpUtil.inSide(ratList[j * 2], ratList[j * 2 + 1], minT, maxT, minA, maxA)) {
-//                res += ratList[j * 2 + 1];
-//                cnt++;
-//            }
-//        }
-//        return cnt == 0 ? 0 : res / cnt;
-//    }
+    public long find3(long minT, long maxT, long minA, long maxA) {
+        if (!PretreatmentHolder.getIns().isFinish) {
+            System.out.println("pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
+            return 0;
+        }
+        int l = findLeft3(minT);
+        int r = findRight3(maxT);
+        if (l == -1 || r == -1) {
+            return 0;
+        }
+        if (r - l + 1 < 3) {
+            return easyFind3(minT, maxT, minA, maxA, l, r);
+        }
+        long res = 0;
+        int cnt = 0;
+
+//        long distance = PretreatmentHolder.getIns().distance;
+        int btPos = HelpUtil.getPosition(minA);
+        int tpPos = HelpUtil.getPosition(maxA);
+
+        tpPos = Math.min(tpPos, GlobalParams.A_RANGE - 1);
+        LineInfo[] leftLineInfos = HelpUtil.readLineInfo((l + 1) * GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
+        LineInfo[] rightLineInfos = HelpUtil.readLineInfo(r * GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
+
+        // 中间
+        for (int i = btPos + 1; i <= tpPos - 1; ++i) {
+            long sum = rightLineInfos[i].bs - leftLineInfos[i].bs;
+            if (sum < 0) {
+                sum = Long.MAX_VALUE + sum;
+            }
+            int dCnt = rightLineInfos[i].cntSum - leftLineInfos[i].cntSum;
+            res += sum;
+            cnt += dCnt;
+        }
+
+        // 上下边界
+        if (btPos < tpPos) {
+            int bAmount = (int) ((rightLineInfos[btPos].aPos - leftLineInfos[btPos].aPos) / 8);
+            if (bAmount > 0) {
+                long[] baList = HelpUtil.readA(true, btPos, leftLineInfos[btPos].aPos, bAmount);
+                for (int i = 0; i < bAmount; ++i) {
+                    if (minA <= baList[i] && baList[i] <= maxA) {
+                        res += baList[i];
+                        cnt++;
+                    }
+                }
+            }
+        }
+
+        int tAmount = (int) ((rightLineInfos[tpPos].aPos - leftLineInfos[tpPos].aPos) / 8);
+        if (tAmount > 0) {
+            long[] taList = HelpUtil.readA(true, tpPos, leftLineInfos[tpPos].aPos, tAmount);
+            for (int i = 0; i < tAmount; ++i) {
+                if (minA <= taList[i] && taList[i] <= maxA) {
+                    res += taList[i];
+                    cnt++;
+                }
+            }
+        }
+
+        // 左右边界
+        int leftAmount = GlobalParams.getBlockMessageLimit();
+        long[] latList = HelpUtil.readAT(16L * l * GlobalParams.getBlockMessageLimit(), leftAmount);
+        for (int j = 0; j < leftAmount; ++j) {
+            if (HelpUtil.inSide(latList[j * 2], latList[j * 2 + 1], minT, maxT, minA, maxA)) {
+                res += latList[j * 2 + 1];
+                cnt++;
+            }
+        }
+
+        int rightAmount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+        long[] ratList = HelpUtil.readAT(16L * r * GlobalParams.getBlockMessageLimit(), rightAmount);
+        for (int j = 0; j < rightAmount; ++j) {
+            if (HelpUtil.inSide(ratList[j * 2], ratList[j * 2 + 1], minT, maxT, minA, maxA)) {
+                res += ratList[j * 2 + 1];
+                cnt++;
+            }
+        }
+        return cnt == 0 ? 0 : res / cnt;
+    }
 
     private int findLeft2(int idx, long value) {
         ArrayList<Long> maxTList = maxTs2.get(idx);

@@ -17,11 +17,11 @@ import java.util.Queue;
  * @Author: laynehuang
  * @CreatedAt: 2019/8/30 0030
  */
-class PretreatmentHolder {
+public class PretreatmentHolder {
 
     private static PretreatmentHolder ins = new PretreatmentHolder();
 
-    private boolean isFinish = false;
+    public boolean isFinish = false;
 
     private FileChannel infoChannel;
 
@@ -87,6 +87,8 @@ class PretreatmentHolder {
     public static PretreatmentHolder getIns() {
         return ins;
     }
+
+    private long sleepCost = 0;
 
     synchronized void work() {
         if (isFinish) {
@@ -174,29 +176,20 @@ class PretreatmentHolder {
 
                     // 组成新块重新写
                     while (queue.size() >= GlobalParams.getBlockMessageLimit()) {
-                        // 记录&处理竖线位置
-                        for (int j = 0; j < GlobalParams.A_RANGE; ++j) {
-                            lineInfoBuffer.putLong(aPos[j]);
-                            lineInfoBuffer.putInt(cntSum[j]);
-                            lineInfoBuffer.putInt(ks[j]);
-                            lineInfoBuffer.putLong(bs[j]);
-                        }
-                        writeCount++;
-                        if (writeCount == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
-                            writeCount = 0;
-                            try {
-                                lineInfoBuffer.flip();
-                                infoChannel.write(lineInfoBuffer);
-                                lineInfoBuffer.clear();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
                         for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
                             msgs[i] = queue.poll();
 //                            pollCnt++;
                         }
                         buildBlock(msgs, GlobalParams.getBlockMessageLimit());
+                    }
+
+                    if (MyHash.getIns().size3 % GlobalParams.WRITE_COMMIT_COUNT_LIMIT == 0) {
+                        try {
+                            Thread.sleep(1000);
+                            sleepCost += 1000;
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
                 // 处理剩余a t 落盘
@@ -240,12 +233,13 @@ class PretreatmentHolder {
                 }
 
                 isFinish = true;
-                System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms)");
+                System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms) 睡眠消耗:" + sleepCost);
+                System.out.println("共处理块数:" + MyHash.getIns().size3);
                 System.out.print("[");
                 for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
                     System.out.print(cntSum[i] + ",");
                 }
-                System.out.print("]");
+                System.out.println("]");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -259,6 +253,27 @@ class PretreatmentHolder {
         long minA = Long.MAX_VALUE;
         long maxA = Long.MIN_VALUE;
         long sum = 0;
+
+        // 记录&处理竖线位置
+        for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+            lineInfoBuffer.putLong(aPos[i]);
+            lineInfoBuffer.putInt(cntSum[i]);
+            lineInfoBuffer.putInt(ks[i]);
+            lineInfoBuffer.putLong(bs[i]);
+        }
+
+        writeCount++;
+        // 写到文件中
+        if (writeCount == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
+            writeCount = 0;
+            try {
+                lineInfoBuffer.flip();
+                infoChannel.write(lineInfoBuffer);
+                lineInfoBuffer.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         for (int i = 0; i < size; ++i) {
             MsgForThree msg = msgForThrees[i];
