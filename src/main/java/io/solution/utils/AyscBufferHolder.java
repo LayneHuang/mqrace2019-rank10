@@ -126,10 +126,16 @@ public class AyscBufferHolder {
     private long writeCost = 0;
 
     private double avgDataSize = 0;
+//
+//    private boolean predealStart = false;
+//    private ReentrantLock predealStratLock = new ReentrantLock();
 
     public void commit(long threadId, Message message) {
         int idx = getIndex(threadId);
+
+//        if (msgAmount[idx] < MSG_COUNT / MAX_THREAD_AMOUNT / 2) {
         aLists.get(idx).add(message.getA());
+//        }
 
         tList[idx][commitAmount[idx]] = message.getT();
 
@@ -165,6 +171,7 @@ public class AyscBufferHolder {
             maxT[idx] = maxA[idx] = Long.MIN_VALUE;
             sums[idx] = 0;
 
+//            if (msgAmount[idx] < MSG_COUNT / MAX_THREAD_AMOUNT / 2) {
             aLists.get(idx).sort(Long::compare);
             int size = aLists.get(idx).size();
             int distance = (size / A_MOD);
@@ -173,22 +180,22 @@ public class AyscBufferHolder {
                 int pos = i * distance;
                 wLines[i] = (long) ((1.0 * wLines[i] * blockSize + aLists.get(idx).get(pos)) / (1.0 + blockSize));
             }
-
             aLists.get(idx).clear();
+//            }
 
             blockSize++;
             try {
                 HashData data = new HashData();
-                long s0 = System.nanoTime();
-                int dataSize = data.encode(tList[idx], commitAmount[idx]);
-                long s1 = System.nanoTime();
+//                long s0 = System.nanoTime();
+                data.encode(tList[idx], commitAmount[idx]);
+//                int dataSize = data.encode(tList[idx], commitAmount[idx]);
+//                long s1 = System.nanoTime();
                 hashInfos.get(idx).add(data);
-                long s2 = System.nanoTime();
-                if (idx == 0) {
-                    avgDataSize = (avgDataSize * (msgAmount[idx] - 1) + dataSize) / msgAmount[idx];
-                    encodeCost += (s1 - s0);
-                    addCost += (s2 - s1);
-                }
+//                long s2 = System.nanoTime();
+//                if (idx == 0) {
+//                    encodeCost += (s1 - s0);
+//                    addCost += (s2 - s1);
+//                }
 
 //                tBuffers[idx].flip();
 //                tChannels[idx].write(tBuffers[idx]);
@@ -197,10 +204,10 @@ public class AyscBufferHolder {
                 aBuffers[idx].flip();
                 aChannels[idx].write(aBuffers[idx]);
                 aBuffers[idx].clear();
-                long s3 = System.nanoTime();
-                if (idx == 0) {
-                    writeCost += (s3 - s2);
-                }
+//                long s3 = System.nanoTime();
+//                if (idx == 0) {
+//                    writeCost += (s3 - s2);
+//                }
 
                 bBuffers[idx].flip();
                 bChannels[idx].write(bBuffers[idx]);
@@ -212,6 +219,16 @@ public class AyscBufferHolder {
             commitAmount[idx] = 0;
 
         }
+//
+//        if (!predealStart && msgAmount[idx] > MSG_COUNT / total / 2) {
+//            predealStratLock.lock();
+//            if (!predealStart) {
+//                PretreatmentHolder.getIns().work();
+//            }
+//            predealStart = true;
+//            predealStratLock.unlock();
+//        }
+
     }
 
     private ReentrantLock lock = new ReentrantLock();
@@ -270,18 +287,17 @@ public class AyscBufferHolder {
             e.printStackTrace();
         }
 
-        int totalMsgAmount = 0;
+//        int totalMsgAmount = 0;
+//        for (int i = 0; i < total; ++i) {
+//            totalMsgAmount += msgAmount[i];
+//        }
 
-        for (int i = 0; i < total; ++i) {
-            totalMsgAmount += msgAmount[i];
-        }
-
-        System.out.print("[");
-        for (int i = 0; i < A_RANGE; ++i) {
-            System.out.print(wLines[i] + ",");
-        }
-        System.out.println("]");
-        System.out.println("消息总量:" + totalMsgAmount);
+//        System.out.print("[");
+//        for (int i = 0; i < A_RANGE; ++i) {
+//            System.out.print(wLines[i] + ",");
+//        }
+//        System.out.println("]");
+//        System.out.println("消息总量:" + totalMsgAmount);
         System.out.println("flush 结束~ " + System.currentTimeMillis());
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
 

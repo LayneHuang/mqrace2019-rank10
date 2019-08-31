@@ -18,7 +18,7 @@ public class GlobalParams {
     /**
      * 消息总数
      */
-    public static int MSG_COUNT = (IS_DEBUG ? 200_000_000 : 2_080_000_000);
+    public static int MSG_COUNT = (IS_DEBUG ? 20_000_000 : 2_080_000_000);
 
     /**
      * 写文件拥塞队列大小

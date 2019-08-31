@@ -96,7 +96,6 @@ class PretreatmentHolder {
             System.out.println("预处理开始~");
             long s0 = System.currentTimeMillis();
             try {
-
                 int totalBlock = 0;
                 int threadAmount = MyHash.getIns().size2;
                 int[] blocksSize = new int[threadAmount];
@@ -116,9 +115,7 @@ class PretreatmentHolder {
                 }
 
                 MsgForThree[] msgs = new MsgForThree[GlobalParams.getBlockMessageLimit()];
-
                 Queue<MsgForThree> queue = new PriorityQueue<>(Comparator.comparingLong(t0 -> t0.t));
-//                PriorityQueue<MsgForThree> queue = new PriorityQueue<>((t0, t1) -> Long.compare(t1.t , t0.t));
 
 //                int tt = 0;
                 for (int idx = 0; idx < threadAmount; ++idx) {
@@ -127,8 +124,8 @@ class PretreatmentHolder {
                 }
 //                System.out.println("总块数:" + totalBlock + " tt:" + tt);
                 int finishSize = 0;
-                int pollCnt = 0;
-                int addCnt = 0;
+//                int pollCnt = 0;
+//                int addCnt = 0;
 
                 while (finishSize < totalBlock) {
                     // 选线程中最大值最小的块
@@ -154,7 +151,7 @@ class PretreatmentHolder {
                         while (nowDealPos[idx] < amount && at[idx][nowDealPos[idx]].t <= minOfMaxT) {
                             queue.add(new MsgForThree(at[idx][nowDealPos[idx]].t, at[idx][nowDealPos[idx]].a));
                             nowDealPos[idx]++;
-                            addCnt++;
+//                            addCnt++;
                         }
 
                         // 某块插入完了
@@ -195,26 +192,10 @@ class PretreatmentHolder {
                                 e.printStackTrace();
                             }
                         }
-
                         for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
                             msgs[i] = queue.poll();
-//                            if (MyHash.getIns().size3 == 0) {
-//                                System.out.print(msgs[i].t + " ");
-//                            }
-                            pollCnt++;
+//                            pollCnt++;
                         }
-
-                        for (int i = 1; i < GlobalParams.getBlockMessageLimit(); ++i) {
-                            if (!f && msgs[i].t < msgs[i - 1].t) {
-                                f = true;
-                                System.out.println("fuck~ " + MyHash.getIns().size3 + " " + i);
-                                for (int j = 0; j < GlobalParams.getBlockMessageLimit(); ++j) {
-                                    System.out.print(msgs[j].t + " ");
-                                }
-                                System.out.println();
-                            }
-                        }
-
                         buildBlock(msgs, GlobalParams.getBlockMessageLimit());
                     }
                 }
@@ -223,12 +204,12 @@ class PretreatmentHolder {
                     int tempSize = 0;
                     while (!queue.isEmpty()) {
                         msgs[tempSize++] = queue.poll();
-                        pollCnt++;
+//                        pollCnt++;
                     }
                     buildBlock(msgs, tempSize);
                 }
 
-                System.out.println("入队数:" + addCnt + " 出队数:" + pollCnt);
+//                System.out.println("入队数:" + addCnt + " 出队数:" + pollCnt);
 
                 // 处理剩余横向a
                 for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
@@ -272,21 +253,12 @@ class PretreatmentHolder {
         thread.start();
     }
 
-    boolean f = false;
-
     private void buildBlock(MsgForThree[] msgForThrees, int size) {
         long minT = Long.MAX_VALUE;
         long maxT = Long.MIN_VALUE;
         long minA = Long.MAX_VALUE;
         long maxA = Long.MIN_VALUE;
         long sum = 0;
-
-//        for (int i = 1; i < size; ++i) {
-//            if (!f && msgForThrees[i].t < msgForThrees[i - 1].t) {
-//                f = true ;
-//                System.out.println("fuck~ " + MyHash.getIns().size3);
-//            }
-//        }
 
         for (int i = 0; i < size; ++i) {
             MsgForThree msg = msgForThrees[i];
