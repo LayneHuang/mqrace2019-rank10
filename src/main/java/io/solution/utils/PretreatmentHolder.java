@@ -244,6 +244,7 @@ public class PretreatmentHolder {
                 e.printStackTrace();
             }
         });
+        thread.setPriority(2);
         thread.start();
     }
 

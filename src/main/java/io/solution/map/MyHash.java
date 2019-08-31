@@ -173,14 +173,14 @@ public class MyHash {
         return res;
     }
 
-//    private boolean isOutput = false;
+    private boolean isOutput = false;
 
     public long easyFind3Aysc(long minT, long maxT, long minA, long maxA) {
-//        if (!isOutput && !PretreatmentHolder.getIns().isFinish) {
-//            isOutput = true;
-//            System.out.println("pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
-//        }
-        if (PretreatmentHolder.getIns().isFinish || (size3 > 0 && maxTs3[size3 - 1] > maxT)) {
+        if (!isOutput) {
+            isOutput = true;
+            System.out.println("aysc pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
+        }
+        if ((size3 > 1024 && maxTs3[size3 - 1024] > maxT)) {
             return find3(minT, maxT, minA, maxA);
         }
         long res = 0;
@@ -210,7 +210,7 @@ public class MyHash {
                 if (i == infoSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
                 if (i < r && !HelpUtil.intersect(minT, maxT, minA, maxA, minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i))
-                        && tMsgAmount < 1024 * 64) {
+                        && tMsgAmount < 1024 * 16) {
                     if (sIdx == -1) {
                         sIdx = i;
                     }
@@ -294,9 +294,14 @@ public class MyHash {
         return cnt == 0 ? 0 : res / cnt;
     }
 
+    private boolean f = false;
+
     public long find3(long minT, long maxT, long minA, long maxA) {
 //        if (!PretreatmentHolder.getIns().isFinish) {
-//            System.out.println("pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
+        if (!f) {
+            f = true;
+            System.out.println("find3 pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
+        }
 //            return 0;
 //        }
         int l = findLeft3(minT);
