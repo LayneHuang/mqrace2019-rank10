@@ -22,8 +22,8 @@ public class DemoTester {
         int checkTime = 10 * 60 * 1000;
 
         //正确性检测的次数
-        int checkTimes2 = 1000;
-        int checkTimes3 = 50000;
+        int checkTimes2 = 100;
+        int checkTimes3 = 50;
         //发送的线程数量
         int sendTsNum = 10;
         //查询的线程数量

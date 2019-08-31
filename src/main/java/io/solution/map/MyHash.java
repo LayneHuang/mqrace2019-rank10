@@ -29,12 +29,13 @@ public class MyHash {
     public int size2 = 0;
 
     // 第3阶段
-    public int size = 0;
-    public long[] minTs3 = new long[GlobalParams.getBlockMessageLimit()];
-    private long[] maxTs3 = new long[GlobalParams.getBlockMessageLimit()];
-    private long[] minAs3 = new long[GlobalParams.getBlockMessageLimit()];
-    private long[] maxAs3 = new long[GlobalParams.getBlockMessageLimit()];
-    private long[] sums3 = new long[GlobalParams.getBlockMessageLimit()];
+    public int size3 = 0;
+    public long[] minTs3 = new long[GlobalParams.getBlockInfoLimit()];
+    private long[] maxTs3 = new long[GlobalParams.getBlockInfoLimit()];
+    private long[] minAs3 = new long[GlobalParams.getBlockInfoLimit()];
+    private long[] maxAs3 = new long[GlobalParams.getBlockInfoLimit()];
+    private long[] sums3 = new long[GlobalParams.getBlockInfoLimit()];
+    public int lastMsgAmount3 = GlobalParams.getBlockMessageLimit();
 
     private MyHash() {
         for (int i = 0; i < GlobalParams.MAX_THREAD_AMOUNT; ++i) {
@@ -67,10 +68,19 @@ public class MyHash {
         sums2.get(idx).add(sum);
     }
 
+    public void insert3(long minT, long maxT, long minA, long maxA, long sum) {
+        minTs3[size3] = minT;
+        maxTs3[size3] = maxT;
+        minAs3[size3] = minA;
+        maxAs3[size3] = maxA;
+        sums3[size3] = sum;
+        size3++;
+//        System.out.println("cnt:" + ((size3 - 1) * GlobalParams.getBlockMessageLimit() + lastMsgAmount3));
+    }
+
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
 
         List<Message> res = new ArrayList<>();
-
 //        int readCount = 0;
 //        long s0 = System.currentTimeMillis();
 
@@ -138,7 +148,7 @@ public class MyHash {
         return res;
     }
 
-    public long easyFind3(long minT, long maxT, long minA, long maxA) {
+    public long easyFind3Aysc(long minT, long maxT, long minA, long maxA) {
         long res = 0;
         int cnt = 0;
         for (int idx = 0; idx < size2; ++idx) {
@@ -200,6 +210,127 @@ public class MyHash {
         return cnt == 0 ? 0 : res / cnt;
     }
 
+    public long easyFind3(long minT, long maxT, long minA, long maxA) {
+        int l = findLeft3(minT);
+        int r = findRight3(maxT);
+        if (l == -1 || r == -1) {
+            return 0;
+        }
+        return easyFind3(minT, maxT, minA, maxA, l, r);
+    }
+
+    private long easyFind3(long minT, long maxT, long minA, long maxA, int l, int r) {
+        long res = 0;
+        int cnt = 0;
+        int tMsgAmount = 0;
+        int sIdx = -1;
+
+        for (int i = l; i <= r; ++i) {
+            int amount = (i == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+            tMsgAmount += amount;
+            if (i < r && !HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs3[i], maxTs3[i], minAs3[i], maxAs3[i])
+                    && tMsgAmount < 1024 * 16) {
+                if (sIdx == -1) {
+                    sIdx = i;
+                }
+                continue;
+            } else if (HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs3[i], maxTs3[i], minAs3[i], maxAs3[i])) {
+                res += sums3[i];
+                cnt += amount;
+                tMsgAmount -= amount;
+            } else if (sIdx == -1) {
+                sIdx = i;
+            }
+            if (sIdx != -1) {
+                long[] atList = HelpUtil.readAT(16L * sIdx * GlobalParams.getBlockMessageLimit(), tMsgAmount);
+                for (int j = 0; j < tMsgAmount; ++j) {
+                    if (HelpUtil.inSide(atList[j << 1], atList[j << 1 | 1], minT, maxT, minA, maxA)) {
+                        res += atList[j << 1 | 1];
+                        cnt++;
+                    }
+                }
+            }
+            tMsgAmount = 0;
+            sIdx = -1;
+        }
+        return cnt == 0 ? 0 : res / cnt;
+    }
+
+//    public long find3(long minT, long maxT, long minA, long maxA) {
+//        int l = findLeft3(minT);
+//        int r = findRight3(maxT);
+//        if (l == -1 || r == -1) {
+//            return 0;
+//        }
+//        if (r - l + 1 < 3) {
+//            return easyFind3(minT, maxT, minA, maxA, l, r);
+//        }
+//        long res = 0;
+//        int cnt = 0;
+//
+////        long distance = PretreatmentHolder.getIns().distance;
+//        int btPos = HelpUtil.getPosition(minA);
+//        int tpPos = HelpUtil.getPosition(maxA);
+//
+//        tpPos = Math.min(tpPos, GlobalParams.A_RANGE - 1);
+//        LineInfo[] leftLineInfos = HelpUtil.readLineInfo(infoPos[l + 1]);
+//        LineInfo[] rightLineInfos = HelpUtil.readLineInfo(infoPos[r]);
+//
+//        // 中间
+//        for (int i = btPos + 1; i <= tpPos - 1; ++i) {
+//            long sum = rightLineInfos[i].bs - leftLineInfos[i].bs;
+//            if (sum < 0) {
+//                sum = Long.MAX_VALUE + sum;
+//            }
+//            int dCnt = rightLineInfos[i].cntSum - leftLineInfos[i].cntSum;
+//            res += sum;
+//            cnt += dCnt;
+//        }
+//
+//        // 上下边界
+//        if (btPos < tpPos) {
+//            int bAmount = (int) ((rightLineInfos[btPos].aPos - leftLineInfos[btPos].aPos) / 8);
+//            if (bAmount > 0) {
+//                long[] baList = HelpUtil.readA(true, btPos, leftLineInfos[btPos].aPos, bAmount);
+//                for (int i = 0; i < bAmount; ++i) {
+//                    if (minA <= baList[i] && baList[i] <= maxA) {
+//                        res += baList[i];
+//                        cnt++;
+//                    }
+//                }
+//            }
+//        }
+//
+//        int tAmount = (int) ((rightLineInfos[tpPos].aPos - leftLineInfos[tpPos].aPos) / 8);
+//        if (tAmount > 0) {
+//            long[] taList = HelpUtil.readA(true, tpPos, leftLineInfos[tpPos].aPos, tAmount);
+//            for (int i = 0; i < tAmount; ++i) {
+//                if (minA <= taList[i] && taList[i] <= maxA) {
+//                    res += taList[i];
+//                    cnt++;
+//                }
+//            }
+//        }
+//
+//        // 左右边界
+//        long[] latList = HelpUtil.readAT(posATs[l], msgAmount[l]);
+//        for (int j = 0; j < msgAmount[l]; ++j) {
+//            if (HelpUtil.inSide(latList[j * 2], latList[j * 2 + 1], minT, maxT, minA, maxA)) {
+//                res += latList[j * 2 + 1];
+//                cnt++;
+//            }
+//        }
+//
+//        long[] ratList = HelpUtil.readAT(posATs[r], msgAmount[r]);
+//        for (int j = 0; j < msgAmount[r]; ++j) {
+//            if (HelpUtil.inSide(ratList[j * 2], ratList[j * 2 + 1], minT, maxT, minA, maxA)) {
+//                res += ratList[j * 2 + 1];
+//                cnt++;
+//            }
+//        }
+//        return cnt == 0 ? 0 : res / cnt;
+//    }
+
     private int findLeft2(int idx, long value) {
         ArrayList<Long> maxTList = maxTs2.get(idx);
         int l = 0, r = maxTList.size() - 1;
@@ -240,6 +371,45 @@ public class MyHash {
         return r - 1;
     }
 
+    private int findLeft3(long value) {
+        int l = 0, r = size3 - 1;
+        if (maxTs3[r] < value) {
+            return -1;
+        }
+        if (value <= maxTs3[l]) {
+            return l;
+        }
+
+        while (l + 1 < r) {
+            int mid = (l + r) >> 1;
+            if (maxTs3[mid] < value) {
+                l = mid;
+            } else {
+                r = mid;
+            }
+        }
+        return l + 1;
+    }
+
+    private int findRight3(long value) {
+        int l = 0, r = size3 - 1;
+        if (value < minTs3[l]) {
+            return -1;
+        }
+        if (value >= minTs3[r]) {
+            return r;
+        }
+
+        while (l + 1 < r) {
+            int mid = (l + r) >> 1;
+            if (minTs3[mid] > value) {
+                r = mid;
+            } else {
+                l = mid;
+            }
+        }
+        return r - 1;
+    }
 
     public static long[] readT(int idx, int l, int r, int size) {
         long[] tList = new long[size];

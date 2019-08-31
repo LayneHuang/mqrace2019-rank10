@@ -144,18 +144,18 @@ public class AyscBufferHolder {
         msgAmount[idx]++;
         commitAmount[idx]++;
 
-        if (idx == 0 && msgAmount[idx] % 500000 == 0) {
-            System.out.println(idx
-                    + " msg amount:" + msgAmount[idx]
-                    + " 目前写入a耗时:" + writeCost
-                    + " hash t耗时:" + encodeCost
-                    + " add 耗时:" + addCost
-                    + " avgDataTSize:" + avgDataSize
-            );
-            System.out.println("Rest memory:"
-                    + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory())
-                    / (1024 * 1024) + "(M)");
-        }
+//        if (idx == 0 && msgAmount[idx] % 500000 == 0) {
+//            System.out.println(idx
+//                    + " msg amount:" + msgAmount[idx]
+//                    + " 目前写入a耗时:" + writeCost
+//                    + " hash t耗时:" + encodeCost
+//                    + " add 耗时:" + addCost
+//                    + " avgDataTSize:" + avgDataSize
+//            );
+//            System.out.println("Rest memory:"
+//                    + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory())
+//                    / (1024 * 1024) + "(M)");
+//        }
 
         if (commitAmount[idx] == getBlockMessageLimit()) {
 
@@ -172,17 +172,6 @@ public class AyscBufferHolder {
             for (int i = 0; i < A_MOD; ++i) {
                 int pos = i * distance;
                 wLines[i] = (long) ((1.0 * wLines[i] * blockSize + aLists.get(idx).get(pos)) / (1.0 + blockSize));
-                if (idx == 0) {
-                    System.out.print(pos + " ");
-                }
-            }
-            
-            if (idx == 0) {
-                System.out.println();
-                for (int i = 0; i < A_MOD; ++i) {
-                    System.out.print(wLines[i] + " ");
-                }
-                System.out.println();
             }
 
             aLists.get(idx).clear();
@@ -281,11 +270,18 @@ public class AyscBufferHolder {
             e.printStackTrace();
         }
 
+        int totalMsgAmount = 0;
+
+        for (int i = 0; i < total; ++i) {
+            totalMsgAmount += msgAmount[i];
+        }
+
         System.out.print("[");
         for (int i = 0; i < A_RANGE; ++i) {
             System.out.print(wLines[i] + ",");
         }
         System.out.println("]");
+        System.out.println("消息总量:" + totalMsgAmount);
         System.out.println("flush 结束~ " + System.currentTimeMillis());
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
 

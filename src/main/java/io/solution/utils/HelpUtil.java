@@ -138,6 +138,36 @@ public class HelpUtil {
         return res;
     }
 
+    public static long[] readAT(long position, int count) {
+        int size = count * 16;
+        FileChannel channel = null;
+        long[] res = new long[count << 1];
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getATPath(),
+                    StandardOpenOption.READ
+            );
+            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            channel.read(buffer, position);
+            buffer.flip();
+            // trans
+            for (int i = 0; i < (count << 1); ++i) {
+                res[i] = buffer.getLong();
+            }
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
 
     public static int getPosition(long a) {
         for (int i = 0; i < GlobalParams.A_RANGE; ++i) {

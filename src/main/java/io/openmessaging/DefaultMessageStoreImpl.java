@@ -35,6 +35,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 //        System.out.println("res :" + res + " " + (System.currentTimeMillis() - s0));
 //        return res;
         return MyHash.getIns().easyFind3(tMin, tMax, aMin, aMax);
+//        return MyHash.getIns().easyFind3Aysc(tMin, tMax, aMin, aMax);
     }
 
 }
