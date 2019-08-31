@@ -18,7 +18,7 @@ public class GlobalParams {
     /**
      * 消息总数
      */
-    public static int MSG_COUNT = (IS_DEBUG ? 20_000_000 : 2_080_000_000);
+    public static int MSG_COUNT = (IS_DEBUG ? 25_000_000 : 2_080_000_000);
 
     /**
      * 写文件拥塞队列大小
@@ -27,9 +27,9 @@ public class GlobalParams {
 
     public static final int MAX_THREAD_AMOUNT = 20;
 
-    public static final int A_MOD = (IS_DEBUG ? 9 : 199);
+    public static final int A_MOD = (IS_DEBUG ? 9 : 59);
 
-    public static final int A_RANGE = (IS_DEBUG ? 10 : 200);
+    public static final int A_RANGE = (IS_DEBUG ? 10 : 60);
 
     public static final int EIGHT_K = 8 * 1024;
 
