@@ -305,10 +305,10 @@ public class AyscBufferHolder {
 
         GlobalParams.setStepOneFinished();
         lock.unlock();
-//
-//        if (tId == ftId) {
-//            PretreatmentHolder.getIns().work();
-//        }
+
+        if (tId == ftId) {
+            PretreatmentHolder.getIns().work();
+        }
     }
 
 }

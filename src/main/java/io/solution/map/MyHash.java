@@ -180,9 +180,9 @@ public class MyHash {
 //            isOutput = true;
 //            System.out.println("pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
 //        }
-//        if (PretreatmentHolder.getIns().isFinish || (size3 > 0 && maxTs3[size3 - 1] > maxT)) {
-//            return find3(minT, maxT, minA, maxA);
-//        }
+        if (PretreatmentHolder.getIns().isFinish || (size3 > 0 && maxTs3[size3 - 1] > maxT)) {
+            return find3(minT, maxT, minA, maxA);
+        }
         long res = 0;
         int cnt = 0;
         for (int idx = 0; idx < size2; ++idx) {
