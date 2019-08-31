@@ -8,6 +8,7 @@ import io.solution.utils.HelpUtil;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author: laynehuang
@@ -76,6 +77,28 @@ public class MyHash {
         sums3[size3] = sum;
         size3++;
 //        System.out.println("cnt:" + ((size3 - 1) * GlobalParams.getBlockMessageLimit() + lastMsgAmount3));
+    }
+
+
+    private ConcurrentHashMap<Long, Integer> indexMap = new ConcurrentHashMap<>();
+
+    private static final String HEAP_CREATE_LOCK = "MYHASH_IDX_CREATE_LOCK";
+
+    private int total = 0;
+
+    public int getIndex(long threadId) {
+        if (indexMap.containsKey(threadId)) {
+            return indexMap.get(threadId);
+        } else {
+            synchronized (HEAP_CREATE_LOCK) {
+                if (indexMap.containsKey(threadId)) {
+                    return indexMap.get(threadId);
+                }
+                int index = total++;
+                indexMap.put(threadId, index);
+                return index;
+            }
+        }
     }
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {

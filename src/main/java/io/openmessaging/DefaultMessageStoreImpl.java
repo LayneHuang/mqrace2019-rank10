@@ -19,13 +19,29 @@ public class DefaultMessageStoreImpl extends MessageStore {
         AyscBufferHolder.getIns().commit(threadId, message);
     }
 
+
+    private int cnt = 0;
+    private long cost = 0;
+
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         long threadId = Thread.currentThread().getId();
         if (!GlobalParams.isStepOneFinished()) {
             AyscBufferHolder.getIns().flush(threadId);
         }
-        return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
+        long s0 = System.nanoTime();
+        List<Message> res = MyHash.getIns().find2(tMin, tMax, aMin, aMax);
+        long s1 = System.nanoTime();
+
+        if (MyHash.getIns().getIndex(threadId) == 0) {
+            cnt++;
+            cost += (s1 - s0);
+            if (cnt % (GlobalParams.IS_DEBUG ? 50 : 500) == 0) {
+                System.out.println("单线程解决" + cnt + "个查询耗时:" + cost);
+            }
+        }
+
+        return res;
     }
 
     @Override
