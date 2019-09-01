@@ -217,7 +217,9 @@ public class PretreatmentHolder {
                 }
 
                 isFinish = true;
-                System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms) 睡眠消耗:" + sleepCost);
+                System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms)"
+                        + " 睡眠消耗:" + sleepCost
+                );
                 System.out.println("共处理块数:" + MyHash.getIns().size3);
                 System.out.print("[");
                 for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
@@ -228,7 +230,7 @@ public class PretreatmentHolder {
                 e.printStackTrace();
             }
         });
-        thread.setPriority(Thread.MIN_PRIORITY);
+//        thread.setPriority(Thread.MIN_PRIORITY);
         thread.start();
     }
 
@@ -273,17 +275,17 @@ public class PretreatmentHolder {
             // 处理竖线数据
             int pos = HelpUtil.getPosition(msg.a);
             aBuffers[pos].putLong(msg.a);
-            aBufferSize[pos]++;
-            if (aBufferSize[pos] == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
-                try {
-                    aBuffers[pos].flip();
-                    channels[pos].write(aBuffers[pos]);
-                    aBuffers[pos].clear();
-                    aBufferSize[pos] = 0;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//            aBufferSize[pos]++;
+//            if (aBufferSize[pos] == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
+            try {
+                aBuffers[pos].flip();
+                channels[pos].write(aBuffers[pos]);
+                aBuffers[pos].clear();
+                aBufferSize[pos] = 0;
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+//            }
             aPos[pos] += 8;
             cntSum[pos]++;
             if (Long.MAX_VALUE - bs[pos] < msg.a) {
