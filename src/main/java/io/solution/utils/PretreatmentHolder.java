@@ -21,7 +21,7 @@ public class PretreatmentHolder {
 
     private static PretreatmentHolder ins = new PretreatmentHolder();
 
-    public boolean isFinish = false;
+//    public boolean isFinish = false;
 
     private FileChannel infoChannel;
 
@@ -88,10 +88,7 @@ public class PretreatmentHolder {
     }
 
     synchronized void work() {
-        if (isFinish) {
-            return;
-        }
-//        Thread thread = new Thread(() -> {
+
         System.out.println("预处理开始~");
         long s0 = System.currentTimeMillis();
         try {
@@ -214,9 +211,9 @@ public class PretreatmentHolder {
                 }
             }
 
-            isFinish = true;
             System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms)");
             System.out.println("共处理块数:" + MyHash.getIns().size3);
+            System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
             System.out.print("[");
             for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
                 System.out.print(cntSum[i] + ",");
@@ -225,8 +222,6 @@ public class PretreatmentHolder {
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        });
-//        thread.start();
     }
 
     private void buildBlock(MsgForThree[] msgForThrees, int size) {
@@ -300,7 +295,7 @@ public class PretreatmentHolder {
         if (size != GlobalParams.getBlockMessageLimit()) {
             MyHash.getIns().lastMsgAmount3 = size;
         }
-        MyHash.getIns().insert3(minT, maxT, minA, maxA, sum);
+        MyHash.getIns().insert3(minT, maxT);
     }
 
 }

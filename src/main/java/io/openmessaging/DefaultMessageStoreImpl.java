@@ -30,13 +30,11 @@ public class DefaultMessageStoreImpl extends MessageStore {
         return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
     }
 
-    private boolean f = false;
-
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        if (!f) {
-            f = true;
+        if (!GlobalParams.isStepTwoFinished()) {
             System.out.println("第二阶段耗时:" + (System.currentTimeMillis() - s0));
+            MyHash.getIns().cleanStepTwoInfo();
         }
         return MyHash.getIns().find3(tMin, tMax, aMin, aMax);
     }

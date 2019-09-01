@@ -13,12 +13,12 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 50 : 100);
+    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 16 : 50);
 
     /**
      * 消息总数
      */
-    public static int MSG_COUNT = (IS_DEBUG ? 80_000_000 : 2_080_000_000);
+    private static int MSG_COUNT = (IS_DEBUG ? 80_000_000 : 2_050_000_000);
 
     /**
      * 写文件拥塞队列大小
@@ -27,9 +27,9 @@ public class GlobalParams {
 
     public static final int MAX_THREAD_AMOUNT = 20;
 
-    public static final int A_MOD = (IS_DEBUG ? 9 : 599);
+    public static final int A_MOD = (IS_DEBUG ? 9 : 399);
 
-    public static final int A_RANGE = (IS_DEBUG ? 10 : 600);
+    public static final int A_RANGE = (IS_DEBUG ? 10 : 400);
 
     public static final int EIGHT_K = 8 * 1024;
 
@@ -41,6 +41,16 @@ public class GlobalParams {
 
     public static boolean isStepOneFinished() {
         return isStepOneFinished;
+    }
+
+    private static boolean isStepTwoFinished = false;
+
+    public static void setStepTwoFinished() {
+        isStepTwoFinished = true;
+    }
+
+    public static boolean isStepTwoFinished() {
+        return isStepTwoFinished;
     }
 
     private static String PRE_PATH = "/alidata1/race2019/data";

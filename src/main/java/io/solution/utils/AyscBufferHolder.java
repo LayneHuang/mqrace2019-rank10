@@ -166,8 +166,6 @@ public class AyscBufferHolder {
 
     }
 
-    private long ftId = -1;
-
     public synchronized void flush() {
         if (GlobalParams.isStepOneFinished()) {
             return;
@@ -223,7 +221,9 @@ public class AyscBufferHolder {
 //        System.out.println("]");
 //        System.out.println("消息总量:" + totalMsgAmount);
         System.out.println("flush 结束~ 第一阶段耗时:" + (System.currentTimeMillis() - beginTime) + "(ms)");
-        System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
+//        System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory()) / (1024 * 1024) + "(M)");
+//        System.out.println("Rest memory:" + (Runtime.getRuntime().totalMemory()) / (1024 * 1024) + "(M)");
+        System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
         PretreatmentHolder.getIns().work();
         GlobalParams.setStepOneFinished();
     }
