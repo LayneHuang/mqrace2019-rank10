@@ -244,7 +244,7 @@ public class PretreatmentHolder {
                 e.printStackTrace();
             }
         });
-        thread.setPriority(2);
+        thread.setPriority(Thread.MIN_PRIORITY);
         thread.start();
     }
 
@@ -290,7 +290,7 @@ public class PretreatmentHolder {
             int pos = HelpUtil.getPosition(msg.a);
             aBuffers[pos].putLong(msg.a);
             aBufferSize[pos]++;
-            if (aBufferSize[pos] == 1024) {
+            if (aBufferSize[pos] == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
                 try {
                     aBuffers[pos].flip();
                     channels[pos].write(aBuffers[pos]);
@@ -309,12 +309,6 @@ public class PretreatmentHolder {
                 bs[pos] += msg.a;
             }
         }
-        if (size != GlobalParams.getBlockMessageLimit()) {
-//            System.out.println("cnt:" + (MyHash.getIns().size3  * GlobalParams.getBlockMessageLimit() + size));
-            MyHash.getIns().lastMsgAmount3 = size;
-        }
-        MyHash.getIns().insert3(minT, maxT, minA, maxA, sum);
-
         try {
             atBuffer.flip();
             atChannel.write(atBuffer);
@@ -322,6 +316,11 @@ public class PretreatmentHolder {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        if (size != GlobalParams.getBlockMessageLimit()) {
+//            System.out.println("cnt:" + (MyHash.getIns().size3  * GlobalParams.getBlockMessageLimit() + size));
+            MyHash.getIns().lastMsgAmount3 = size;
+        }
+        MyHash.getIns().insert3(minT, maxT, minA, maxA, sum);
     }
 
 }

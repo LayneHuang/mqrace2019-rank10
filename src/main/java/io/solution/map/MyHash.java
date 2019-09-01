@@ -294,14 +294,10 @@ public class MyHash {
         return cnt == 0 ? 0 : res / cnt;
     }
 
-    private boolean f = false;
 
     public long find3(long minT, long maxT, long minA, long maxA) {
 //        if (!PretreatmentHolder.getIns().isFinish) {
-        if (!f) {
-            f = true;
-            System.out.println("find3 pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
-        }
+        System.out.println("find3 pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
 //            return 0;
 //        }
         int l = findLeft3(minT);
