@@ -20,11 +20,9 @@ public class AyscBufferHolder {
 
     private static AyscBufferHolder ins = new AyscBufferHolder();
 
-    //    private ByteBuffer[] tBuffers = new ByteBuffer[MAX_THREAD_AMOUNT];
     private ByteBuffer[] aBuffers = new ByteBuffer[MAX_THREAD_AMOUNT];
     private ByteBuffer[] bBuffers = new ByteBuffer[MAX_THREAD_AMOUNT];
 
-    //    private FileChannel[] tChannels = new FileChannel[MAX_THREAD_AMOUNT];
     private FileChannel[] aChannels = new FileChannel[MAX_THREAD_AMOUNT];
     private FileChannel[] bChannels = new FileChannel[MAX_THREAD_AMOUNT];
 
@@ -33,10 +31,6 @@ public class AyscBufferHolder {
     private long[] minA = new long[MAX_THREAD_AMOUNT];
     private long[] maxA = new long[MAX_THREAD_AMOUNT];
     private long[] sums = new long[MAX_THREAD_AMOUNT];
-
-    //    public long[] tPos = new long[MAX_THREAD_AMOUNT];
-    public long[] aPos = new long[MAX_THREAD_AMOUNT];
-    public long[] bPos = new long[MAX_THREAD_AMOUNT];
 
     private int[] commitAmount = new int[MAX_THREAD_AMOUNT];
     private int[] msgAmount = new int[MAX_THREAD_AMOUNT];
@@ -60,15 +54,11 @@ public class AyscBufferHolder {
         for (int i = 0; i < MAX_THREAD_AMOUNT; ++i) {
 
             aLists.add(new ArrayList<>());
-
             hashInfos.add(new ArrayList<>());
-
             aBuffers[i] = ByteBuffer.allocateDirect(8 * getBlockMessageLimit());
             bBuffers[i] = ByteBuffer.allocateDirect(getBodySize() * getBlockMessageLimit());
-
             minT[i] = minA[i] = Long.MAX_VALUE;
             maxT[i] = maxA[i] = Long.MIN_VALUE;
-
             try {
 
                 Path pathA = GlobalParams.getAPath(i, false);
@@ -77,7 +67,6 @@ public class AyscBufferHolder {
                         StandardOpenOption.CREATE,
                         StandardOpenOption.APPEND
                 );
-                aPos[i] = aChannels[i].position();
 
                 Path pathB = GlobalParams.getBPath(i);
                 bChannels[i] = FileChannel.open(
@@ -85,7 +74,6 @@ public class AyscBufferHolder {
                         StandardOpenOption.CREATE,
                         StandardOpenOption.APPEND
                 );
-                bPos[i] = bChannels[i].position();
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -123,22 +111,10 @@ public class AyscBufferHolder {
         }
     }
 
-    private long encodeCost = 0;
-    private long addCost = 0;
-    private long writeCost = 0;
-
-    private double avgDataSize = 0;
-//
-//    private boolean predealStart = false;
-//    private ReentrantLock predealStratLock = new ReentrantLock();
-
     public void commit(long threadId, Message message) {
         int idx = getIndex(threadId);
 
-//        if (msgAmount[idx] < MSG_COUNT / MAX_THREAD_AMOUNT / 2) {
         aLists.get(idx).add(message.getA());
-//        }
-
         tList[idx][commitAmount[idx]] = message.getT();
 
         aBuffers[idx].putLong(message.getA());
@@ -152,28 +128,14 @@ public class AyscBufferHolder {
         msgAmount[idx]++;
         commitAmount[idx]++;
 
-//        if (idx == 0 && msgAmount[idx] % 500000 == 0) {
-//            System.out.println(idx
-//                    + " msg amount:" + msgAmount[idx]
-//                    + " 目前写入a耗时:" + writeCost
-//                    + " hash t耗时:" + encodeCost
-//                    + " add 耗时:" + addCost
-//                    + " avgDataTSize:" + avgDataSize
-//            );
-//            System.out.println("Rest memory:"
-//                    + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory())
-//                    / (1024 * 1024) + "(M)");
-//        }
-
         if (commitAmount[idx] == getBlockMessageLimit()) {
 
             MyHash.getIns().insert(idx, minT[idx], maxT[idx], minA[idx], maxA[idx], sums[idx]);
-//            MyHash.getIns().insert(idx, minT[idx], maxT[idx], minA[idx], maxA[idx]);
+
             minT[idx] = minA[idx] = Long.MAX_VALUE;
             maxT[idx] = maxA[idx] = Long.MIN_VALUE;
             sums[idx] = 0;
 
-//            if (msgAmount[idx] < MSG_COUNT / MAX_THREAD_AMOUNT / 2) {
             aLists.get(idx).sort(Long::compare);
             int size = aLists.get(idx).size();
             int distance = (size / A_MOD);
@@ -183,33 +145,16 @@ public class AyscBufferHolder {
                 wLines[i] = (long) ((1.0 * wLines[i] * blockSize + aLists.get(idx).get(pos)) / (1.0 + blockSize));
             }
             aLists.get(idx).clear();
-//            }
 
             blockSize++;
             try {
                 HashData data = new HashData();
-//                long s0 = System.nanoTime();
                 data.encode(tList[idx], commitAmount[idx]);
-//                int dataSize = data.encode(tList[idx], commitAmount[idx]);
-//                long s1 = System.nanoTime();
                 hashInfos.get(idx).add(data);
-//                long s2 = System.nanoTime();
-//                if (idx == 0) {
-//                    encodeCost += (s1 - s0);
-//                    addCost += (s2 - s1);
-//                }
-
-//                tBuffers[idx].flip();
-//                tChannels[idx].write(tBuffers[idx]);
-//                tBuffers[idx].clear();
 
                 aBuffers[idx].flip();
                 aChannels[idx].write(aBuffers[idx]);
                 aBuffers[idx].clear();
-//                long s3 = System.nanoTime();
-//                if (idx == 0) {
-//                    writeCost += (s3 - s2);
-//                }
 
                 bBuffers[idx].flip();
                 bChannels[idx].write(bBuffers[idx]);
@@ -217,19 +162,8 @@ public class AyscBufferHolder {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             commitAmount[idx] = 0;
-
         }
-//
-//        if (!predealStart && msgAmount[idx] > MSG_COUNT / total / 2) {
-//            predealStratLock.lock();
-//            if (!predealStart) {
-//                PretreatmentHolder.getIns().work();
-//            }
-//            predealStart = true;
-//            predealStratLock.unlock();
-//        }
 
     }
 
@@ -251,10 +185,7 @@ public class AyscBufferHolder {
                     MyHash.getIns().lastMsgAmount[i] = commitAmount[i];
                     MyHash.getIns().insert(i, minT[i], maxT[i], minA[i], maxA[i], sums[i]);
 //                    MyHash.getIns().insert(i, minT[i], maxT[i], minA[i], maxA[i]);
-
-//                    tBuffers[i].flip();
-//                    tChannels[i].write(tBuffers[i]);
-//                    tBuffers[i].clear();
+                    ;
                     HashData data = new HashData();
                     data.encode(tList[i], commitAmount[i]);
                     hashInfos.get(i).add(data);
@@ -272,10 +203,7 @@ public class AyscBufferHolder {
 //                tBuffers[i] = null;
                 aBuffers[i] = null;
                 bBuffers[i] = null;
-//                if (tChannels[i] != null) {
-//                    tChannels[i].close();
-//                    tChannels[i] = null;
-//                }
+
                 if (aChannels[i] != null) {
                     aChannels[i].close();
                     aChannels[i] = null;
@@ -306,9 +234,9 @@ public class AyscBufferHolder {
         GlobalParams.setStepOneFinished();
         lock.unlock();
 
-        if (tId == ftId) {
-            PretreatmentHolder.getIns().work();
-        }
+//        if (tId == ftId) {
+//            PretreatmentHolder.getIns().work();
+//        }
     }
 
 }

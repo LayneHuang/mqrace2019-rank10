@@ -107,7 +107,6 @@ public class MyHash {
 
         List<Message> res = new ArrayList<>();
         int readCount = 0;
-//        long s0 = System.currentTimeMillis();
         long s = System.nanoTime();
         boolean isLargeQuery = false;
         for (int idx = 0; idx < size2; ++idx) {
@@ -149,18 +148,13 @@ public class MyHash {
                     sIdx = i;
                 }
 
-//                long tPos = AyscBufferHolder.getIns().tPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
-                long aPos = AyscBufferHolder.getIns().aPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
-                long bPos = AyscBufferHolder.getIns().bPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * GlobalParams.getBodySize();
-//                if (bPos < 0) {
-//                    System.out.println("GG body pos 小于0 s:" + AyscBufferHolder.getIns().bPos[idx] + " sIdx:" + sIdx + " block msg limit:" + GlobalParams.getBlockMessageLimit() + " body size:" + GlobalParams.getBodySize() + " bPos:" + bPos);
-//                }
+                long aPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
+                long bPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * GlobalParams.getBodySize();
+
                 long[] tList = readT(idx, sIdx, i, tMsgAmount);
                 long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);
-//                if (tList[0] != aList[0]) {
-//                    System.out.println("t[0]:" + tList[0] + " a[0]:" + aList[0]);
-//                }
+
                 readCount++;
                 for (int j = 0; j < tMsgAmount; ++j) {
                     if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
@@ -228,9 +222,7 @@ public class MyHash {
                     sIdx = i;
                 }
                 if (sIdx != -1) {
-//                    long tPos = AyscBufferHolder.getIns().tPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
-                    long aPos = AyscBufferHolder.getIns().aPos[idx] + (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
-//                    long[] tList = HelpUtil.readT(idx, tPos, tMsgAmount);
+                    long aPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
                     long[] tList = readT(idx, sIdx, i, tMsgAmount);
                     long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                     for (int j = 0; j < tMsgAmount; ++j) {

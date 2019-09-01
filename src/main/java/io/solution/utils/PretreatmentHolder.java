@@ -49,7 +49,6 @@ public class PretreatmentHolder {
             GlobalParams.INFO_SIZE * GlobalParams.A_RANGE * GlobalParams.WRITE_COMMIT_COUNT_LIMIT
     );
 
-
     private PretreatmentHolder() {
         try {
             infoChannel = FileChannel.open(
@@ -119,15 +118,12 @@ public class PretreatmentHolder {
                 MsgForThree[] msgs = new MsgForThree[GlobalParams.getBlockMessageLimit()];
                 Queue<MsgForThree> queue = new PriorityQueue<>(Comparator.comparingLong(t0 -> t0.t));
 
-//                int tt = 0;
                 for (int idx = 0; idx < threadAmount; ++idx) {
                     blocksSize[idx] = MyHash.getIns().minTs2.get(idx).size();
                     totalBlock += blocksSize[idx];
                 }
-//                System.out.println("总块数:" + totalBlock + " tt:" + tt);
+
                 int finishSize = 0;
-//                int pollCnt = 0;
-//                int addCnt = 0;
 
                 while (finishSize < totalBlock) {
                     // 选线程中最大值最小的块
@@ -165,7 +161,7 @@ public class PretreatmentHolder {
                             if (preDealSize[idx] < blocksSize[idx]) {
                                 int nowAmount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
                                 long[] tList = MyHash.readT(idx, preDealSize[idx], preDealSize[idx], nowAmount);
-                                long[] aList = HelpUtil.readA(false, idx, AyscBufferHolder.getIns().aPos[idx] + (long) preDealSize[idx] * GlobalParams.getBlockMessageLimit() * 8, nowAmount);
+                                long[] aList = HelpUtil.readA(false, idx, (long) preDealSize[idx] * GlobalParams.getBlockMessageLimit() * 8, nowAmount);
                                 for (int i = 0; i < nowAmount; ++i) {
                                     at[idx][i].t = tList[i];
                                     at[idx][i].a = aList[i];
@@ -178,31 +174,19 @@ public class PretreatmentHolder {
                     while (queue.size() >= GlobalParams.getBlockMessageLimit()) {
                         for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
                             msgs[i] = queue.poll();
-//                            pollCnt++;
                         }
                         buildBlock(msgs, GlobalParams.getBlockMessageLimit());
                     }
 
-                    if (MyHash.getIns().size3 % GlobalParams.WRITE_COMMIT_COUNT_LIMIT == 0) {
-                        try {
-                            Thread.sleep(1000);
-                            sleepCost += 1000;
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
                 }
                 // 处理剩余a t 落盘
                 if (!queue.isEmpty()) {
                     int tempSize = 0;
                     while (!queue.isEmpty()) {
                         msgs[tempSize++] = queue.poll();
-//                        pollCnt++;
                     }
                     buildBlock(msgs, tempSize);
                 }
-
-//                System.out.println("入队数:" + addCnt + " 出队数:" + pollCnt);
 
                 // 处理剩余横向a
                 for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
@@ -317,7 +301,6 @@ public class PretreatmentHolder {
             e.printStackTrace();
         }
         if (size != GlobalParams.getBlockMessageLimit()) {
-//            System.out.println("cnt:" + (MyHash.getIns().size3  * GlobalParams.getBlockMessageLimit() + size));
             MyHash.getIns().lastMsgAmount3 = size;
         }
         MyHash.getIns().insert3(minT, maxT, minA, maxA, sum);
