@@ -136,13 +136,17 @@ public class AyscBufferHolder {
             sums[idx] = 0;
 
             aLists.get(idx).sort(Long::compare);
-            int size = aLists.get(idx).size();
-            int distance = (size / A_MOD);
+//            int size = aLists.get(idx).size();
+//            int distance = (size / (A_MOD - 1));
 
+//            for (int i = 0; i < A_MOD; ++i) {
+//                int pos = i * distance;
+//                wLines[i] = (long) ((1.0 * wLines[i] * blockSize + aLists.get(idx).get(pos)) / (1.0 + blockSize));
+//            }
             for (int i = 0; i < A_MOD; ++i) {
-                int pos = i * distance;
-                wLines[i] = (long) ((1.0 * wLines[i] * blockSize + aLists.get(idx).get(pos)) / (1.0 + blockSize));
+                wLines[i] = (long) ((1.0 * wLines[i] * blockSize + aLists.get(idx).get(i)) / (1.0 + blockSize));
             }
+
             aLists.get(idx).clear();
 
             blockSize++;

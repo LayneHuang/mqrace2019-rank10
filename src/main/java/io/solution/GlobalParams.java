@@ -27,9 +27,11 @@ public class GlobalParams {
 
     public static final int MAX_THREAD_AMOUNT = 20;
 
-    public static final int A_MOD = (IS_DEBUG ? 9 : 399);
+    public static final int A_MOD = (IS_DEBUG ? 9 : getBlockMessageLimit() + 1);
 
-    public static final int A_RANGE = (IS_DEBUG ? 10 : 400);
+    //    public static final int A_MOD = (IS_DEBUG ? 9 : 399);
+
+    public static final int A_RANGE = A_MOD + 1;
 
     public static final int EIGHT_K = 8 * 1024;
 
