@@ -10,7 +10,6 @@ import io.solution.utils.PretreatmentHolder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author: laynehuang
@@ -29,7 +28,7 @@ public class MyHash {
     private ArrayList<ArrayList<Long>> sums2 = new ArrayList<>();
 
     public int[] lastMsgAmount = new int[GlobalParams.MAX_THREAD_AMOUNT];
-    public int size2 = 0;
+    public int threadAmount = 0;
 
     // 第3阶段
     public int size3 = 0;
@@ -54,16 +53,8 @@ public class MyHash {
         return ins;
     }
 
-    public void insert(int idx, long minT, long maxT, long minA, long maxA) {
-        size2 = Math.max(size2, idx + 1);
-        minTs2.get(idx).add(minT);
-        maxTs2.get(idx).add(maxT);
-        minAs2.get(idx).add(minA);
-        maxAs2.get(idx).add(maxA);
-    }
-
     public void insert(int idx, long minT, long maxT, long minA, long maxA, long sum) {
-        size2 = Math.max(size2, idx + 1);
+        threadAmount = Math.max(threadAmount, idx + 1);
         minTs2.get(idx).add(minT);
         maxTs2.get(idx).add(maxT);
         minAs2.get(idx).add(minA);
@@ -78,29 +69,6 @@ public class MyHash {
         maxAs3[size3] = maxA;
         sums3[size3] = sum;
         size3++;
-//        System.out.println("cnt:" + ((size3 - 1) * GlobalParams.getBlockMessageLimit() + lastMsgAmount3));
-    }
-
-
-    private ConcurrentHashMap<Long, Integer> indexMap = new ConcurrentHashMap<>();
-
-    private static final String HEAP_CREATE_LOCK = "MYHASH_IDX_CREATE_LOCK";
-
-    private int total = 0;
-
-    public int getIndex(long threadId) {
-        if (indexMap.containsKey(threadId)) {
-            return indexMap.get(threadId);
-        } else {
-            synchronized (HEAP_CREATE_LOCK) {
-                if (indexMap.containsKey(threadId)) {
-                    return indexMap.get(threadId);
-                }
-                int index = total++;
-                indexMap.put(threadId, index);
-                return index;
-            }
-        }
     }
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
@@ -109,39 +77,46 @@ public class MyHash {
         int readCount = 0;
         long s = System.nanoTime();
         boolean isLargeQuery = false;
-        for (int idx = 0; idx < size2; ++idx) {
+
+        for (int idx = 0; idx < threadAmount; ++idx) {
             int l = findLeft2(idx, minT);
-            int r = findRight2(idx, maxT);
-            if (l == -1 || r == -1) {
+            int r = l;
+            if (l == -1) {
                 continue;
-            }
-            if (r - l + 1 > 1000) {
-                System.out.println("第二阶段跨越块:" + (r - l + 1));
-                isLargeQuery = true;
             }
             long nowMaxA = Long.MIN_VALUE;
             long nowMinA = Long.MAX_VALUE;
-            for (int i = l; i <= r; ++i) {
+            int blockSize = minTs2.get(idx).size();
+            for (int i = l; i < blockSize && minTs2.get(idx).get(i) <= maxT; ++i) {
                 nowMaxA = Math.max(nowMaxA, maxAs2.get(idx).get(i));
                 nowMinA = Math.min(nowMinA, minAs2.get(idx).get(i));
+                r = i;
+                if (i - l > 100) isLargeQuery = true;
             }
             if (minA > nowMaxA || maxA < nowMinA) {
                 continue;
             }
-            int infoSize = maxTs2.get(idx).size();
+
             int tMsgAmount = 0;
             int sIdx = -1;
 
             for (int i = l; i <= r; ++i) {
                 int amount = GlobalParams.getBlockMessageLimit();
-                if (i == infoSize - 1) amount = lastMsgAmount[idx];
+                if (i == blockSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
-                if (i < r && tMsgAmount < 1024 * 16 && HelpUtil.intersect(minT, maxT, minA, maxA, minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i))) {
+
+                // 是否相交
+                boolean isIntersect = HelpUtil.intersect(
+                        minT, maxT, minA, maxA,
+                        minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i)
+                );
+
+                if (i < r && isIntersect && tMsgAmount < 1024 * 16) {
                     if (sIdx == -1) {
                         sIdx = i;
                     }
                     continue;
-                } else if (sIdx == -1 && !HelpUtil.intersect(minT, maxT, minA, maxA, minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i))) {
+                } else if (sIdx == -1 && !isIntersect) {
                     tMsgAmount = 0;
                     continue;
                 } else if (sIdx == -1) {
@@ -156,7 +131,7 @@ public class MyHash {
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);
 
                 readCount++;
-                for (int j = 0; j < tMsgAmount; ++j) {
+                for (int j = 0; j < tMsgAmount && tList[j] <= maxT; ++j) {
                     if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                         res.add(new Message(aList[j], tList[j], bodyList[j]));
                     }
@@ -179,42 +154,55 @@ public class MyHash {
             isOutput = true;
             System.out.println("aysc pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
         }
-        if ((size3 > GlobalParams.WRITE_COMMIT_COUNT_LIMIT && maxTs3[size3 - GlobalParams.WRITE_COMMIT_COUNT_LIMIT] > maxT)) {
-            return find3(minT, maxT, minA, maxA);
-        }
+//        if ((size3 > GlobalParams.WRITE_COMMIT_COUNT_LIMIT && maxTs3[size3 - GlobalParams.WRITE_COMMIT_COUNT_LIMIT] > maxT)) {
+//            return find3(minT, maxT, minA, maxA);
+//        }
         long res = 0;
         int cnt = 0;
-        for (int idx = 0; idx < size2; ++idx) {
+        for (int idx = 0; idx < threadAmount; ++idx) {
             int l = findLeft2(idx, minT);
-            int r = findRight2(idx, maxT);
-            if (l == -1 || r == -1) {
+            int r = l;
+            if (l == -1) {
                 continue;
             }
             long nowMaxA = Long.MIN_VALUE;
             long nowMinA = Long.MAX_VALUE;
-            for (int i = l; i <= r; ++i) {
+            int blockSize = minTs2.get(idx).size();
+            for (int i = l; i < blockSize && minTs2.get(idx).get(i) <= maxT; ++i) {
                 nowMaxA = Math.max(nowMaxA, maxAs2.get(idx).get(i));
                 nowMinA = Math.min(nowMinA, minAs2.get(idx).get(i));
+                r = i;
             }
             if (minA > nowMaxA || maxA < nowMinA) {
                 continue;
             }
 
-            int infoSize = maxTs2.get(idx).size();
             int tMsgAmount = 0;
             int sIdx = -1;
 
             for (int i = l; i <= r; ++i) {
                 int amount = GlobalParams.getBlockMessageLimit();
-                if (i == infoSize - 1) amount = lastMsgAmount[idx];
+                if (i == blockSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
-                if (i < r && !HelpUtil.intersect(minT, maxT, minA, maxA, minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i))
-                        && tMsgAmount < 1024 * 16) {
+
+                // 是否相交
+                boolean isIntersect = HelpUtil.intersect(
+                        minT, maxT, minA, maxA,
+                        minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i)
+                );
+
+                // 是否包含
+                boolean isInside = HelpUtil.matrixInside(
+                        minT, maxT, minA, maxA,
+                        minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i)
+                );
+
+                if (i < r && isIntersect && !isInside && tMsgAmount < 1024 * 16) {
                     if (sIdx == -1) {
                         sIdx = i;
                     }
                     continue;
-                } else if (HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i))) {
+                } else if (isInside) {
                     res += sums2.get(idx).get(i);
                     cnt += amount;
                     tMsgAmount -= amount;
@@ -222,10 +210,10 @@ public class MyHash {
                     sIdx = i;
                 }
                 if (sIdx != -1) {
-                    long aPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
+                    long aPos = 8L * sIdx * GlobalParams.getBlockMessageLimit();
                     long[] tList = readT(idx, sIdx, i, tMsgAmount);
                     long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
-                    for (int j = 0; j < tMsgAmount; ++j) {
+                    for (int j = 0; j < tMsgAmount && tList[j] <= maxT; ++j) {
                         if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                             res += aList[j];
                             cnt++;
@@ -235,7 +223,6 @@ public class MyHash {
                 tMsgAmount = 0;
                 sIdx = -1;
             }
-
         }
 
         return cnt == 0 ? 0 : res / cnt;
@@ -374,6 +361,7 @@ public class MyHash {
     }
 
     private int findLeft2(int idx, long value) {
+        int cnt = 0;
         ArrayList<Long> maxTList = maxTs2.get(idx);
         int l = 0, r = maxTList.size() - 1;
         if (maxTList.get(r) < value) {
@@ -389,29 +377,15 @@ public class MyHash {
             } else {
                 r = mid;
             }
+            cnt++;
+            if (cnt > 1000) {
+                System.out.println("二分有问题~");
+                break;
+            }
         }
         return l + 1;
     }
 
-    private int findRight2(int idx, long value) {
-        ArrayList<Long> minTList = minTs2.get(idx);
-        int l = 0, r = minTList.size() - 1;
-        if (value < minTList.get(l)) {
-            return -1;
-        }
-        if (value >= minTList.get(r)) {
-            return r;
-        }
-        while (l + 1 < r) {
-            int mid = (l + r) >> 1;
-            if (minTList.get(mid) > value) {
-                r = mid;
-            } else {
-                l = mid;
-            }
-        }
-        return r - 1;
-    }
 
     private int findLeft3(long value) {
         int l = 0, r = size3 - 1;
@@ -459,7 +433,7 @@ public class MyHash {
         for (int j = l; j <= r; ++j) {
             int amount = AyscBufferHolder.getIns().hashInfos.get(idx).get(j).size;
             long[] tListSub = AyscBufferHolder.getIns().hashInfos.get(idx).get(j).readT();
-            for (int k = 0; k < amount; ++k) {
+            for (int k = 0; k < amount && tListSize < size; ++k) {
                 tList[tListSize++] = tListSub[k];
             }
         }

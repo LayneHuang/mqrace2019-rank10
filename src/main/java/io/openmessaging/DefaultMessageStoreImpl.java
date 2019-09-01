@@ -20,7 +20,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private long s0 = 0;
-    private int[] cnt = new int[GlobalParams.MAX_THREAD_AMOUNT];
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
@@ -29,17 +28,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
             s0 = System.currentTimeMillis();
             AyscBufferHolder.getIns().flush(threadId);
         }
-//        List<Message> res = MyHash.getIns().find2(tMin, tMax, aMin, aMax);
-//        int idx = MyHash.getIns().getIndex(threadId);
-//        cnt[idx]++;
-//        if (idx == 0) {
-//            cnt++;
-//            if (cnt % (GlobalParams.IS_DEBUG ? 50 : 500) == 0) {
-//                System.out.println("单线程解决" + cnt + "个查询延时:" + (System.currentTimeMillis() - s0));
-//            }
-//        }
-//        return res;
-        return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
+        List<Message> res = MyHash.getIns().find2(tMin, tMax, aMin, aMax);
+        System.out.println("res size:" + res.size());
+        return res;
+//        return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
     }
 
     private boolean f = false;
@@ -50,11 +42,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
             f = true;
             System.out.println("第二阶段耗时:" + (System.currentTimeMillis() - s0));
         }
-//        long s0 = System.currentTimeMillis();
-//        long res = MyHash.getIns().easyFind3(tMin, tMax, aMin, aMax);
-//        System.out.println("res :" + res + " " + (System.currentTimeMillis() - s0));
-//        return res;
-//        return MyHash.getIns().easyFind3(tMin, tMax, aMin, aMax);
         return MyHash.getIns().easyFind3Aysc(tMin, tMax, aMin, aMax);
     }
 

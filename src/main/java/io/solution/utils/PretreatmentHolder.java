@@ -98,7 +98,7 @@ public class PretreatmentHolder {
             long s0 = System.currentTimeMillis();
             try {
                 int totalBlock = 0;
-                int threadAmount = MyHash.getIns().size2;
+                int threadAmount = MyHash.getIns().threadAmount;
                 int[] blocksSize = new int[threadAmount];
                 // 每条线程消息处理了的块的数量
                 int[] preDealSize = new int[threadAmount];
