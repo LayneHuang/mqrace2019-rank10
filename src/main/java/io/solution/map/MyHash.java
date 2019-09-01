@@ -152,8 +152,8 @@ public class MyHash {
             int tpPos = HelpUtil.getPosition(maxA);
 
             tpPos = Math.min(tpPos, GlobalParams.A_RANGE - 1);
-            LineInfo[] leftLineInfos = HelpUtil.readLineInfo((l + 1) * GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
-            LineInfo[] rightLineInfos = HelpUtil.readLineInfo(r * GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
+            LineInfo[] leftLineInfos = HelpUtil.readLineInfo((long) (l + 1) * GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
+            LineInfo[] rightLineInfos = HelpUtil.readLineInfo((long) r * GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
 
             // 中间
             for (int i = btPos + 1; i <= tpPos - 1; ++i) {
