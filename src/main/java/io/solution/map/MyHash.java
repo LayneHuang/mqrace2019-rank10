@@ -66,11 +66,13 @@ public class MyHash {
         if (GlobalParams.isStepTwoFinished()) {
             return;
         }
+        long s0 = System.nanoTime();
         minTs2.clear();
         maxTs2.clear();
         minAs2.clear();
         maxAs2.clear();
         lastMsgAmount = null;
+        System.out.println("清掉第二阶段记录耗时:" + (System.nanoTime() - s0) + "(ns)");
         GlobalParams.setStepTwoFinished();
     }
 
