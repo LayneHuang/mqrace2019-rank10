@@ -106,14 +106,19 @@ public class MyHash {
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
 
         List<Message> res = new ArrayList<>();
-//        int readCount = 0;
+        int readCount = 0;
 //        long s0 = System.currentTimeMillis();
-
+        long s = System.nanoTime();
+        boolean isLargeQuery = false;
         for (int idx = 0; idx < size2; ++idx) {
             int l = findLeft2(idx, minT);
             int r = findRight2(idx, maxT);
             if (l == -1 || r == -1) {
                 continue;
+            }
+            if (r - l + 1 > 1000) {
+                System.out.println("第二阶段跨越块:" + (r - l + 1));
+                isLargeQuery = true;
             }
             long nowMaxA = Long.MIN_VALUE;
             long nowMinA = Long.MAX_VALUE;
@@ -132,7 +137,7 @@ public class MyHash {
                 int amount = GlobalParams.getBlockMessageLimit();
                 if (i == infoSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
-                if (i < r && tMsgAmount < 1024 * 64) {
+                if (i < r && tMsgAmount < 1024 * 16 && HelpUtil.intersect(minT, maxT, minA, maxA, minTs2.get(idx).get(i), maxTs2.get(idx).get(i), minAs2.get(idx).get(i), maxAs2.get(idx).get(i))) {
                     if (sIdx == -1) {
                         sIdx = i;
                     }
@@ -156,7 +161,7 @@ public class MyHash {
 //                if (tList[0] != aList[0]) {
 //                    System.out.println("t[0]:" + tList[0] + " a[0]:" + aList[0]);
 //                }
-//                readCount++;
+                readCount++;
                 for (int j = 0; j < tMsgAmount; ++j) {
                     if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
                         res.add(new Message(aList[j], tList[j], bodyList[j]));
@@ -166,9 +171,9 @@ public class MyHash {
                 sIdx = -1;
             }
         }
-//        if (res.size() % 100 == 0) {
-//            System.out.println("读盘次数:" + readCount + " 耗时:" + (System.currentTimeMillis() - s0));
-//        }
+        if (isLargeQuery) {
+            System.out.println("读盘次数:" + readCount + " 耗时:" + (System.nanoTime() - s));
+        }
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
     }
