@@ -27,9 +27,9 @@ public class GlobalParams {
 
     public static final int MAX_THREAD_AMOUNT = 20;
 
-    public static final int A_MOD = (IS_DEBUG ? 9 : 299);
+    public static final int A_MOD = (IS_DEBUG ? 9 : 599);
 
-    public static final int A_RANGE = (IS_DEBUG ? 10 : 300);
+    public static final int A_RANGE = (IS_DEBUG ? 10 : 600);
 
     public static final int EIGHT_K = 8 * 1024;
 

@@ -180,7 +180,7 @@ public class MyHash {
             isOutput = true;
             System.out.println("aysc pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
         }
-        if ((size3 > 1024 && maxTs3[size3 - 1024] > maxT)) {
+        if ((size3 > GlobalParams.WRITE_COMMIT_COUNT_LIMIT && maxTs3[size3 - GlobalParams.WRITE_COMMIT_COUNT_LIMIT] > maxT)) {
             return find3(minT, maxT, minA, maxA);
         }
         long res = 0;
