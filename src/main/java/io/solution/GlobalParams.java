@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 50 : 50);
+    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 50 : 100);
 
     /**
      * 消息总数
@@ -27,9 +27,9 @@ public class GlobalParams {
 
     public static final int MAX_THREAD_AMOUNT = 20;
 
-    public static final int A_MOD = (IS_DEBUG ? 9 : 199);
+    public static final int A_MOD = (IS_DEBUG ? 9 : 599);
 
-    public static final int A_RANGE = (IS_DEBUG ? 10 : 200);
+    public static final int A_RANGE = (IS_DEBUG ? 10 : 600);
 
     public static final int EIGHT_K = 8 * 1024;
 

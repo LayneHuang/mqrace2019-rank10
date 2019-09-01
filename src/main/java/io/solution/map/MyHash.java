@@ -69,6 +69,10 @@ public class MyHash {
         maxAs3[size3] = maxA;
         sums3[size3] = sum;
         size3++;
+
+        if (size3 % 5000 == 0) {
+            System.out.println("预处理到第" + size3 + "块~");
+        }
     }
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
@@ -149,9 +153,13 @@ public class MyHash {
     public long easyFind3Aysc(long minT, long maxT, long minA, long maxA) {
         if (!isOutput) {
             isOutput = true;
-            System.out.println("aysc pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
+            if (PretreatmentHolder.getIns().isFinish) {
+                System.out.println("aysc pre deal is finish.");
+            } else {
+                System.out.println("aysc pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
+            }
         }
-        if ((size3 > GlobalParams.WRITE_COMMIT_COUNT_LIMIT && maxTs3[size3 - GlobalParams.WRITE_COMMIT_COUNT_LIMIT] > maxT)) {
+        if (PretreatmentHolder.getIns().isFinish || (size3 > GlobalParams.WRITE_COMMIT_COUNT_LIMIT && maxTs3[size3 - GlobalParams.WRITE_COMMIT_COUNT_LIMIT] > maxT)) {
             return find3(minT, maxT, minA, maxA);
         }
         long res = 0;
@@ -278,7 +286,7 @@ public class MyHash {
 
     public long find3(long minT, long maxT, long minA, long maxA) {
 //        if (!PretreatmentHolder.getIns().isFinish) {
-        System.out.println("find3 pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
+//        System.out.println("find3 pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
 //            return 0;
 //        }
         int l = findLeft3(minT);

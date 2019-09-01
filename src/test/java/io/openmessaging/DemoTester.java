@@ -25,7 +25,7 @@ public class DemoTester {
         int checkTimes2 = 500;
         int checkTimes3 = 50000;
         //发送的线程数量
-        int sendTsNum = 2;
+        int sendTsNum = 10;
         //查询的线程数量
         int checkTsNum = 10;
         // 每次查询消息的最大跨度

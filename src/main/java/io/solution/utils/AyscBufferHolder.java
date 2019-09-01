@@ -181,7 +181,6 @@ public class AyscBufferHolder {
                     MyHash.getIns().lastMsgAmount[i] = commitAmount[i];
                     MyHash.getIns().insert(i, minT[i], maxT[i], minA[i], maxA[i], sums[i]);
 //                    MyHash.getIns().insert(i, minT[i], maxT[i], minA[i], maxA[i]);
-                    ;
                     HashData data = new HashData();
                     data.encode(tList[i], commitAmount[i]);
                     hashInfos.get(i).add(data);
@@ -217,7 +216,6 @@ public class AyscBufferHolder {
 //        for (int i = 0; i < total; ++i) {
 //            totalMsgAmount += msgAmount[i];
 //        }
-
 //        System.out.print("[");
 //        for (int i = 0; i < A_RANGE; ++i) {
 //            System.out.print(wLines[i] + ",");
@@ -226,9 +224,7 @@ public class AyscBufferHolder {
 //        System.out.println("消息总量:" + totalMsgAmount);
         System.out.println("flush 结束~ 第一阶段耗时:" + (System.currentTimeMillis() - beginTime) + "(ms)");
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
-
         PretreatmentHolder.getIns().work();
-
         GlobalParams.setStepOneFinished();
     }
 

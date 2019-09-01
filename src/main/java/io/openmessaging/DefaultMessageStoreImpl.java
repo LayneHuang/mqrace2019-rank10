@@ -23,16 +23,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
-//        long threadId = Thread.currentThread().getId();
         if (!GlobalParams.isStepOneFinished()) {
             s0 = System.currentTimeMillis();
             AyscBufferHolder.getIns().flush();
         }
-//        long s = System.nanoTime();
-//        List<Message> res = MyHash.getIns().find2(tMin, tMax, aMin, aMax);
-//        long e = System.nanoTime();
-//        System.out.println("res size:" + res.size() + " cost:" + (e - s) / (1e6));
-//        return res;
         return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
     }
 
@@ -44,7 +38,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             f = true;
             System.out.println("第二阶段耗时:" + (System.currentTimeMillis() - s0));
         }
-        return MyHash.getIns().easyFind3Aysc(tMin, tMax, aMin, aMax);
+        return MyHash.getIns().find3(tMin, tMax, aMin, aMax);
     }
 
 }

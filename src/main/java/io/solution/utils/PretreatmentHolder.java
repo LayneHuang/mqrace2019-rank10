@@ -87,151 +87,146 @@ public class PretreatmentHolder {
         return ins;
     }
 
-    private long sleepCost = 0;
-
     synchronized void work() {
         if (isFinish) {
             return;
         }
-        Thread thread = new Thread(() -> {
-            System.out.println("预处理开始~");
-            long s0 = System.currentTimeMillis();
-            try {
-                int totalBlock = 0;
-                int threadAmount = MyHash.getIns().threadAmount;
-                int[] blocksSize = new int[threadAmount];
-                // 每条线程消息处理了的块的数量
-                int[] preDealSize = new int[threadAmount];
-                // 每条线程消息正在处理的块的消息偏移
-                int[] nowDealPos = new int[threadAmount];
-                // t数据
-                MsgForThree[][] at = new MsgForThree[threadAmount][GlobalParams.getBlockMessageLimit()];
-                for (int idx = 0; idx < threadAmount; ++idx) {
-                    int nowAmount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
-                    long[] tList = MyHash.readT(idx, 0, 0, nowAmount);
-                    long[] aList = HelpUtil.readA(false, idx, 0, nowAmount);
-                    for (int i = 0; i < nowAmount; ++i) {
-                        at[idx][i] = new MsgForThree(tList[i], aList[i]);
-                    }
+//        Thread thread = new Thread(() -> {
+        System.out.println("预处理开始~");
+        long s0 = System.currentTimeMillis();
+        try {
+            int totalBlock = 0;
+            int threadAmount = MyHash.getIns().threadAmount;
+            int[] blocksSize = new int[threadAmount];
+            // 每条线程消息处理了的块的数量
+            int[] preDealSize = new int[threadAmount];
+            // 每条线程消息正在处理的块的消息偏移
+            int[] nowDealPos = new int[threadAmount];
+            // t数据
+            MsgForThree[][] at = new MsgForThree[threadAmount][GlobalParams.getBlockMessageLimit()];
+            for (int idx = 0; idx < threadAmount; ++idx) {
+                int nowAmount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
+                long[] tList = MyHash.readT(idx, 0, 0, nowAmount);
+                long[] aList = HelpUtil.readA(false, idx, 0, nowAmount);
+                for (int i = 0; i < nowAmount; ++i) {
+                    at[idx][i] = new MsgForThree(tList[i], aList[i]);
                 }
-
-                MsgForThree[] msgs = new MsgForThree[GlobalParams.getBlockMessageLimit()];
-                Queue<MsgForThree> queue = new PriorityQueue<>(Comparator.comparingLong(t0 -> t0.t));
-
-                for (int idx = 0; idx < threadAmount; ++idx) {
-                    blocksSize[idx] = MyHash.getIns().minTs2.get(idx).size();
-                    totalBlock += blocksSize[idx];
-                }
-
-                int finishSize = 0;
-
-                while (finishSize < totalBlock) {
-                    // 选线程中最大值最小的块
-                    long minOfMaxT = Long.MAX_VALUE;
-
-                    for (int idx = 0; idx < threadAmount; ++idx) {
-                        int nowPos = preDealSize[idx];
-                        if (nowPos < blocksSize[idx]) {
-                            long maxT = MyHash.getIns().maxTs2.get(idx).get(nowPos);
-                            if (maxT < minOfMaxT) {
-                                minOfMaxT = maxT;
-                            }
-                        }
-                    }
-
-                    // 把所有小于等于这个minOfMax的t放进队列 (最多thread amount个块)
-                    for (int idx = 0; idx < threadAmount; ++idx) {
-                        // 处理完的线程过掉
-                        if (preDealSize[idx] >= blocksSize[idx]) {
-                            continue;
-                        }
-                        int amount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
-                        while (nowDealPos[idx] < amount && at[idx][nowDealPos[idx]].t <= minOfMaxT) {
-                            queue.add(new MsgForThree(at[idx][nowDealPos[idx]].t, at[idx][nowDealPos[idx]].a));
-                            nowDealPos[idx]++;
-//                            addCnt++;
-                        }
-
-                        // 某块插入完了
-                        if (nowDealPos[idx] >= amount) {
-                            finishSize++;
-                            nowDealPos[idx] = 0;
-                            preDealSize[idx]++;
-                            // 重新读入一块新块
-                            if (preDealSize[idx] < blocksSize[idx]) {
-                                int nowAmount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
-                                long[] tList = MyHash.readT(idx, preDealSize[idx], preDealSize[idx], nowAmount);
-                                long[] aList = HelpUtil.readA(false, idx, (long) preDealSize[idx] * GlobalParams.getBlockMessageLimit() * 8, nowAmount);
-                                for (int i = 0; i < nowAmount; ++i) {
-                                    at[idx][i].t = tList[i];
-                                    at[idx][i].a = aList[i];
-                                }
-                            }
-                        }
-                    }
-
-                    // 组成新块重新写
-                    while (queue.size() >= GlobalParams.getBlockMessageLimit()) {
-                        for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
-                            msgs[i] = queue.poll();
-                        }
-                        buildBlock(msgs, GlobalParams.getBlockMessageLimit());
-                    }
-
-                }
-                // 处理剩余a t 落盘
-                if (!queue.isEmpty()) {
-                    int tempSize = 0;
-                    while (!queue.isEmpty()) {
-                        msgs[tempSize++] = queue.poll();
-                    }
-                    buildBlock(msgs, tempSize);
-                }
-
-                // 处理剩余横向a
-                for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
-                    if (aBufferSize[i] > 0) {
-                        aBuffers[i].flip();
-                        channels[i].write(aBuffers[i]);
-                        aBufferSize[i] = 0;
-                    }
-                    aBuffers[i].clear();
-                }
-
-                // 处理剩余info
-                if (writeCount > 0) {
-                    lineInfoBuffer.flip();
-                    infoChannel.write(lineInfoBuffer);
-                    lineInfoBuffer.clear();
-                }
-                if (infoChannel != null) {
-                    infoChannel.close();
-                    infoChannel = null;
-                }
-
-                for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
-                    if (channels[i] != null) {
-                        channels[i].close();
-                        channels[i] = null;
-                    }
-                }
-
-                isFinish = true;
-                System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms)"
-                        + " 睡眠消耗:" + sleepCost
-                );
-                System.out.println("共处理块数:" + MyHash.getIns().size3);
-                System.out.print("[");
-                for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
-                    System.out.print(cntSum[i] + ",");
-                }
-                System.out.println("]");
-            } catch (IOException e) {
-                e.printStackTrace();
             }
-        });
-//        thread.setPriority(Thread.MIN_PRIORITY);
-        thread.start();
+
+            MsgForThree[] msgs = new MsgForThree[GlobalParams.getBlockMessageLimit()];
+            Queue<MsgForThree> queue = new PriorityQueue<>(Comparator.comparingLong(t0 -> t0.t));
+
+            for (int idx = 0; idx < threadAmount; ++idx) {
+                blocksSize[idx] = MyHash.getIns().minTs2.get(idx).size();
+                totalBlock += blocksSize[idx];
+            }
+
+            int finishSize = 0;
+
+            while (finishSize < totalBlock) {
+                // 选线程中最大值最小的块
+                long minOfMaxT = Long.MAX_VALUE;
+
+                for (int idx = 0; idx < threadAmount; ++idx) {
+                    int nowPos = preDealSize[idx];
+                    if (nowPos < blocksSize[idx]) {
+                        long maxT = MyHash.getIns().maxTs2.get(idx).get(nowPos);
+                        if (maxT < minOfMaxT) {
+                            minOfMaxT = maxT;
+                        }
+                    }
+                }
+
+                // 把所有小于等于这个minOfMax的t放进队列 (最多thread amount个块)
+                for (int idx = 0; idx < threadAmount; ++idx) {
+                    // 处理完的线程过掉
+                    if (preDealSize[idx] >= blocksSize[idx]) {
+                        continue;
+                    }
+                    int amount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
+                    while (nowDealPos[idx] < amount && at[idx][nowDealPos[idx]].t <= minOfMaxT) {
+                        queue.add(new MsgForThree(at[idx][nowDealPos[idx]].t, at[idx][nowDealPos[idx]].a));
+                        nowDealPos[idx]++;
+//                            addCnt++;
+                    }
+
+                    // 某块插入完了
+                    if (nowDealPos[idx] >= amount) {
+                        finishSize++;
+                        nowDealPos[idx] = 0;
+                        preDealSize[idx]++;
+                        // 重新读入一块新块
+                        if (preDealSize[idx] < blocksSize[idx]) {
+                            int nowAmount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
+                            long[] tList = MyHash.readT(idx, preDealSize[idx], preDealSize[idx], nowAmount);
+                            long[] aList = HelpUtil.readA(false, idx, (long) preDealSize[idx] * GlobalParams.getBlockMessageLimit() * 8, nowAmount);
+                            for (int i = 0; i < nowAmount; ++i) {
+                                at[idx][i].t = tList[i];
+                                at[idx][i].a = aList[i];
+                            }
+                        }
+                    }
+                }
+
+                // 组成新块重新写
+                while (queue.size() >= GlobalParams.getBlockMessageLimit()) {
+                    for (int i = 0; i < GlobalParams.getBlockMessageLimit(); ++i) {
+                        msgs[i] = queue.poll();
+                    }
+                    buildBlock(msgs, GlobalParams.getBlockMessageLimit());
+                }
+
+            }
+            // 处理剩余a t 落盘
+            if (!queue.isEmpty()) {
+                int tempSize = 0;
+                while (!queue.isEmpty()) {
+                    msgs[tempSize++] = queue.poll();
+                }
+                buildBlock(msgs, tempSize);
+            }
+
+            // 处理剩余横向a
+            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+                if (aBufferSize[i] > 0) {
+                    aBuffers[i].flip();
+                    channels[i].write(aBuffers[i]);
+                    aBufferSize[i] = 0;
+                }
+                aBuffers[i].clear();
+            }
+
+            // 处理剩余info
+            if (writeCount > 0) {
+                lineInfoBuffer.flip();
+                infoChannel.write(lineInfoBuffer);
+                lineInfoBuffer.clear();
+            }
+            if (infoChannel != null) {
+                infoChannel.close();
+                infoChannel = null;
+            }
+
+            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+                if (channels[i] != null) {
+                    channels[i].close();
+                    channels[i] = null;
+                }
+            }
+
+            isFinish = true;
+            System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms)");
+            System.out.println("共处理块数:" + MyHash.getIns().size3);
+            System.out.print("[");
+            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+                System.out.print(cntSum[i] + ",");
+            }
+            System.out.println("]");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        });
+//        thread.start();
     }
 
     private void buildBlock(MsgForThree[] msgForThrees, int size) {
@@ -275,17 +270,17 @@ public class PretreatmentHolder {
             // 处理竖线数据
             int pos = HelpUtil.getPosition(msg.a);
             aBuffers[pos].putLong(msg.a);
-//            aBufferSize[pos]++;
-//            if (aBufferSize[pos] == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
-            try {
-                aBuffers[pos].flip();
-                channels[pos].write(aBuffers[pos]);
-                aBuffers[pos].clear();
-                aBufferSize[pos] = 0;
-            } catch (IOException e) {
-                e.printStackTrace();
+            aBufferSize[pos]++;
+            if (aBufferSize[pos] == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
+                try {
+                    aBuffers[pos].flip();
+                    channels[pos].write(aBuffers[pos]);
+                    aBuffers[pos].clear();
+                    aBufferSize[pos] = 0;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-//            }
             aPos[pos] += 8;
             cntSum[pos]++;
             if (Long.MAX_VALUE - bs[pos] < msg.a) {
