@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static io.solution.GlobalParams.*;
 
@@ -167,12 +166,9 @@ public class AyscBufferHolder {
 
     }
 
-    private ReentrantLock lock = new ReentrantLock();
     private long ftId = -1;
 
-    public void flush(long tId) {
-        lock.lock();
-        ftId = tId;
+    public synchronized void flush() {
         if (GlobalParams.isStepOneFinished()) {
             return;
         }
@@ -231,12 +227,9 @@ public class AyscBufferHolder {
         System.out.println("flush 结束~ 第一阶段耗时:" + (System.currentTimeMillis() - beginTime) + "(ms)");
         System.out.println("Rest memory:" + Runtime.getRuntime().freeMemory() / (1024 * 1024) + "(M)");
 
-        GlobalParams.setStepOneFinished();
-        lock.unlock();
+        PretreatmentHolder.getIns().work();
 
-//        if (tId == ftId) {
-//            PretreatmentHolder.getIns().work();
-//        }
+        GlobalParams.setStepOneFinished();
     }
 
 }

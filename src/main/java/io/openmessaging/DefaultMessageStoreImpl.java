@@ -23,15 +23,17 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
-        long threadId = Thread.currentThread().getId();
+//        long threadId = Thread.currentThread().getId();
         if (!GlobalParams.isStepOneFinished()) {
             s0 = System.currentTimeMillis();
-            AyscBufferHolder.getIns().flush(threadId);
+            AyscBufferHolder.getIns().flush();
         }
-        List<Message> res = MyHash.getIns().find2(tMin, tMax, aMin, aMax);
-        System.out.println("res size:" + res.size());
-        return res;
-//        return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
+//        long s = System.nanoTime();
+//        List<Message> res = MyHash.getIns().find2(tMin, tMax, aMin, aMax);
+//        long e = System.nanoTime();
+//        System.out.println("res size:" + res.size() + " cost:" + (e - s) / (1e6));
+//        return res;
+        return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
     }
 
     private boolean f = false;

@@ -72,7 +72,6 @@ public class MyHash {
     }
 
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
-
         List<Message> res = new ArrayList<>();
         int readCount = 0;
         long s = System.nanoTime();
@@ -91,7 +90,7 @@ public class MyHash {
                 nowMaxA = Math.max(nowMaxA, maxAs2.get(idx).get(i));
                 nowMinA = Math.min(nowMinA, minAs2.get(idx).get(i));
                 r = i;
-                if (i - l > 100) isLargeQuery = true;
+                if (i - l > 500) isLargeQuery = true;
             }
             if (minA > nowMaxA || maxA < nowMinA) {
                 continue;
@@ -99,12 +98,12 @@ public class MyHash {
 
             int tMsgAmount = 0;
             int sIdx = -1;
-
+//            System.out.println("thread:" + idx + "读盘前");
             for (int i = l; i <= r; ++i) {
                 int amount = GlobalParams.getBlockMessageLimit();
                 if (i == blockSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
-
+//
                 // 是否相交
                 boolean isIntersect = HelpUtil.intersect(
                         minT, maxT, minA, maxA,
@@ -122,14 +121,12 @@ public class MyHash {
                 } else if (sIdx == -1) {
                     sIdx = i;
                 }
-
                 long aPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
                 long bPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * GlobalParams.getBodySize();
 
                 long[] tList = readT(idx, sIdx, i, tMsgAmount);
                 long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);
-
                 readCount++;
                 for (int j = 0; j < tMsgAmount && tList[j] <= maxT; ++j) {
                     if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
@@ -141,7 +138,7 @@ public class MyHash {
             }
         }
         if (isLargeQuery) {
-            System.out.println("读盘次数:" + readCount + " 耗时:" + (System.nanoTime() - s));
+            System.out.println("读盘次数:" + readCount + " 耗时:" + (System.nanoTime() - s) / (1000000.0) + "(ms)");
         }
         res.sort(Comparator.comparingLong(Message::getT));
         return res;
@@ -154,9 +151,9 @@ public class MyHash {
             isOutput = true;
             System.out.println("aysc pre deal is not finish. now size:" + size3 + " msg amount:" + (size3 * GlobalParams.getBlockMessageLimit()));
         }
-//        if ((size3 > GlobalParams.WRITE_COMMIT_COUNT_LIMIT && maxTs3[size3 - GlobalParams.WRITE_COMMIT_COUNT_LIMIT] > maxT)) {
-//            return find3(minT, maxT, minA, maxA);
-//        }
+        if ((size3 > GlobalParams.WRITE_COMMIT_COUNT_LIMIT && maxTs3[size3 - GlobalParams.WRITE_COMMIT_COUNT_LIMIT] > maxT)) {
+            return find3(minT, maxT, minA, maxA);
+        }
         long res = 0;
         int cnt = 0;
         for (int idx = 0; idx < threadAmount; ++idx) {
@@ -378,7 +375,7 @@ public class MyHash {
                 r = mid;
             }
             cnt++;
-            if (cnt > 1000) {
+            if (cnt > 200) {
                 System.out.println("二分有问题~");
                 break;
             }
@@ -430,11 +427,11 @@ public class MyHash {
     public static long[] readT(int idx, int l, int r, int size) {
         long[] tList = new long[size];
         int tListSize = 0;
-        for (int j = l; j <= r; ++j) {
-            int amount = AyscBufferHolder.getIns().hashInfos.get(idx).get(j).size;
-            long[] tListSub = AyscBufferHolder.getIns().hashInfos.get(idx).get(j).readT();
-            for (int k = 0; k < amount && tListSize < size; ++k) {
-                tList[tListSize++] = tListSub[k];
+        for (int i = l; i <= r; ++i) {
+            int amount = AyscBufferHolder.getIns().hashInfos.get(idx).get(i).size;
+            long[] tListSub = AyscBufferHolder.getIns().hashInfos.get(idx).get(i).readT();
+            for (int j = 0; j < amount && tListSize < size; ++j) {
+                tList[tListSize++] = tListSub[j];
             }
         }
         return tList;
