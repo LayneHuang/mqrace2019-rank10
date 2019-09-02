@@ -72,7 +72,9 @@ public class MyHash {
         minAs2.clear();
         maxAs2.clear();
         lastMsgAmount = null;
+        AyscBufferHolder.getIns().hashInfos.clear();
         System.out.println("清掉第二阶段记录耗时:" + (System.nanoTime() - s0) + "(ns)");
+        System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
         GlobalParams.setStepTwoFinished();
     }
 

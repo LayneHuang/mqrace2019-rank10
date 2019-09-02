@@ -18,16 +18,16 @@ public class GlobalParams {
     /**
      * 消息总数
      */
-    private static int MSG_COUNT = (IS_DEBUG ? 80_000_000 : 2_050_000_000);
+    private static int MSG_COUNT = (IS_DEBUG ? 160_000_000 : 2_050_000_000);
 
     /**
      * 写文件拥塞队列大小
      */
-    public static final int WRITE_COMMIT_COUNT_LIMIT = 1024;
+    public static final int WRITE_COMMIT_COUNT_LIMIT = 512;
 
     public static final int MAX_THREAD_AMOUNT = 20;
 
-    public static final int A_MOD = (IS_DEBUG ? 9 : getBlockMessageLimit());
+    public static final int A_MOD = getBlockMessageLimit() >> 1;
 
     //    public static final int A_MOD = (IS_DEBUG ? 9 : 399);
 

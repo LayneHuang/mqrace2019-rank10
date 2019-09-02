@@ -211,11 +211,23 @@ public class HelpUtil {
     }
 
     public static int getPosition(long a) {
-        for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
-            if (a < AyscBufferHolder.getIns().wLines[i]) {
-                return i;
+//        for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+//            if (a * 1.0 < AyscBufferHolder.getIns().wLines[i]) {
+//                return i;
+//            }
+//        }
+//        return GlobalParams.A_MOD;
+        if (a < AyscBufferHolder.getIns().wLines[0]) return 0;
+        int l = 0;
+        int r = GlobalParams.A_MOD;
+        while (l + 1 < r) {
+            int mid = (l + r) >> 1;
+            if (a * 1.0 >= AyscBufferHolder.getIns().wLines[mid]) {
+                l = mid;
+            } else {
+                r = mid;
             }
         }
-        return GlobalParams.A_MOD;
+        return r;
     }
 }
