@@ -191,10 +191,6 @@ public class AyscBufferHolder {
             e.printStackTrace();
         }
 
-//        int totalMsgAmount = 0;
-//        for (int i = 0; i < total; ++i) {
-//            totalMsgAmount += msgAmount[i];
-//        }
         System.out.print("[");
         for (int i = 0; i < A_RANGE; ++i) {
             System.out.print(String.format("%.2f", wLines[i]) + ",");

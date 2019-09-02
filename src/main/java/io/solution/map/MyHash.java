@@ -64,21 +64,6 @@ public class MyHash {
         size3++;
     }
 
-    public synchronized void cleanStepTwoInfo() {
-        if (GlobalParams.isStepTwoFinished()) {
-            return;
-        }
-        long s0 = System.nanoTime();
-        minTs2.clear();
-        maxTs2.clear();
-        minAs2.clear();
-        maxAs2.clear();
-        lastMsgAmount = null;
-        System.out.println("清掉第二阶段记录耗时:" + (System.nanoTime() - s0) + "(ns)");
-        System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
-        GlobalParams.setStepTwoFinished();
-    }
-
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
         List<Message> res = new ArrayList<>();
 

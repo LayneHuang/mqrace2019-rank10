@@ -14,7 +14,7 @@ public class HashData {
     private long t;
     public byte[] dataT;
     public int dataSize;
-    public int size;
+    private int size;
 
     public HashData() {
         dataSize = GlobalParams.getBlockMessageLimit();
@@ -36,7 +36,7 @@ public class HashData {
         return res;
     }
 
-    public int encode(long[] tList, int size) {
+    public void encode(long[] tList, int size) {
         this.size = size;
         t = tList[0];
         long pre = t;
@@ -46,7 +46,6 @@ public class HashData {
             pos += HashUtil.encodeInt(diff, this, pos);
             pre = tList[i];
         }
-        return dataSize;
     }
 
 }

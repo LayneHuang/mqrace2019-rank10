@@ -57,32 +57,12 @@ public class GlobalParams {
 
     private static String PRE_PATH = "/alidata1/race2019/data";
 
-    public static Path getTPath(int d) {
-        Path path;
-        if (GlobalParams.IS_DEBUG) {
-            path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".t");
-        } else {
-            path = Paths.get(PRE_PATH + "/mydata" + d + ".t");
-        }
-        return path;
-    }
-
     public static Path getAPath(int d, boolean w) {
         Path path;
         if (GlobalParams.IS_DEBUG) {
             path = Paths.get(System.getProperty("user.dir"), "/d/data" + (w ? "_w" : "_h") + d + ".a");
         } else {
             path = Paths.get(PRE_PATH + "/mydata" + (w ? "_w" : "_h") + d + ".a");
-        }
-        return path;
-    }
-
-    public static Path getAPath() {
-        Path path;
-        if (GlobalParams.IS_DEBUG) {
-            path = Paths.get(System.getProperty("user.dir"), "/d/data.a");
-        } else {
-            path = Paths.get(PRE_PATH + "/mydata.a");
         }
         return path;
     }
@@ -103,16 +83,6 @@ public class GlobalParams {
             path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".tab");
         } else {
             path = Paths.get(PRE_PATH + "/mydata" + d + ".tab");
-        }
-        return path;
-    }
-
-    public static Path getATPath() {
-        Path path;
-        if (GlobalParams.IS_DEBUG) {
-            path = Paths.get(System.getProperty("user.dir"), "/d/data.at");
-        } else {
-            path = Paths.get(PRE_PATH + "/mydata.at");
         }
         return path;
     }
