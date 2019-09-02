@@ -2,8 +2,8 @@ package io.solution.map;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
-import io.solution.data.LineInfo;
-import io.solution.utils.AyscBufferHolder;
+import io.solution.data.HashData;
+import io.solution.data.HashInfo;
 import io.solution.utils.HelpUtil;
 
 import java.util.ArrayList;
@@ -32,6 +32,7 @@ public class MyHash {
     private long[] minTs3 = new long[GlobalParams.getBlockInfoLimit()];
     private long[] maxTs3 = new long[GlobalParams.getBlockInfoLimit()];
     public int lastMsgAmount3 = GlobalParams.getBlockMessageLimit();
+    private HashData[] hashDatas = new HashData[GlobalParams.getBlockInfoLimit()];
 
     private MyHash() {
         for (int i = 0; i < GlobalParams.MAX_THREAD_AMOUNT; ++i) {
@@ -56,9 +57,10 @@ public class MyHash {
         sums2.get(idx).add(sum);
     }
 
-    public void insert3(long minT, long maxT) {
+    public void insert3(long minT, long maxT, HashData hashData) {
         minTs3[size3] = minT;
         maxTs3[size3] = maxT;
+        hashDatas[size3] = hashData;
         size3++;
     }
 
@@ -72,7 +74,7 @@ public class MyHash {
         minAs2.clear();
         maxAs2.clear();
         lastMsgAmount = null;
-        AyscBufferHolder.getIns().hashInfos.clear();
+//        AyscBufferHolder.getIns().hashInfos.clear();
         System.out.println("清掉第二阶段记录耗时:" + (System.nanoTime() - s0) + "(ns)");
         System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
         GlobalParams.setStepTwoFinished();
@@ -123,17 +125,25 @@ public class MyHash {
                 } else if (sIdx == -1) {
                     sIdx = i;
                 }
-                long aPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
+//                long aPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
+                long taPos = 16L * sIdx * GlobalParams.getBlockMessageLimit();
                 long bPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * GlobalParams.getBodySize();
 
-                long[] tList = readT(idx, sIdx, i, tMsgAmount);
-                long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
+//                long[] tList = readT(idx, sIdx, i, tMsgAmount);
+//                long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
+                long[] taList = HelpUtil.readTA(idx, taPos, tMsgAmount);
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);
-                for (int j = 0; j < tMsgAmount && tList[j] <= maxT; ++j) {
-                    if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
-                        res.add(new Message(aList[j], tList[j], bodyList[j]));
+//                for (int j = 0; j < tMsgAmount && tList[j] <= maxT; ++j) {
+//                    if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
+//                        res.add(new Message(aList[j], tList[j], bodyList[j]));
+//                    }
+//                }
+                for (int j = 0; j < tMsgAmount && taList[j << 1] <= maxT; ++j) {
+                    if (HelpUtil.inSide(taList[j << 1], taList[j << 1 | 1], minT, maxT, minA, maxA)) {
+                        res.add(new Message(taList[j << 1 | 1], taList[j << 1], bodyList[j]));
                     }
                 }
+
                 tMsgAmount = 0;
                 sIdx = -1;
             }
@@ -148,72 +158,74 @@ public class MyHash {
         if (l == -1 || r == -1) {
             return 0;
         }
+
         long res = 0;
         int cnt = 0;
 
-        if (l + 1 < r) {
-            int btPos = HelpUtil.getPosition(minA);
-            int tpPos = HelpUtil.getPosition(maxA);
+        int leftAmount = GlobalParams.getBlockMessageLimit();
+        int rightAmount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+        HashInfo lHashInfo;     // 不一定需要
+        HashInfo rHashInfo = HelpUtil.readLineInfoAndA((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * r, rightAmount);
 
-            tpPos = Math.min(tpPos, GlobalParams.A_RANGE - 1);
-            LineInfo[] leftLineInfos = HelpUtil.readLineInfo((long) (l + 1) * GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
-            LineInfo[] rightLineInfos = HelpUtil.readLineInfo((long) r * GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
-
-            // 中间
-            for (int i = btPos + 1; i <= tpPos - 1; ++i) {
-                long sum = rightLineInfos[i].bs - leftLineInfos[i].bs;
-                if (sum < 0) {
-                    sum = Long.MAX_VALUE + sum;
-                }
-                int dCnt = rightLineInfos[i].cntSum - leftLineInfos[i].cntSum;
-                res += sum;
-                cnt += dCnt;
+        // 右边界
+        long[] rTList = hashDatas[r].readT();
+        for (int j = 0; j < rightAmount && rTList[j] <= maxT; ++j) {
+            if (HelpUtil.inSide(rTList[j], rHashInfo.aList[j], minT, maxT, minA, maxA)) {
+                res += rHashInfo.aList[j];
+                cnt++;
             }
+        }
 
-            // 上下边界
-            if (btPos < tpPos) {
-                int bAmount = (int) ((rightLineInfos[btPos].aPos - leftLineInfos[btPos].aPos) / 8);
-                if (bAmount > 0) {
-                    long[] baList = HelpUtil.readA(true, btPos, leftLineInfos[btPos].aPos, bAmount);
-                    for (int i = 0; i < bAmount; ++i) {
-                        if (minA <= baList[i] && baList[i] <= maxA) {
-                            res += baList[i];
+        if (l < r) {
+            lHashInfo = HelpUtil.readAAndLineInfo((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * l + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE, leftAmount);
+
+            // 左
+            long[] lTList = hashDatas[l].readT();
+            for (int j = 0; j < leftAmount && lTList[j] <= maxT; ++j) {
+                if (HelpUtil.inSide(lTList[j], lHashInfo.aList[j], minT, maxT, minA, maxA)) {
+                    res += lHashInfo.aList[j];
+                    cnt++;
+                }
+            }
+            if (l + 1 < r) {
+                int btPos = HelpUtil.getPosition(minA);
+                int tpPos = HelpUtil.getPosition(maxA);
+
+                // 中间
+                for (int i = btPos + 1; i <= tpPos - 1; ++i) {
+                    long sum = rHashInfo.lineInfos[i].bs - lHashInfo.lineInfos[i].bs;
+                    if (sum < 0) {
+                        sum = Long.MAX_VALUE + sum;
+                    }
+                    int dCnt = rHashInfo.lineInfos[i].cntSum - lHashInfo.lineInfos[i].cntSum;
+                    res += sum;
+                    cnt += dCnt;
+                }
+
+                // 上下边界
+                if (btPos < tpPos) {
+                    int bAmount = (int) ((rHashInfo.lineInfos[btPos].aPos - lHashInfo.lineInfos[btPos].aPos) / 8);
+                    if (bAmount > 0) {
+                        long[] baList = HelpUtil.readA(true, btPos, lHashInfo.lineInfos[btPos].aPos, bAmount);
+                        for (int i = 0; i < bAmount; ++i) {
+                            if (minA <= baList[i] && baList[i] <= maxA) {
+                                res += baList[i];
+                                cnt++;
+                            }
+                        }
+                    }
+                }
+
+                int tAmount = (int) ((rHashInfo.lineInfos[tpPos].aPos - lHashInfo.lineInfos[tpPos].aPos) / 8);
+                if (tAmount > 0) {
+                    long[] taList = HelpUtil.readA(true, tpPos, lHashInfo.lineInfos[tpPos].aPos, tAmount);
+                    for (int i = 0; i < tAmount; ++i) {
+                        if (minA <= taList[i] && taList[i] <= maxA) {
+                            res += taList[i];
                             cnt++;
                         }
                     }
                 }
-            }
-
-            int tAmount = (int) ((rightLineInfos[tpPos].aPos - leftLineInfos[tpPos].aPos) / 8);
-            if (tAmount > 0) {
-                long[] taList = HelpUtil.readA(true, tpPos, leftLineInfos[tpPos].aPos, tAmount);
-                for (int i = 0; i < tAmount; ++i) {
-                    if (minA <= taList[i] && taList[i] <= maxA) {
-                        res += taList[i];
-                        cnt++;
-                    }
-                }
-            }
-        }
-
-        // 左右边界
-        if (l < r) {
-            int leftAmount = GlobalParams.getBlockMessageLimit();
-            long[] latList = HelpUtil.readAT(16L * l * GlobalParams.getBlockMessageLimit(), leftAmount);
-            for (int j = 0; j < leftAmount; ++j) {
-                if (HelpUtil.inSide(latList[j * 2], latList[j * 2 + 1], minT, maxT, minA, maxA)) {
-                    res += latList[j * 2 + 1];
-                    cnt++;
-                }
-            }
-        }
-
-        int rightAmount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
-        long[] ratList = HelpUtil.readAT(16L * r * GlobalParams.getBlockMessageLimit(), rightAmount);
-        for (int j = 0; j < rightAmount; ++j) {
-            if (HelpUtil.inSide(ratList[j * 2], ratList[j * 2 + 1], minT, maxT, minA, maxA)) {
-                res += ratList[j * 2 + 1];
-                cnt++;
             }
         }
         return cnt == 0 ? 0 : res / cnt;
@@ -279,17 +291,17 @@ public class MyHash {
         return r - 1;
     }
 
-    public static long[] readT(int idx, int l, int r, int size) {
-        long[] tList = new long[size];
-        int tListSize = 0;
-        for (int i = l; i <= r; ++i) {
-            int amount = AyscBufferHolder.getIns().hashInfos.get(idx).get(i).size;
-            long[] tListSub = AyscBufferHolder.getIns().hashInfos.get(idx).get(i).readT();
-            for (int j = 0; j < amount && tListSize < size; ++j) {
-                tList[tListSize++] = tListSub[j];
-            }
-        }
-        return tList;
-    }
+//    public static long[] readT(int idx, int l, int r, int size) {
+//        long[] tList = new long[size];
+//        int tListSize = 0;
+//        for (int i = l; i <= r; ++i) {
+//            int amount = AyscBufferHolder.getIns().hashInfos.get(idx).get(i).size;
+//            long[] tListSub = AyscBufferHolder.getIns().hashInfos.get(idx).get(i).readT();
+//            for (int j = 0; j < amount && tListSize < size; ++j) {
+//                tList[tListSize++] = tListSub[j];
+//            }
+//        }
+//        return tList;
+//    }
 
 }

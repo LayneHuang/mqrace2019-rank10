@@ -19,10 +19,10 @@ public class AyscBufferHolder {
 
     private static AyscBufferHolder ins = new AyscBufferHolder();
 
-    private ByteBuffer[] aBuffers = new ByteBuffer[MAX_THREAD_AMOUNT];
+    private ByteBuffer[] taBuffers = new ByteBuffer[MAX_THREAD_AMOUNT];
     private ByteBuffer[] bBuffers = new ByteBuffer[MAX_THREAD_AMOUNT];
 
-    private FileChannel[] aChannels = new FileChannel[MAX_THREAD_AMOUNT];
+    private FileChannel[] taChannels = new FileChannel[MAX_THREAD_AMOUNT];
     private FileChannel[] bChannels = new FileChannel[MAX_THREAD_AMOUNT];
 
     private long[] minT = new long[MAX_THREAD_AMOUNT];
@@ -42,7 +42,7 @@ public class AyscBufferHolder {
 
     private long[][] tList = new long[MAX_THREAD_AMOUNT][getBlockMessageLimit()];
 
-    public ArrayList<ArrayList<HashData>> hashInfos = new ArrayList<>(MAX_THREAD_AMOUNT);
+//    public ArrayList<ArrayList<HashData>> hashInfos = new ArrayList<>(MAX_THREAD_AMOUNT);
 
     private int blockSize = 0;
 
@@ -56,16 +56,16 @@ public class AyscBufferHolder {
         for (int i = 0; i < MAX_THREAD_AMOUNT; ++i) {
 
             aLists.add(new ArrayList<>());
-            hashInfos.add(new ArrayList<>());
-            aBuffers[i] = ByteBuffer.allocateDirect(8 * getBlockMessageLimit());
+//            hashInfos.add(new ArrayList<>());
+            taBuffers[i] = ByteBuffer.allocateDirect(16 * getBlockMessageLimit());
             bBuffers[i] = ByteBuffer.allocateDirect(getBodySize() * getBlockMessageLimit());
             minT[i] = minA[i] = Long.MAX_VALUE;
             maxT[i] = maxA[i] = Long.MIN_VALUE;
             try {
 
-                Path pathA = GlobalParams.getAPath(i, false);
-                aChannels[i] = FileChannel.open(
-                        pathA,
+                Path pathTA = GlobalParams.getTAPath(i);
+                taChannels[i] = FileChannel.open(
+                        pathTA,
                         StandardOpenOption.CREATE,
                         StandardOpenOption.APPEND
                 );
@@ -119,7 +119,8 @@ public class AyscBufferHolder {
         aLists.get(idx).add(message.getA());
         tList[idx][commitAmount[idx]] = message.getT();
 
-        aBuffers[idx].putLong(message.getA());
+        taBuffers[idx].putLong(message.getT());
+        taBuffers[idx].putLong(message.getA());
         bBuffers[idx].put(message.getBody());
 
         minT[idx] = Math.min(minT[idx], message.getT());
@@ -148,16 +149,16 @@ public class AyscBufferHolder {
             blockSize++;
 
             // 对t做hash
-            HashData data = new HashData();
-            data.encode(tList[idx], commitAmount[idx]);
-            hashInfos.get(idx).add(data);
+//            HashData data = new HashData();
+//            data.encode(tList[idx], commitAmount[idx]);
+//            hashInfos.get(idx).add(data);
 
 //            if (blockAMount[idx] == WRITE_COMMIT_COUNT_LIMIT) {
-            // 对 a & body 写入文件
+            // 对 t & a & body 写入文件
             try {
-                aBuffers[idx].flip();
-                aChannels[idx].write(aBuffers[idx]);
-                aBuffers[idx].clear();
+                taBuffers[idx].flip();
+                taChannels[idx].write(taBuffers[idx]);
+                taBuffers[idx].clear();
 
                 bBuffers[idx].flip();
                 bChannels[idx].write(bBuffers[idx]);
@@ -187,27 +188,27 @@ public class AyscBufferHolder {
 //                    MyHash.getIns().insert(i, minT[i], maxT[i], minA[i], maxA[i]);
                     HashData data = new HashData();
                     data.encode(tList[i], commitAmount[i]);
-                    hashInfos.get(i).add(data);
+//                    hashInfos.get(i).add(data);
                 } else {
                     MyHash.getIns().lastMsgAmount[i] = getBlockMessageLimit();
                 }
 
 //                if (blockAMount[i] > 0) {
-                aBuffers[i].flip();
-                aChannels[i].write(aBuffers[i]);
-                aBuffers[i].clear();
+                taBuffers[i].flip();
+                taChannels[i].write(taBuffers[i]);
+                taBuffers[i].clear();
 
                 bBuffers[i].flip();
                 bChannels[i].write(bBuffers[i]);
                 bBuffers[i].clear();
 //                }
 
-                aBuffers[i] = null;
+                taBuffers[i] = null;
                 bBuffers[i] = null;
 
-                if (aChannels[i] != null) {
-                    aChannels[i].close();
-                    aChannels[i] = null;
+                if (taChannels[i] != null) {
+                    taChannels[i].close();
+                    taChannels[i] = null;
                 }
                 if (bChannels[i] != null) {
                     bChannels[i].close();

@@ -1,6 +1,7 @@
 package io.solution.utils;
 
 import io.solution.GlobalParams;
+import io.solution.data.HashInfo;
 import io.solution.data.LineInfo;
 
 import java.io.IOException;
@@ -139,6 +140,38 @@ public class HelpUtil {
         return res;
     }
 
+
+    public static long[] readTA(int idx, long position, int count) {
+        int size = count * 16;
+        FileChannel channel = null;
+        long[] res = new long[count << 1];
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getTAPath(idx),
+                    StandardOpenOption.READ
+            );
+            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            channel.read(buffer, position);
+            buffer.flip();
+            // trans
+            for (int i = 0; i < (count << 1); ++i) {
+                res[i] = buffer.getLong();
+            }
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
+
     public static long[] readAT(long position, int count) {
         int size = count * 16;
         FileChannel channel = null;
@@ -210,13 +243,95 @@ public class HelpUtil {
         return res;
     }
 
+    public static HashInfo readLineInfoAndA(long position, int size) {
+
+        FileChannel channel = null;
+        HashInfo hashInfo = new HashInfo();
+
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getInfoPath(),
+                    StandardOpenOption.READ
+            );
+
+            ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.INFO_SIZE * GlobalParams.A_RANGE + 8 * size);
+            channel.read(buffer, position);
+            buffer.flip();
+
+            // trans
+            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+                LineInfo lineInfo = new LineInfo();
+                lineInfo.aPos = buffer.getLong();
+                lineInfo.cntSum = buffer.getInt();
+                lineInfo.ks = buffer.getInt();
+                lineInfo.bs = buffer.getLong();
+                hashInfo.lineInfos[i] = lineInfo;
+            }
+
+            for (int i = 0; i < size; ++i) {
+                hashInfo.aList[i] = buffer.getLong();
+            }
+
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return hashInfo;
+    }
+
+    public static HashInfo readAAndLineInfo(long position, int size) {
+
+        FileChannel channel = null;
+        HashInfo hashInfo = new HashInfo();
+
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getInfoPath(),
+                    StandardOpenOption.READ
+            );
+
+            ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.INFO_SIZE * GlobalParams.A_RANGE + 8 * size);
+            channel.read(buffer, position);
+            buffer.flip();
+
+            for (int i = 0; i < size; ++i) {
+                hashInfo.aList[i] = buffer.getLong();
+            }
+
+            // trans
+            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+                LineInfo lineInfo = new LineInfo();
+                lineInfo.aPos = buffer.getLong();
+                lineInfo.cntSum = buffer.getInt();
+                lineInfo.ks = buffer.getInt();
+                lineInfo.bs = buffer.getLong();
+                hashInfo.lineInfos[i] = lineInfo;
+            }
+
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return hashInfo;
+    }
+
     public static int getPosition(long a) {
-//        for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
-//            if (a * 1.0 < AyscBufferHolder.getIns().wLines[i]) {
-//                return i;
-//            }
-//        }
-//        return GlobalParams.A_MOD;
         if (a < AyscBufferHolder.getIns().wLines[0]) return 0;
         int l = 0;
         int r = GlobalParams.A_MOD;

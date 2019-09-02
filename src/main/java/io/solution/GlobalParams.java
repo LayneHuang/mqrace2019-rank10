@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 16 : 25);
+    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 16 : 50);
 
     /**
      * 消息总数
@@ -77,12 +77,32 @@ public class GlobalParams {
         return path;
     }
 
+    public static Path getAPath() {
+        Path path;
+        if (GlobalParams.IS_DEBUG) {
+            path = Paths.get(System.getProperty("user.dir"), "/d/data.a");
+        } else {
+            path = Paths.get(PRE_PATH + "/mydata.a");
+        }
+        return path;
+    }
+
     public static Path getBPath(int d) {
         Path path;
         if (GlobalParams.IS_DEBUG) {
             path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".body");
         } else {
             path = Paths.get(PRE_PATH + "/mydata" + d + ".body");
+        }
+        return path;
+    }
+
+    public static Path getTAPath(int d) {
+        Path path;
+        if (GlobalParams.IS_DEBUG) {
+            path = Paths.get(System.getProperty("user.dir"), "/d/data" + d + ".tab");
+        } else {
+            path = Paths.get(PRE_PATH + "/mydata" + d + ".tab");
         }
         return path;
     }
@@ -107,7 +127,7 @@ public class GlobalParams {
         return path;
     }
 
-    private static int getMessageSize() {
+    public static int getMessageSize() {
         return IS_DEBUG ? 24 : 50;
     }
 
