@@ -22,8 +22,6 @@ public class PretreatmentHolder {
 
     private static PretreatmentHolder ins = new PretreatmentHolder();
 
-//    public boolean isFinish = false;
-
     private FileChannel infoChannel;
 
     private ByteBuffer[] aBuffers = new ByteBuffer[GlobalParams.A_RANGE];
@@ -31,7 +29,6 @@ public class PretreatmentHolder {
     private int[] aBufferSize = new int[GlobalParams.A_RANGE];
 
     private FileChannel[] channels = new FileChannel[GlobalParams.A_RANGE];
-//    private FileChannel atChannel;
 
     private long[] aPos = new long[GlobalParams.A_RANGE];
 
@@ -41,10 +38,6 @@ public class PretreatmentHolder {
     private int[] ks = new int[GlobalParams.A_RANGE];
 
     private long[] bs = new long[GlobalParams.A_RANGE];
-
-//    private int writeCount = 0;
-
-//    private ByteBuffer atBuffer = ByteBuffer.allocateDirect(16 * GlobalParams.getBlockMessageLimit());
 
     private ByteBuffer lineInfoBuffer = ByteBuffer.allocateDirect(
             8 * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE
@@ -57,13 +50,6 @@ public class PretreatmentHolder {
                     StandardOpenOption.CREATE,
                     StandardOpenOption.APPEND
             );
-
-//            atChannel = FileChannel.open(
-//                    GlobalParams.getATPath(),
-//                    StandardOpenOption.CREATE,
-//                    StandardOpenOption.APPEND
-//            );
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -104,11 +90,8 @@ public class PretreatmentHolder {
             MsgForThree[][] at = new MsgForThree[threadAmount][GlobalParams.getBlockMessageLimit()];
             for (int idx = 0; idx < threadAmount; ++idx) {
                 int nowAmount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
-//                long[] tList = MyHash.readT(idx, 0, 0, nowAmount);
-//                long[] aList = HelpUtil.readA(false, idx, 0, nowAmount);
                 long[] taList = HelpUtil.readTA(idx, 0, nowAmount);
                 for (int i = 0; i < nowAmount; ++i) {
-//                    at[idx][i] = new MsgForThree(tList[i], aList[i]);
                     at[idx][i] = new MsgForThree(taList[i << 1], taList[i << 1 | 1]);
                 }
             }
@@ -158,16 +141,8 @@ public class PretreatmentHolder {
                         // 重新读入一块新块
                         if (preDealSize[idx] < blocksSize[idx]) {
                             int nowAmount = (preDealSize[idx] == blocksSize[idx] - 1 ? MyHash.getIns().lastMsgAmount[idx] : GlobalParams.getBlockMessageLimit());
-//                            long[] tList = MyHash.readT(idx, preDealSize[idx], preDealSize[idx], nowAmount);
-//                            long[] aList = HelpUtil.readA(false, idx, (long) preDealSize[idx] * GlobalParams.getBlockMessageLimit() * 8, nowAmount);
-                            long[] taList = HelpUtil.readTA(
-                                    idx,
-                                    16L * preDealSize[idx] * GlobalParams.getBlockMessageLimit(),
-                                    nowAmount
-                            );
+                            long[] taList = HelpUtil.readTA(idx, 16L * preDealSize[idx] * GlobalParams.getBlockMessageLimit(), nowAmount);
                             for (int i = 0; i < nowAmount; ++i) {
-//                                at[idx][i].t = tList[i];
-//                                at[idx][i].a = aList[i];
                                 at[idx][i].t = taList[i << 1];
                                 at[idx][i].a = taList[i << 1 | 1];
                             }
@@ -182,8 +157,8 @@ public class PretreatmentHolder {
                     }
                     buildBlock(msgs, GlobalParams.getBlockMessageLimit());
                 }
-
             }
+
             // 处理剩余a t 落盘
             if (!queue.isEmpty()) {
                 int tempSize = 0;
@@ -203,12 +178,6 @@ public class PretreatmentHolder {
                 aBuffers[i].clear();
             }
 
-            // 处理剩余info
-//            if (writeCount > 0) {
-//                lineInfoBuffer.flip();
-//                infoChannel.write(lineInfoBuffer);
-//                lineInfoBuffer.clear();
-//            }
             if (infoChannel != null) {
                 infoChannel.close();
                 infoChannel = null;
@@ -239,7 +208,6 @@ public class PretreatmentHolder {
         long maxT = Long.MIN_VALUE;
         long minA = Long.MAX_VALUE;
         long maxA = Long.MIN_VALUE;
-        long sum = 0;
 
         // 记录&处理竖线位置
         for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
@@ -249,27 +217,11 @@ public class PretreatmentHolder {
             lineInfoBuffer.putLong(bs[i]);
         }
 
-//        writeCount++;
-//        // 写到文件中
-//        if (writeCount == GlobalParams.WRITE_COMMIT_COUNT_LIMIT) {
-//            writeCount = 0;
-//            try {
-//                lineInfoBuffer.flip();
-//                infoChannel.write(lineInfoBuffer);
-//                lineInfoBuffer.clear();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-
         HashData hashData = new HashData();
         long[] tList = new long[GlobalParams.getBlockMessageLimit()];
         for (int i = 0; i < size; ++i) {
             MsgForThree msg = msgForThrees[i];
-//            atBuffer.putLong(msg.t);
-//            atBuffer.putLong(msg.a);
             lineInfoBuffer.putLong(msg.a);
-            sum += msg.a;
             minT = Math.min(minT, msg.t);
             maxT = Math.max(maxT, msg.t);
             minA = Math.min(minA, msg.a);
@@ -299,13 +251,6 @@ public class PretreatmentHolder {
                 bs[pos] += msg.a;
             }
         }
-//        try {
-//            atBuffer.flip();
-//            atChannel.write(atBuffer);
-//            atBuffer.clear();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         try {
             lineInfoBuffer.flip();
             infoChannel.write(lineInfoBuffer);

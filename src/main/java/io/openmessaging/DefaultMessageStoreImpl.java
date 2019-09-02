@@ -19,12 +19,12 @@ public class DefaultMessageStoreImpl extends MessageStore {
         AyscBufferHolder.getIns().commit(threadId, message);
     }
 
-    private long s0 = 0;
+//    private long s0 = 0;
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         if (!GlobalParams.isStepOneFinished()) {
-            s0 = System.currentTimeMillis();
+//            s0 = System.currentTimeMillis();
             AyscBufferHolder.getIns().flush();
         }
         return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
@@ -32,10 +32,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        if (!GlobalParams.isStepTwoFinished()) {
-            System.out.println("第二阶段耗时:" + (System.currentTimeMillis() - s0));
-            MyHash.getIns().cleanStepTwoInfo();
-        }
+//        if (!GlobalParams.isStepTwoFinished()) {
+//            System.out.println("第二阶段耗时:" + (System.currentTimeMillis() - s0));
+//            MyHash.getIns().cleanStepTwoInfo();
+//        }
         return MyHash.getIns().find3(tMin, tMax, aMin, aMax);
     }
 

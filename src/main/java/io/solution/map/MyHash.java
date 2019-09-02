@@ -48,7 +48,7 @@ public class MyHash {
         return ins;
     }
 
-    public void insert(int idx, long minT, long maxT, long minA, long maxA, long sum) {
+    public void insert2(int idx, long minT, long maxT, long minA, long maxA, long sum) {
         threadAmount = Math.max(threadAmount, idx + 1);
         minTs2.get(idx).add(minT);
         maxTs2.get(idx).add(maxT);
@@ -74,7 +74,6 @@ public class MyHash {
         minAs2.clear();
         maxAs2.clear();
         lastMsgAmount = null;
-//        AyscBufferHolder.getIns().hashInfos.clear();
         System.out.println("清掉第二阶段记录耗时:" + (System.nanoTime() - s0) + "(ns)");
         System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
         GlobalParams.setStepTwoFinished();
@@ -107,7 +106,6 @@ public class MyHash {
                 int amount = GlobalParams.getBlockMessageLimit();
                 if (i == blockSize - 1) amount = lastMsgAmount[idx];
                 tMsgAmount += amount;
-//
                 // 是否相交
                 boolean isIntersect = HelpUtil.intersect(
                         minT, maxT, minA, maxA,
@@ -125,19 +123,11 @@ public class MyHash {
                 } else if (sIdx == -1) {
                     sIdx = i;
                 }
-//                long aPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * 8;
+                // 读出该块 a & t & body
                 long taPos = 16L * sIdx * GlobalParams.getBlockMessageLimit();
                 long bPos = (long) sIdx * GlobalParams.getBlockMessageLimit() * GlobalParams.getBodySize();
-
-//                long[] tList = readT(idx, sIdx, i, tMsgAmount);
-//                long[] aList = HelpUtil.readA(false, idx, aPos, tMsgAmount);
                 long[] taList = HelpUtil.readTA(idx, taPos, tMsgAmount);
                 byte[][] bodyList = HelpUtil.readBody(idx, bPos, tMsgAmount);
-//                for (int j = 0; j < tMsgAmount && tList[j] <= maxT; ++j) {
-//                    if (HelpUtil.inSide(tList[j], aList[j], minT, maxT, minA, maxA)) {
-//                        res.add(new Message(aList[j], tList[j], bodyList[j]));
-//                    }
-//                }
                 for (int j = 0; j < tMsgAmount && taList[j << 1] <= maxT; ++j) {
                     if (HelpUtil.inSide(taList[j << 1], taList[j << 1 | 1], minT, maxT, minA, maxA)) {
                         res.add(new Message(taList[j << 1 | 1], taList[j << 1], bodyList[j]));
@@ -290,18 +280,4 @@ public class MyHash {
         }
         return r - 1;
     }
-
-//    public static long[] readT(int idx, int l, int r, int size) {
-//        long[] tList = new long[size];
-//        int tListSize = 0;
-//        for (int i = l; i <= r; ++i) {
-//            int amount = AyscBufferHolder.getIns().hashInfos.get(idx).get(i).size;
-//            long[] tListSub = AyscBufferHolder.getIns().hashInfos.get(idx).get(i).readT();
-//            for (int j = 0; j < amount && tListSize < size; ++j) {
-//                tList[tListSize++] = tListSub[j];
-//            }
-//        }
-//        return tList;
-//    }
-
 }

@@ -2,7 +2,6 @@ package io.solution.utils;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
-import io.solution.data.HashData;
 import io.solution.map.MyHash;
 
 import java.io.IOException;
@@ -33,16 +32,10 @@ public class AyscBufferHolder {
 
     // 目前消息提交数
     private int[] commitAmount = new int[MAX_THREAD_AMOUNT];
-    // 目前块提交数
-//    private int[] blockAMount = new int[MAX_THREAD_AMOUNT];
-
+    // 每个线程消息总数
 //    private int[] msgAmount = new int[MAX_THREAD_AMOUNT];
 
     private ArrayList<ArrayList<Long>> aLists = new ArrayList<>();
-
-    private long[][] tList = new long[MAX_THREAD_AMOUNT][getBlockMessageLimit()];
-
-//    public ArrayList<ArrayList<HashData>> hashInfos = new ArrayList<>(MAX_THREAD_AMOUNT);
 
     private int blockSize = 0;
 
@@ -56,7 +49,6 @@ public class AyscBufferHolder {
         for (int i = 0; i < MAX_THREAD_AMOUNT; ++i) {
 
             aLists.add(new ArrayList<>());
-//            hashInfos.add(new ArrayList<>());
             taBuffers[i] = ByteBuffer.allocateDirect(16 * getBlockMessageLimit());
             bBuffers[i] = ByteBuffer.allocateDirect(getBodySize() * getBlockMessageLimit());
             minT[i] = minA[i] = Long.MAX_VALUE;
@@ -117,8 +109,6 @@ public class AyscBufferHolder {
         int idx = getIndex(threadId);
 
         aLists.get(idx).add(message.getA());
-        tList[idx][commitAmount[idx]] = message.getT();
-
         taBuffers[idx].putLong(message.getT());
         taBuffers[idx].putLong(message.getA());
         bBuffers[idx].put(message.getBody());
@@ -132,9 +122,7 @@ public class AyscBufferHolder {
         commitAmount[idx]++;
 
         if (commitAmount[idx] == getBlockMessageLimit()) {
-
-//            blockAMount[idx]++;
-            MyHash.getIns().insert(idx, minT[idx], maxT[idx], minA[idx], maxA[idx], sums[idx]);
+            MyHash.getIns().insert2(idx, minT[idx], maxT[idx], minA[idx], maxA[idx], sums[idx]);
 
             minT[idx] = minA[idx] = Long.MAX_VALUE;
             maxT[idx] = maxA[idx] = Long.MIN_VALUE;
@@ -148,12 +136,6 @@ public class AyscBufferHolder {
             aLists.get(idx).clear();
             blockSize++;
 
-            // 对t做hash
-//            HashData data = new HashData();
-//            data.encode(tList[idx], commitAmount[idx]);
-//            hashInfos.get(idx).add(data);
-
-//            if (blockAMount[idx] == WRITE_COMMIT_COUNT_LIMIT) {
             // 对 t & a & body 写入文件
             try {
                 taBuffers[idx].flip();
@@ -166,8 +148,6 @@ public class AyscBufferHolder {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-//                blockAMount[idx] = 0;
-//            }
             commitAmount[idx] = 0;
         }
 
@@ -182,30 +162,22 @@ public class AyscBufferHolder {
 
             for (int i = 0; i < total; ++i) {
                 if (commitAmount[i] > 0) {
-
                     MyHash.getIns().lastMsgAmount[i] = commitAmount[i];
-                    MyHash.getIns().insert(i, minT[i], maxT[i], minA[i], maxA[i], sums[i]);
-//                    MyHash.getIns().insert(i, minT[i], maxT[i], minA[i], maxA[i]);
-                    HashData data = new HashData();
-                    data.encode(tList[i], commitAmount[i]);
-//                    hashInfos.get(i).add(data);
+                    MyHash.getIns().insert2(i, minT[i], maxT[i], minA[i], maxA[i], sums[i]);
+                    taBuffers[i].flip();
+                    taChannels[i].write(taBuffers[i]);
+                    taBuffers[i].clear();
+
+                    bBuffers[i].flip();
+                    bChannels[i].write(bBuffers[i]);
+                    bBuffers[i].clear();
                 } else {
                     MyHash.getIns().lastMsgAmount[i] = getBlockMessageLimit();
                 }
 
-//                if (blockAMount[i] > 0) {
-                taBuffers[i].flip();
-                taChannels[i].write(taBuffers[i]);
-                taBuffers[i].clear();
-
-                bBuffers[i].flip();
-                bChannels[i].write(bBuffers[i]);
-                bBuffers[i].clear();
-//                }
-
+                // 清空buff
                 taBuffers[i] = null;
                 bBuffers[i] = null;
-
                 if (taChannels[i] != null) {
                     taChannels[i].close();
                     taChannels[i] = null;
@@ -230,8 +202,6 @@ public class AyscBufferHolder {
         System.out.println("]");
 //        System.out.println("消息总量:" + totalMsgAmount);
         System.out.println("flush 结束~ 第一阶段耗时:" + (System.currentTimeMillis() - beginTime) + "(ms)");
-//        System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory()) / (1024 * 1024) + "(M)");
-//        System.out.println("Rest memory:" + (Runtime.getRuntime().totalMemory()) / (1024 * 1024) + "(M)");
         System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
         PretreatmentHolder.getIns().work();
         GlobalParams.setStepOneFinished();

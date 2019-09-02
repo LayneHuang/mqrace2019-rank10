@@ -41,40 +41,6 @@ public class HelpUtil {
         return a <= maxA && a >= minA && t <= maxT && t >= minT;
     }
 
-    public static long[] readT(int idx, long position, int messageCount) {
-        int size = messageCount * 8;
-        FileChannel channel = null;
-        long[] res = new long[messageCount];
-
-        try {
-            channel = FileChannel.open(
-                    GlobalParams.getTPath(idx),
-                    StandardOpenOption.READ
-            );
-            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
-            channel.read(buffer, position);
-            buffer.flip();
-
-            // trans
-            for (int i = 0; i < messageCount; ++i) {
-                res[i] = buffer.getLong();
-            }
-
-            buffer.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (channel != null) {
-                    channel.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return res;
-    }
-
     public static long[] readA(boolean w, int idx, long position, int count) {
         int size = count * 8;
         FileChannel channel = null;
@@ -157,77 +123,6 @@ public class HelpUtil {
             for (int i = 0; i < (count << 1); ++i) {
                 res[i] = buffer.getLong();
             }
-            buffer.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (channel != null) {
-                    channel.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return res;
-    }
-
-    public static long[] readAT(long position, int count) {
-        int size = count * 16;
-        FileChannel channel = null;
-        long[] res = new long[count << 1];
-        try {
-            channel = FileChannel.open(
-                    GlobalParams.getATPath(),
-                    StandardOpenOption.READ
-            );
-            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
-            channel.read(buffer, position);
-            buffer.flip();
-            // trans
-            for (int i = 0; i < (count << 1); ++i) {
-                res[i] = buffer.getLong();
-            }
-            buffer.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (channel != null) {
-                    channel.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return res;
-    }
-
-    public static LineInfo[] readLineInfo(long position) {
-        FileChannel channel = null;
-        LineInfo[] res = new LineInfo[GlobalParams.A_RANGE];
-
-        try {
-            channel = FileChannel.open(
-                    GlobalParams.getInfoPath(),
-                    StandardOpenOption.READ
-            );
-
-            ByteBuffer buffer = ByteBuffer.allocateDirect(GlobalParams.INFO_SIZE * GlobalParams.A_RANGE);
-            channel.read(buffer, position);
-            buffer.flip();
-//            System.out.println("buffer limit:" + buffer.limit() + " " + (24 * GlobalParams.A_RANGE));
-
-            // trans
-            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
-                LineInfo lineInfo = new LineInfo();
-                lineInfo.aPos = buffer.getLong();
-                lineInfo.cntSum = buffer.getInt();
-                lineInfo.ks = buffer.getInt();
-                lineInfo.bs = buffer.getLong();
-                res[i] = lineInfo;
-            }
-
             buffer.clear();
         } catch (IOException e) {
             e.printStackTrace();
