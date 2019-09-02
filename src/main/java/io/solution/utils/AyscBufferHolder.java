@@ -85,7 +85,7 @@ public class AyscBufferHolder {
 
     private int total = 0;
 
-    private long beginTime = 0;
+//    private long beginTime = 0;
 
     private int getIndex(long threadId) {
         if (indexMap.containsKey(threadId)) {
@@ -96,9 +96,9 @@ public class AyscBufferHolder {
                     return indexMap.get(threadId);
                 }
                 int index = total++;
-                if (index == 0) {
-                    beginTime = System.currentTimeMillis();
-                }
+//                if (index == 0) {
+//                    beginTime = System.currentTimeMillis();
+//                }
                 indexMap.put(threadId, index);
                 return index;
             }
@@ -157,7 +157,7 @@ public class AyscBufferHolder {
         if (GlobalParams.isStepOneFinished()) {
             return;
         }
-        System.out.println("flush 开始~");
+//        System.out.println("flush 开始~");
         try {
 
             for (int i = 0; i < total; ++i) {
@@ -191,14 +191,14 @@ public class AyscBufferHolder {
             e.printStackTrace();
         }
 
-        System.out.print("[");
-        for (int i = 0; i < A_RANGE; ++i) {
-            System.out.print(String.format("%.2f", wLines[i]) + ",");
-        }
-        System.out.println("]");
+//        System.out.print("[");
+//        for (int i = 0; i < A_RANGE; ++i) {
+//            System.out.print(String.format("%.2f", wLines[i]) + ",");
+//        }
+//        System.out.println("]");
 //        System.out.println("消息总量:" + totalMsgAmount);
-        System.out.println("flush 结束~ 第一阶段耗时:" + (System.currentTimeMillis() - beginTime) + "(ms)");
-        System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
+//        System.out.println("flush 结束~ 第一阶段耗时:" + (System.currentTimeMillis() - beginTime) + "(ms)");
+//        System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
         PretreatmentHolder.getIns().work();
         GlobalParams.setStepOneFinished();
     }

@@ -9,11 +9,11 @@ import java.nio.file.Paths;
  */
 public class GlobalParams {
 
-    public static boolean IS_DEBUG = Boolean.valueOf(System.getProperty("debug", "false"));
+    private static boolean IS_DEBUG = Boolean.valueOf(System.getProperty("debug", "false"));
 
     private static final int PAGE_SIZE = 1024;
 
-    public static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 16 : 50);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 16 : 50);
 
     /**
      * 消息总数
@@ -46,14 +46,6 @@ public class GlobalParams {
     }
 
     private static boolean isStepTwoFinished = false;
-
-    public static void setStepTwoFinished() {
-        isStepTwoFinished = true;
-    }
-
-    public static boolean isStepTwoFinished() {
-        return isStepTwoFinished;
-    }
 
     private static String PRE_PATH = "/alidata1/race2019/data";
 
@@ -97,7 +89,7 @@ public class GlobalParams {
         return path;
     }
 
-    public static int getMessageSize() {
+    private static int getMessageSize() {
         return IS_DEBUG ? 24 : 50;
     }
 

@@ -18,7 +18,7 @@ import java.util.Queue;
  * @Author: laynehuang
  * @CreatedAt: 2019/8/30 0030
  */
-public class PretreatmentHolder {
+class PretreatmentHolder {
 
     private static PretreatmentHolder ins = new PretreatmentHolder();
 
@@ -70,14 +70,14 @@ public class PretreatmentHolder {
         }
     }
 
-    public static PretreatmentHolder getIns() {
+    static PretreatmentHolder getIns() {
         return ins;
     }
 
     synchronized void work() {
 
-        System.out.println("预处理开始~");
-        long s0 = System.currentTimeMillis();
+//        System.out.println("预处理开始~");
+//        long s0 = System.currentTimeMillis();
         try {
             int totalBlock = 0;
             int threadAmount = MyHash.getIns().threadAmount;
@@ -190,14 +190,14 @@ public class PretreatmentHolder {
                 }
             }
 
-            System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms)");
-            System.out.println("共处理块数:" + MyHash.getIns().size3);
-            System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
-            System.out.print("[");
-            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
-                System.out.print(cntSum[i] + ",");
-            }
-            System.out.println("]");
+//            System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms)");
+//            System.out.println("共处理块数:" + MyHash.getIns().size3);
+//            System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
+//            System.out.print("[");
+//            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+//                System.out.print(cntSum[i] + ",");
+//            }
+//            System.out.println("]");
         } catch (IOException e) {
             e.printStackTrace();
         }
