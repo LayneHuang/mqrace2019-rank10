@@ -226,13 +226,28 @@ public class HelpUtil {
         return hashInfo;
     }
 
+//    public static int getPosition(long a) {
+//        if (a < AyscBufferHolder.getIns().wLines[0]) return 0;
+//        int l = 0;
+//        int r = GlobalParams.A_MOD;
+//        while (l + 1 < r) {
+//            int mid = (l + r) >> 1;
+//            if (a * 1.0 >= AyscBufferHolder.getIns().wLines[mid]) {
+//                l = mid;
+//            } else {
+//                r = mid;
+//            }
+//        }
+//        return r;
+//    }
+
     public static int getPosition(long a) {
-        if (a < AyscBufferHolder.getIns().wLines[0]) return 0;
+        if (a < BufferHolderFactory.wLines[0]) return 0;
         int l = 0;
         int r = GlobalParams.A_MOD;
         while (l + 1 < r) {
             int mid = (l + r) >> 1;
-            if (a * 1.0 >= AyscBufferHolder.getIns().wLines[mid]) {
+            if (a * 1.0 >= BufferHolderFactory.wLines[mid]) {
                 l = mid;
             } else {
                 r = mid;
@@ -240,4 +255,5 @@ public class HelpUtil {
         }
         return r;
     }
+
 }

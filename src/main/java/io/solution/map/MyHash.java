@@ -168,7 +168,6 @@ public class MyHash {
         if (l <= r) {
             int leftAmount = GlobalParams.getBlockMessageLimit();
             int rightAmount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
-            HashInfo lHashInfo;     // 不一定需要
             HashInfo rHashInfo = HelpUtil.readLineInfoAndA((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * r, rightAmount);
 
             // 右边界
@@ -181,7 +180,7 @@ public class MyHash {
             }
 
             if (l < r) {
-                lHashInfo = HelpUtil.readAAndLineInfo((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * l + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE, leftAmount);
+                HashInfo lHashInfo = HelpUtil.readAAndLineInfo((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * l + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE, leftAmount);
 
                 // 左
                 long[] lTList = hashDatas[l].readT();
