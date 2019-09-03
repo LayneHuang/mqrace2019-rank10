@@ -134,6 +134,8 @@ public class MyHash {
         return res;
     }
 
+    private int smallQuery = 0;
+
     public long find3(long minT, long maxT, long minA, long maxA) {
         int l = findLeft3(minT);
         int r = findRight3(maxT);
@@ -162,6 +164,14 @@ public class MyHash {
                 cnt += amount;
             } else if (HelpUtil.intersect(minT, maxT, minA, maxA, minTs3[r], maxTs3[r], minAs3[r], maxAs3[r])) {
                 break;
+            }
+        }
+
+        // 打印小查询的个数 8K * 10
+        if (l + 10 >= r) {
+            smallQuery++;
+            if (smallQuery % 500 > 0) {
+                System.out.println("small query count:" + smallQuery);
             }
         }
 
