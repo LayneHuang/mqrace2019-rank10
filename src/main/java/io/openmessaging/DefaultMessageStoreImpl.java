@@ -16,14 +16,12 @@ public class DefaultMessageStoreImpl extends MessageStore {
     @Override
     public void put(Message message) {
         long threadId = Thread.currentThread().getId();
-//        AyscBufferHolder.getIns().commit(threadId, message);
         BufferHolderFactory.getBufferHolder(threadId).commit(message);
     }
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         if (!GlobalParams.isStepOneFinished()) {
-//            AyscBufferHolder.getIns().flush();
             BufferHolderFactory.flush();
         }
         return MyHash.getIns().find2(tMin, tMax, aMin, aMax);
