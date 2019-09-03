@@ -31,6 +31,10 @@ public class MyHash {
     public int size3 = 0;
     private long[] minTs3 = new long[GlobalParams.getBlockInfoLimit()];
     private long[] maxTs3 = new long[GlobalParams.getBlockInfoLimit()];
+    private long[] minAs3 = new long[GlobalParams.getBlockInfoLimit()];
+    private long[] maxAs3 = new long[GlobalParams.getBlockInfoLimit()];
+    private long[] sums3 = new long[GlobalParams.getBlockInfoLimit()];
+
     public int lastMsgAmount3 = GlobalParams.getBlockMessageLimit();
     private HashData[] hashDatas = new HashData[GlobalParams.getBlockInfoLimit()];
 
@@ -57,9 +61,12 @@ public class MyHash {
         sums2.get(idx).add(sum);
     }
 
-    public void insert3(long minT, long maxT, HashData hashData) {
+    public void insert3(long minT, long maxT, long minA, long maxA, long sum, HashData hashData) {
         minTs3[size3] = minT;
         maxTs3[size3] = maxT;
+        minAs3[size3] = minA;
+        maxAs3[size3] = maxA;
+        sums3[size3] = sum;
         hashDatas[size3] = hashData;
         size3++;
     }
@@ -137,67 +144,90 @@ public class MyHash {
         long res = 0;
         int cnt = 0;
 
-        int leftAmount = GlobalParams.getBlockMessageLimit();
-        int rightAmount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
-        HashInfo lHashInfo;     // 不一定需要
-        HashInfo rHashInfo = HelpUtil.readLineInfoAndA((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * r, rightAmount);
-
-        // 右边界
-        long[] rTList = hashDatas[r].readT();
-        for (int j = 0; j < rightAmount && rTList[j] <= maxT; ++j) {
-            if (HelpUtil.inSide(rTList[j], rHashInfo.aList[j], minT, maxT, minA, maxA)) {
-                res += rHashInfo.aList[j];
-                cnt++;
+        // 两边优化
+        for (; l <= r; ++l) {
+            int amount = (l == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+            if (HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs3[l], maxTs3[l], minAs3[l], maxAs3[l])) {
+                res += sums3[l];
+                cnt += amount;
+            } else if (HelpUtil.intersect(minT, maxT, minA, maxA, minTs3[l], maxTs3[l], minAs3[l], maxAs3[l])) {
+                break;
             }
         }
 
-        if (l < r) {
-            lHashInfo = HelpUtil.readAAndLineInfo((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * l + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE, leftAmount);
+        for (; l <= r; --r) {
+            int amount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+            if (HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs3[r], maxTs3[r], minAs3[r], maxAs3[r])) {
+                res += sums3[r];
+                cnt += amount;
+            } else if (HelpUtil.intersect(minT, maxT, minA, maxA, minTs3[r], maxTs3[r], minAs3[r], maxAs3[r])) {
+                break;
+            }
+        }
 
-            // 左
-            long[] lTList = hashDatas[l].readT();
-            for (int j = 0; j < leftAmount && lTList[j] <= maxT; ++j) {
-                if (HelpUtil.inSide(lTList[j], lHashInfo.aList[j], minT, maxT, minA, maxA)) {
-                    res += lHashInfo.aList[j];
+        if (l <= r) {
+            int leftAmount = GlobalParams.getBlockMessageLimit();
+            int rightAmount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+            HashInfo lHashInfo;     // 不一定需要
+            HashInfo rHashInfo = HelpUtil.readLineInfoAndA((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * r, rightAmount);
+
+            // 右边界
+            long[] rTList = hashDatas[r].readT();
+            for (int j = 0; j < rightAmount && rTList[j] <= maxT; ++j) {
+                if (HelpUtil.inSide(rTList[j], rHashInfo.aList[j], minT, maxT, minA, maxA)) {
+                    res += rHashInfo.aList[j];
                     cnt++;
                 }
             }
-            if (l + 1 < r) {
-                int btPos = HelpUtil.getPosition(minA);
-                int tpPos = HelpUtil.getPosition(maxA);
 
-                // 中间
-                for (int i = btPos + 1; i <= tpPos - 1; ++i) {
-                    long sum = rHashInfo.lineInfos[i].bs - lHashInfo.lineInfos[i].bs;
-                    if (sum < 0) {
-                        sum = Long.MAX_VALUE + sum;
+            if (l < r) {
+                lHashInfo = HelpUtil.readAAndLineInfo((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * l + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE, leftAmount);
+
+                // 左
+                long[] lTList = hashDatas[l].readT();
+                for (int j = 0; j < leftAmount && lTList[j] <= maxT; ++j) {
+                    if (HelpUtil.inSide(lTList[j], lHashInfo.aList[j], minT, maxT, minA, maxA)) {
+                        res += lHashInfo.aList[j];
+                        cnt++;
                     }
-                    int dCnt = rHashInfo.lineInfos[i].cntSum - lHashInfo.lineInfos[i].cntSum;
-                    res += sum;
-                    cnt += dCnt;
                 }
+                if (l + 1 < r) {
+                    int btPos = HelpUtil.getPosition(minA);
+                    int tpPos = HelpUtil.getPosition(maxA);
 
-                // 上下边界
-                if (btPos < tpPos) {
-                    int bAmount = (int) ((rHashInfo.lineInfos[btPos].aPos - lHashInfo.lineInfos[btPos].aPos) / 8);
-                    if (bAmount > 0) {
-                        long[] baList = HelpUtil.readA(true, btPos, lHashInfo.lineInfos[btPos].aPos, bAmount);
-                        for (int i = 0; i < bAmount; ++i) {
-                            if (minA <= baList[i] && baList[i] <= maxA) {
-                                res += baList[i];
-                                cnt++;
+                    // 中间
+                    for (int i = btPos + 1; i <= tpPos - 1; ++i) {
+                        long sum = rHashInfo.lineInfos[i].bs - lHashInfo.lineInfos[i].bs;
+                        if (sum < 0) {
+                            sum = Long.MAX_VALUE + sum;
+                        }
+                        int dCnt = rHashInfo.lineInfos[i].cntSum - lHashInfo.lineInfos[i].cntSum;
+                        res += sum;
+                        cnt += dCnt;
+                    }
+
+                    // 上下边界
+                    if (btPos < tpPos) {
+                        int bAmount = (int) ((rHashInfo.lineInfos[btPos].aPos - lHashInfo.lineInfos[btPos].aPos) / 8);
+                        if (bAmount > 0) {
+                            long[] baList = HelpUtil.readA(true, btPos, lHashInfo.lineInfos[btPos].aPos, bAmount);
+                            for (int i = 0; i < bAmount; ++i) {
+                                if (minA <= baList[i] && baList[i] <= maxA) {
+                                    res += baList[i];
+                                    cnt++;
+                                }
                             }
                         }
                     }
-                }
 
-                int tAmount = (int) ((rHashInfo.lineInfos[tpPos].aPos - lHashInfo.lineInfos[tpPos].aPos) / 8);
-                if (tAmount > 0) {
-                    long[] taList = HelpUtil.readA(true, tpPos, lHashInfo.lineInfos[tpPos].aPos, tAmount);
-                    for (int i = 0; i < tAmount; ++i) {
-                        if (minA <= taList[i] && taList[i] <= maxA) {
-                            res += taList[i];
-                            cnt++;
+                    int tAmount = (int) ((rHashInfo.lineInfos[tpPos].aPos - lHashInfo.lineInfos[tpPos].aPos) / 8);
+                    if (tAmount > 0) {
+                        long[] taList = HelpUtil.readA(true, tpPos, lHashInfo.lineInfos[tpPos].aPos, tAmount);
+                        for (int i = 0; i < tAmount; ++i) {
+                            if (minA <= taList[i] && taList[i] <= maxA) {
+                                res += taList[i];
+                                cnt++;
+                            }
                         }
                     }
                 }

@@ -208,7 +208,7 @@ class PretreatmentHolder {
         long maxT = Long.MIN_VALUE;
         long minA = Long.MAX_VALUE;
         long maxA = Long.MIN_VALUE;
-
+        long sum = 0;
         // 记录&处理竖线位置
         for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
             lineInfoBuffer.putLong(aPos[i]);
@@ -226,6 +226,7 @@ class PretreatmentHolder {
             maxT = Math.max(maxT, msg.t);
             minA = Math.min(minA, msg.a);
             maxA = Math.max(maxA, msg.a);
+            sum += msg.a;
             tList[i] = msg.t;
 
             // 处理竖线数据
@@ -263,7 +264,7 @@ class PretreatmentHolder {
             MyHash.getIns().lastMsgAmount3 = size;
         }
         hashData.encode(tList, size);
-        MyHash.getIns().insert3(minT, maxT, hashData);
+        MyHash.getIns().insert3(minT, maxT, minA, maxA, sum, hashData);
     }
 
 }

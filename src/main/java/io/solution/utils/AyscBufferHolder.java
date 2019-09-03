@@ -2,6 +2,7 @@ package io.solution.utils;
 
 import io.openmessaging.Message;
 import io.solution.GlobalParams;
+import io.solution.data.HashData;
 import io.solution.map.MyHash;
 
 import java.io.IOException;
@@ -34,6 +35,8 @@ public class AyscBufferHolder {
     private int[] commitAmount = new int[MAX_THREAD_AMOUNT];
     // 每个线程消息总数
 //    private int[] msgAmount = new int[MAX_THREAD_AMOUNT];
+    // buffer中块的数量
+    private int[] sizeInBuffer = new int[MAX_THREAD_AMOUNT];
 
     private ArrayList<ArrayList<Long>> aLists = new ArrayList<>();
 
@@ -49,8 +52,8 @@ public class AyscBufferHolder {
         for (int i = 0; i < MAX_THREAD_AMOUNT; ++i) {
 
             aLists.add(new ArrayList<>());
-            taBuffers[i] = ByteBuffer.allocateDirect(16 * getBlockMessageLimit());
-            bBuffers[i] = ByteBuffer.allocateDirect(getBodySize() * getBlockMessageLimit());
+            taBuffers[i] = ByteBuffer.allocateDirect(16 * getBlockMessageLimit() * WRITE_COMMIT_COUNT_LIMIT);
+            bBuffers[i] = ByteBuffer.allocateDirect(getBodySize() * getBlockMessageLimit() * WRITE_COMMIT_COUNT_LIMIT);
             minT[i] = minA[i] = Long.MAX_VALUE;
             maxT[i] = maxA[i] = Long.MIN_VALUE;
             try {
@@ -137,16 +140,20 @@ public class AyscBufferHolder {
             blockSize++;
 
             // 对 t & a & body 写入文件
-            try {
-                taBuffers[idx].flip();
-                taChannels[idx].write(taBuffers[idx]);
-                taBuffers[idx].clear();
+            sizeInBuffer[idx]++;
+            if (sizeInBuffer[idx] == WRITE_COMMIT_COUNT_LIMIT) {
+                try {
+                    taBuffers[idx].flip();
+                    taChannels[idx].write(taBuffers[idx]);
+                    taBuffers[idx].clear();
 
-                bBuffers[idx].flip();
-                bChannels[idx].write(bBuffers[idx]);
-                bBuffers[idx].clear();
-            } catch (IOException e) {
-                e.printStackTrace();
+                    bBuffers[idx].flip();
+                    bChannels[idx].write(bBuffers[idx]);
+                    bBuffers[idx].clear();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                sizeInBuffer[idx] = 0;
             }
             commitAmount[idx] = 0;
         }
@@ -160,31 +167,31 @@ public class AyscBufferHolder {
 //        System.out.println("flush 开始~");
         try {
 
-            for (int i = 0; i < total; ++i) {
-                if (commitAmount[i] > 0) {
-                    MyHash.getIns().lastMsgAmount[i] = commitAmount[i];
-                    MyHash.getIns().insert2(i, minT[i], maxT[i], minA[i], maxA[i], sums[i]);
-                    taBuffers[i].flip();
-                    taChannels[i].write(taBuffers[i]);
-                    taBuffers[i].clear();
+            for (int idx = 0; idx < total; ++idx) {
 
-                    bBuffers[i].flip();
-                    bChannels[i].write(bBuffers[i]);
-                    bBuffers[i].clear();
+                if (commitAmount[idx] > 0) {
+                    MyHash.getIns().lastMsgAmount[idx] = commitAmount[idx];
+                    MyHash.getIns().insert2(idx, minT[idx], maxT[idx], minA[idx], maxA[idx], sums[idx]);
+                    taBuffers[idx].flip();
+                    taChannels[idx].write(taBuffers[idx]);
+                    taBuffers[idx].clear();
+                    bBuffers[idx].flip();
+                    bChannels[idx].write(bBuffers[idx]);
+                    bBuffers[idx].clear();
                 } else {
-                    MyHash.getIns().lastMsgAmount[i] = getBlockMessageLimit();
+                    MyHash.getIns().lastMsgAmount[idx] = getBlockMessageLimit();
                 }
 
                 // 清空buff
-                taBuffers[i] = null;
-                bBuffers[i] = null;
-                if (taChannels[i] != null) {
-                    taChannels[i].close();
-                    taChannels[i] = null;
+                taBuffers[idx] = null;
+                bBuffers[idx] = null;
+                if (taChannels[idx] != null) {
+                    taChannels[idx].close();
+                    taChannels[idx] = null;
                 }
-                if (bChannels[i] != null) {
-                    bChannels[i].close();
-                    bChannels[i] = null;
+                if (bChannels[idx] != null) {
+                    bChannels[idx].close();
+                    bChannels[idx] = null;
                 }
             }
         } catch (IOException e) {
