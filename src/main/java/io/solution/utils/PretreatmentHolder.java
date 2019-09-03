@@ -200,13 +200,13 @@ class PretreatmentHolder {
                     channels[i] = null;
                 }
             }
-            System.out.println("共处理块数:" + MyHash.getIns().size3);
-            System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
-            System.out.print("[");
-            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
-                System.out.print(cntSum[i] + ",");
-            }
-            System.out.println("]");
+//            System.out.println("共处理块数:" + MyHash.getIns().size3);
+//            System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
+//            System.out.print("[");
+//            for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
+//                System.out.print(cntSum[i] + ",");
+//            }
+//            System.out.println("]");
         } catch (IOException e) {
             e.printStackTrace();
         }

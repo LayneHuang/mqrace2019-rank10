@@ -38,7 +38,7 @@ public class BufferHolderFactory {
         if (GlobalParams.isStepOneFinished()) {
             return;
         }
-        long s0 = System.currentTimeMillis();
+//        long s0 = System.currentTimeMillis();
         for (BufferHolder blockHolder : mp.values()) {
             blockHolder.flush();
             for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
@@ -51,15 +51,15 @@ public class BufferHolderFactory {
             for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
                 wLines[i] /= total;
             }
-            System.out.print("[");
-            for (int i = 0; i < GlobalParams.A_RANGE; ++i) System.out.print(String.format("%.2f", wLines[i]) + ",");
-            System.out.println("]");
+//            System.out.print("[");
+//            for (int i = 0; i < GlobalParams.A_RANGE; ++i) System.out.print(String.format("%.2f", wLines[i]) + ",");
+//            System.out.println("]");
         }
-        long s1 = System.currentTimeMillis();
+//        long s1 = System.currentTimeMillis();
         PretreatmentHolder.getIns().work();
-        long s2 = System.currentTimeMillis();
-        System.out.println("flush & 值域划分耗时:" + (s1 - s0) + "(ms)");
-        System.out.println("预处理耗时:" + (s2 - s1) + "(ms)");
+//        long s2 = System.currentTimeMillis();
+//        System.out.println("flush & 值域划分耗时:" + (s1 - s0) + "(ms)");
+//        System.out.println("预处理耗时:" + (s2 - s1) + "(ms)");
         GlobalParams.setStepOneFinished();
     }
 
