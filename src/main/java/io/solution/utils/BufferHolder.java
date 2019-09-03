@@ -131,6 +131,7 @@ public class BufferHolder {
                 bBuffers.flip();
                 bChannels.write(bBuffers);
                 bBuffers.clear();
+                commitAmount = 0;
             } else {
                 MyHash.getIns().lastMsgAmount[id] = getBlockMessageLimit();
             }

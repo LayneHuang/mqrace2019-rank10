@@ -32,9 +32,15 @@ public class BufferHolderFactory {
         return total.get();
     }
 
+    static int cnt = 0;
+
     public static synchronized void flush() {
         if (GlobalParams.isStepOneFinished()) {
             return;
+        }
+        cnt++;
+        if (cnt > 1) {
+            System.out.println("fuck in flush 2~~~  tid:" + Thread.currentThread().getId());
         }
         for (BufferHolder blockHolder : mp.values()) {
             blockHolder.flush();
