@@ -71,6 +71,22 @@ public class MyHash {
         size3++;
     }
 
+    public synchronized void cleanStepTwoInfo() {
+        if (GlobalParams.isStepTwoFinished()) {
+            return;
+        }
+        long s0 = System.nanoTime();
+        minTs2.clear();
+        maxTs2.clear();
+        minAs2.clear();
+        maxAs2.clear();
+        sums2.clear();
+        lastMsgAmount = null;
+        System.out.println("清掉第二阶段记录耗时:" + (System.nanoTime() - s0) + "(ns)");
+        System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
+        GlobalParams.setStepTwoFinished();
+    }
+
     public List<Message> find2(long minT, long maxT, long minA, long maxA) {
         List<Message> res = new ArrayList<>();
 
@@ -134,15 +150,7 @@ public class MyHash {
         return res;
     }
 
-    private int smallQuery = 0;
-    private int sCnt = 0;
-    private int bCnt = 0;
-
     public long find3(long minT, long maxT, long minA, long maxA) {
-
-        if (smallQuery > 3000) {
-            return 0;
-        }
 
         int l = findLeft3(minT);
         int r = findRight3(maxT);
@@ -174,42 +182,162 @@ public class MyHash {
             }
         }
 
-        // 打印小查询的个数 8K * 10
-        boolean isS = false;
-        long nRes = res;
-        int nCnt = cnt;
-        long s0 = System.nanoTime();
-        if (l + GlobalParams.SMALL_REGION >= r) {
-            isS = true;
-            smallQuery++;
-            if (smallQuery % 500 > 0) {
-                System.out.println("small query count:" + smallQuery);
-            }
-            int totalAmount = 0;
-            for (int i = l; i <= r; ++i) {
-                int amount = (i == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
-                totalAmount += amount;
-            }
-            if (totalAmount > 0) {
-                long[] aList = HelpUtil.readA(8L * GlobalParams.getBlockMessageLimit() * l, totalAmount);
-                long[] tList = new long[totalAmount];
-                int nowTSize = 0;
-                for (int i = l; i <= r; ++i) {
-                    int amount = (i == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
-                    long[] subTList = hashDatas[i].readT();
-                    for (int j = 0; j < amount; ++j) {
-                        tList[nowTSize++] = subTList[j];
+        if (l <= r) {
+            // 打印小查询的个数 8K * SMALL_REGION
+            if (l + GlobalParams.SMALL_REGION >= r) {
+                if (l == r) {
+                    int amount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+                    long[] aList = HelpUtil.readA(8L * GlobalParams.getBlockMessageLimit() * l, amount);
+                    long[] tList = hashDatas[l].readT();
+                    for (int i = 0; i < amount; ++i) {
+                        if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
+                            res += aList[i];
+                            cnt++;
+                        }
+                    }
+                } else {
+                    int totalAmount = 0;
+                    int rAmount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+                    for (int i = l; i <= r; ++i) {
+                        int amount = (i == r ? rAmount : GlobalParams.getBlockMessageLimit());
+                        totalAmount += amount;
+                    }
+                    long[] aList = HelpUtil.readA(8L * GlobalParams.getBlockMessageLimit() * l, totalAmount);
+                    long[] tList = new long[totalAmount];
+                    int nowTListSize = 0;
+                    for (int i = l; i <= r; ++i) {
+                        long[] subTList = hashDatas[i].readT();
+                        for (int j = 0; j < (i == r ? rAmount : GlobalParams.getBlockMessageLimit()); ++j) {
+                            tList[nowTListSize++] = subTList[j];
+                        }
+                    }
+                    for (int i = 0; i < totalAmount; ++i) {
+                        if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
+                            res += aList[i];
+                            cnt++;
+                        }
+                    }
+//                    int totalAmount = 0;
+//                    int lAmount = GlobalParams.getBlockMessageLimit();
+//                    int rAmount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+//                    for (int i = l; i <= r; ++i) {
+//                        int amount = (i == r ? rAmount : GlobalParams.getBlockMessageLimit());
+//                        totalAmount += amount;
+//                    }
+//                    long[] aList = HelpUtil.readA(8L * GlobalParams.getBlockMessageLimit() * l, totalAmount);
+//                    long[] lTList = hashDatas[l].readT();
+//                    long[] rTList = hashDatas[r].readT();
+//
+//                    for (int i = 0; i < totalAmount; ++i) {
+//                        if (i < lAmount && HelpUtil.inSide(lTList[i], aList[i], minT, maxT, minA, maxA)) {
+//                            res += aList[i];
+//                            cnt++;
+//                        } else if (totalAmount - i <= rAmount && HelpUtil.inSide(rTList[rAmount + i - totalAmount], aList[i], minT, maxT, minA, maxA)) {
+//                            res += aList[i];
+//                            cnt++;
+//                        } else if (minA <= aList[i] && aList[i] <= maxA) {
+//                            res += aList[i];
+//                            cnt++;
+//                        }
+//                    }
+                }
+
+            } else {
+                int leftAmount = GlobalParams.getBlockMessageLimit();
+                int rightAmount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+
+                // 右边界
+                HashInfo rHashInfo = HelpUtil.readLineInfoAndA((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * r, rightAmount);
+                long[] rTList = hashDatas[r].readT();
+                for (int j = 0; j < rightAmount && rTList[j] <= maxT; ++j) {
+                    if (HelpUtil.inSide(rTList[j], rHashInfo.aList[j], minT, maxT, minA, maxA)) {
+                        res += rHashInfo.aList[j];
+                        cnt++;
                     }
                 }
-                for (int i = 0; i < nowTSize; ++i) {
-                    if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
-                        nRes += aList[i];
-                        nCnt++;
+
+                // 左
+                HashInfo lHashInfo = HelpUtil.readAAndLineInfo((8L * GlobalParams.getBlockMessageLimit() + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE) * l + GlobalParams.INFO_SIZE * GlobalParams.A_RANGE, leftAmount);
+                long[] lTList = hashDatas[l].readT();
+                for (int j = 0; j < leftAmount && lTList[j] <= maxT; ++j) {
+                    if (HelpUtil.inSide(lTList[j], lHashInfo.aList[j], minT, maxT, minA, maxA)) {
+                        res += lHashInfo.aList[j];
+                        cnt++;
+                    }
+                }
+
+                // 中间
+                int btPos = HelpUtil.getPosition(minA);
+                int tpPos = HelpUtil.getPosition(maxA);
+                for (int i = btPos + 1; i <= tpPos - 1; ++i) {
+                    long sum = rHashInfo.lineInfos[i].bs - lHashInfo.lineInfos[i].bs;
+                    if (sum < 0) {
+                        sum = Long.MAX_VALUE + sum;
+                    }
+                    int dCnt = rHashInfo.lineInfos[i].cntSum - lHashInfo.lineInfos[i].cntSum;
+                    res += sum;
+                    cnt += dCnt;
+                }
+
+                // 上下边界
+                if (btPos < tpPos) {
+                    int bAmount = (int) ((rHashInfo.lineInfos[btPos].aPos - lHashInfo.lineInfos[btPos].aPos) / 8);
+                    if (bAmount > 0) {
+                        long[] baList = HelpUtil.readA(true, btPos, lHashInfo.lineInfos[btPos].aPos, bAmount);
+                        for (int i = 0; i < bAmount; ++i) {
+                            if (minA <= baList[i] && baList[i] <= maxA) {
+                                res += baList[i];
+                                cnt++;
+                            }
+                        }
+                    }
+                }
+
+                int tAmount = (int) ((rHashInfo.lineInfos[tpPos].aPos - lHashInfo.lineInfos[tpPos].aPos) / 8);
+                if (tAmount > 0) {
+                    long[] taList = HelpUtil.readA(true, tpPos, lHashInfo.lineInfos[tpPos].aPos, tAmount);
+                    for (int i = 0; i < tAmount; ++i) {
+                        if (minA <= taList[i] && taList[i] <= maxA) {
+                            res += taList[i];
+                            cnt++;
+                        }
                     }
                 }
             }
         }
-        long s1 = System.nanoTime();
+        return cnt == 0 ? 0 : res / cnt;
+    }
+
+    public long find3Origin(long minT, long maxT, long minA, long maxA) {
+        int l = findLeft3(minT);
+        int r = findRight3(maxT);
+        if (l == -1 || r == -1) {
+            return 0;
+        }
+
+        long res = 0;
+        int cnt = 0;
+
+        // 两边优化
+        for (; l <= r; ++l) {
+            int amount = (l == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+            if (HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs3[l], maxTs3[l], minAs3[l], maxAs3[l])) {
+                res += sums3[l];
+                cnt += amount;
+            } else if (HelpUtil.intersect(minT, maxT, minA, maxA, minTs3[l], maxTs3[l], minAs3[l], maxAs3[l])) {
+                break;
+            }
+        }
+
+        for (; l <= r; --r) {
+            int amount = (r == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+            if (HelpUtil.matrixInside(minT, maxT, minA, maxA, minTs3[r], maxTs3[r], minAs3[r], maxAs3[r])) {
+                res += sums3[r];
+                cnt += amount;
+            } else if (HelpUtil.intersect(minT, maxT, minA, maxA, minTs3[r], maxTs3[r], minAs3[r], maxAs3[r])) {
+                break;
+            }
+        }
 
         if (l <= r) {
             int leftAmount = GlobalParams.getBlockMessageLimit();
@@ -277,17 +405,6 @@ public class MyHash {
                     }
                 }
             }
-        }
-        long s2 = System.nanoTime();
-        if (isS) {
-            res = nRes;
-            cnt = nCnt;
-            if ((s1 - s0) < (s2 - s1)) {
-                sCnt++;
-            } else {
-                bCnt++;
-            }
-            System.out.println(GlobalParams.A_DISTANCE + "块1次查出耗时:" + (s1 - s0) + " 用环查出耗时:" + (s2 - s1) + "比较:" + sCnt + " " + bCnt);
         }
         return cnt == 0 ? 0 : res / cnt;
     }

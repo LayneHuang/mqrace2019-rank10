@@ -29,6 +29,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
+        if (!GlobalParams.isStepTwoFinished()) {
+            MyHash.getIns().cleanStepTwoInfo();
+        }
         return MyHash.getIns().find3(tMin, tMax, aMin, aMax);
     }
 

@@ -37,7 +37,7 @@ public class GlobalParams {
 
     public static final int EIGHT_K = 8 * 1024;
 
-    public static final int SMALL_REGION = 40;
+    public static final int SMALL_REGION = 20;
 
     private static boolean isStepOneFinished = false;
 
@@ -50,6 +50,14 @@ public class GlobalParams {
     }
 
     private static boolean isStepTwoFinished = false;
+
+    public static void setStepTwoFinished() {
+        isStepTwoFinished = true;
+    }
+
+    public static boolean isStepTwoFinished() {
+        return isStepTwoFinished;
+    }
 
     private static String PRE_PATH = "/alidata1/race2019/data";
 
