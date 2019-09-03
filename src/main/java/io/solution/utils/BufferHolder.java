@@ -93,28 +93,28 @@ public class BufferHolder {
             sums = 0;
 
             // 值域划分计算
-//            aList.sort(Long::compare);
-//            for (int i = 0; i < A_MOD; ++i) {
-//                wLines[i] = (wLines[i] * blockSize + aList.get(i << 1)) / (1.0 + blockSize);
-//            }
-//            aList.clear();
-//            blockSize++;
+            aList.sort(Long::compare);
+            int aListSize = aList.size();
+            for (int i = 0; i < aListSize; i += A_DISTANCE) {
+                allAList.add(aList.get(aListSize - i - 1));
+            }
+            aList.clear();
 
             // 对 t & a & body 写入文件
             sizeInBuffer++;
             if (sizeInBuffer == WRITE_COMMIT_COUNT_LIMIT) {
 
                 // 抽取集合部分
-                aList.sort(Long::compare);
-                int aListSize = aList.size();
-                for (int i = 0; i < aListSize; i += A_DISTANCE) {
-                    allAList.add(aList.get(i));
-                }
-                // 把最大值也插进去
-                if ((aListSize - 1) % A_DISTANCE != 0) {
-                    allAList.add(aList.get(aListSize - 1));
-                }
-                aList.clear();
+//                aList.sort(Long::compare);
+//                int aListSize = aList.size();
+//                for (int i = 0; i < aListSize; i += A_DISTANCE) {
+//                    allAList.add(aList.get(i));
+//                }
+//                // 把最大值也插进去
+//                if ((aListSize - 1) % A_DISTANCE != 0) {
+//                    allAList.add(aList.get(aListSize - 1));
+//                }
+//                aList.clear();
 
                 try {
                     taBuffers.flip();
