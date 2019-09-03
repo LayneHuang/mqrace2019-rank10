@@ -106,8 +106,13 @@ public class BufferHolder {
 
                 // 抽取集合部分
                 aList.sort(Long::compare);
-                for (int i = 0; i < aList.size(); i += A_DISTANCE) {
+                int aListSize = aList.size();
+                for (int i = 0; i < aListSize; i += A_DISTANCE) {
                     allAList.add(aList.get(i));
+                }
+                // 把最大值也插进去
+                if ((aListSize - 1) % A_DISTANCE != 0) {
+                    allAList.add(aList.get(aListSize - 1));
                 }
                 aList.clear();
 

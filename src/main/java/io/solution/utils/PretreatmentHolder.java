@@ -75,9 +75,6 @@ class PretreatmentHolder {
     }
 
     synchronized void work() {
-
-//        System.out.println("预处理开始~");
-//        long s0 = System.currentTimeMillis();
         try {
             int totalBlock = 0;
             int threadAmount = MyHash.getIns().threadAmount;
@@ -189,8 +186,6 @@ class PretreatmentHolder {
                     channels[i] = null;
                 }
             }
-
-//            System.out.println("预处理结束~ cost:" + (System.currentTimeMillis() - s0) + "(ms)");
             System.out.println("共处理块数:" + MyHash.getIns().size3);
             System.out.println("Rest memory:" + (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / (1024 * 1024) + "(M)");
             System.out.print("[");
