@@ -135,8 +135,15 @@ public class MyHash {
     }
 
     private int smallQuery = 0;
+    private int sCnt = 0;
+    private int bCnt = 0;
 
     public long find3(long minT, long maxT, long minA, long maxA) {
+
+        if (smallQuery > 3000) {
+            return 0;
+        }
+
         int l = findLeft3(minT);
         int r = findRight3(maxT);
         if (l == -1 || r == -1) {
@@ -168,12 +175,41 @@ public class MyHash {
         }
 
         // 打印小查询的个数 8K * 10
-        if (l + 10 >= r) {
+        boolean isS = false;
+        long nRes = res;
+        int nCnt = cnt;
+        long s0 = System.nanoTime();
+        if (l + GlobalParams.SMALL_REGION >= r) {
+            isS = true;
             smallQuery++;
             if (smallQuery % 500 > 0) {
                 System.out.println("small query count:" + smallQuery);
             }
+            int totalAmount = 0;
+            for (int i = l; i <= r; ++i) {
+                int amount = (i == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+                totalAmount += amount;
+            }
+            if (totalAmount > 0) {
+                long[] aList = HelpUtil.readA(8L * GlobalParams.getBlockMessageLimit() * l, totalAmount);
+                long[] tList = new long[totalAmount];
+                int nowTSize = 0;
+                for (int i = l; i <= r; ++i) {
+                    int amount = (i == size3 - 1 ? lastMsgAmount3 : GlobalParams.getBlockMessageLimit());
+                    long[] subTList = hashDatas[i].readT();
+                    for (int j = 0; j < amount; ++j) {
+                        tList[nowTSize++] = subTList[j];
+                    }
+                }
+                for (int i = 0; i < nowTSize; ++i) {
+                    if (HelpUtil.inSide(tList[i], aList[i], minT, maxT, minA, maxA)) {
+                        nRes += aList[i];
+                        nCnt++;
+                    }
+                }
+            }
         }
+        long s1 = System.nanoTime();
 
         if (l <= r) {
             int leftAmount = GlobalParams.getBlockMessageLimit();
@@ -241,6 +277,17 @@ public class MyHash {
                     }
                 }
             }
+        }
+        long s2 = System.nanoTime();
+        if (isS) {
+            res = nRes;
+            cnt = nCnt;
+            if ((s1 - s0) < (s2 - s1)) {
+                sCnt++;
+            } else {
+                bCnt++;
+            }
+            System.out.println(GlobalParams.A_DISTANCE + "块1次查出耗时:" + (s1 - s0) + " 用环查出耗时:" + (s2 - s1) + "比较:" + sCnt + " " + bCnt);
         }
         return cnt == 0 ? 0 : res / cnt;
     }

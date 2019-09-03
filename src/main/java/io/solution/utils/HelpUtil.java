@@ -226,6 +226,37 @@ public class HelpUtil {
         return hashInfo;
     }
 
+    public static long[] readA(long position, int count) {
+        int size = count * 8;
+        FileChannel channel = null;
+        long[] res = new long[count];
+        try {
+            channel = FileChannel.open(
+                    GlobalParams.getAPath(),
+                    StandardOpenOption.READ
+            );
+            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            channel.read(buffer, position);
+            buffer.flip();
+            // trans
+            for (int i = 0; i < count; ++i) {
+                res[i] = buffer.getLong();
+            }
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
+
 //    public static int getPosition(long a) {
 //        if (a < AyscBufferHolder.getIns().wLines[0]) return 0;
 //        int l = 0;

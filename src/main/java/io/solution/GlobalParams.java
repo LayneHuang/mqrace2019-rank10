@@ -13,7 +13,7 @@ public class GlobalParams {
 
     private static final int PAGE_SIZE = 1024;
 
-    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 16 : 50);
+    private static final int BLOCK_SIZE = PAGE_SIZE * (IS_DEBUG ? 50 : 50);
 
     /**
      * 消息总数
@@ -37,6 +37,8 @@ public class GlobalParams {
 
     public static final int EIGHT_K = 8 * 1024;
 
+    public static final int SMALL_REGION = 40;
+
     private static boolean isStepOneFinished = false;
 
     public static void setStepOneFinished() {
@@ -50,6 +52,16 @@ public class GlobalParams {
     private static boolean isStepTwoFinished = false;
 
     private static String PRE_PATH = "/alidata1/race2019/data";
+
+    public static Path getAPath() {
+        Path path;
+        if (GlobalParams.IS_DEBUG) {
+            path = Paths.get(System.getProperty("user.dir"), "/d/data.a");
+        } else {
+            path = Paths.get(PRE_PATH + "/mydata.a");
+        }
+        return path;
+    }
 
     public static Path getAPath(int d, boolean w) {
         Path path;

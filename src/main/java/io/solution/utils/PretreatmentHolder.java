@@ -24,6 +24,10 @@ class PretreatmentHolder {
 
     private FileChannel infoChannel;
 
+    private FileChannel hAChannel;
+
+    private ByteBuffer hABuffer = ByteBuffer.allocateDirect(8 * GlobalParams.getBlockMessageLimit());
+
     private ByteBuffer[] aBuffers = new ByteBuffer[GlobalParams.A_RANGE];
 
     private int[] aBufferSize = new int[GlobalParams.A_RANGE];
@@ -47,6 +51,11 @@ class PretreatmentHolder {
         try {
             infoChannel = FileChannel.open(
                     GlobalParams.getInfoPath(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+            hAChannel = FileChannel.open(
+                    GlobalParams.getAPath(),
                     StandardOpenOption.CREATE,
                     StandardOpenOption.APPEND
             );
@@ -180,6 +189,11 @@ class PretreatmentHolder {
                 infoChannel = null;
             }
 
+            if (hAChannel != null) {
+                hAChannel.close();
+                hAChannel = null;
+            }
+
             for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
                 if (channels[i] != null) {
                     channels[i].close();
@@ -217,6 +231,7 @@ class PretreatmentHolder {
         for (int i = 0; i < size; ++i) {
             MsgForThree msg = msgForThrees[i];
             lineInfoBuffer.putLong(msg.a);
+            hABuffer.putLong(msg.a);
             minT = Math.min(minT, msg.t);
             maxT = Math.max(maxT, msg.t);
             minA = Math.min(minA, msg.a);
@@ -251,6 +266,11 @@ class PretreatmentHolder {
             lineInfoBuffer.flip();
             infoChannel.write(lineInfoBuffer);
             lineInfoBuffer.clear();
+
+            hABuffer.flip();
+            hAChannel.write(hABuffer);
+            hABuffer.clear();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
