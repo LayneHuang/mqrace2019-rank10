@@ -33,6 +33,8 @@ public class GlobalParams {
 
     public static final int A_RANGE = A_MOD + 1;
 
+    public static final int A_DISTANCE = 30;
+
     public static final int EIGHT_K = 8 * 1024;
 
     private static boolean isStepOneFinished = false;

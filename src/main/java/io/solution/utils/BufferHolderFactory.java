@@ -3,8 +3,6 @@ package io.solution.utils;
 import io.solution.GlobalParams;
 
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Author: laynehuang
@@ -53,9 +51,9 @@ public class BufferHolderFactory {
             for (int i = 0; i < GlobalParams.A_RANGE; ++i) {
                 wLines[i] /= total;
             }
-//            System.out.print("[");
-//            for (int i = 0; i < GlobalParams.A_RANGE; ++i) System.out.print(String.format("%.2f", wLines[i]) + ",");
-//            System.out.println("]");
+            System.out.print("[");
+            for (int i = 0; i < GlobalParams.A_RANGE; ++i) System.out.print(String.format("%.2f", wLines[i]) + ",");
+            System.out.println("]");
         }
         PretreatmentHolder.getIns().work();
         GlobalParams.setStepOneFinished();

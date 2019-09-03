@@ -31,9 +31,10 @@ public class BufferHolder {
     // buffer中块的数量
     private int sizeInBuffer;
 
-    private ArrayList<Long> aLists = new ArrayList<>();
+    private ArrayList<Long> aList = new ArrayList<>();
+    private ArrayList<Long> allAList = new ArrayList<>();
 
-    private int blockSize = 0;
+//    private int blockSize = 0;
 
     double[] wLines = new double[A_RANGE];
 
@@ -72,7 +73,7 @@ public class BufferHolder {
 
     public void commit(Message message) {
 
-        aLists.add(message.getA());
+        aList.add(message.getA());
         taBuffers.putLong(message.getT());
         taBuffers.putLong(message.getA());
         bBuffers.put(message.getBody());
@@ -92,16 +93,24 @@ public class BufferHolder {
             sums = 0;
 
             // 值域划分计算
-            aLists.sort(Long::compare);
-            for (int i = 0; i < A_MOD; ++i) {
-                wLines[i] = (wLines[i] * blockSize + aLists.get(i << 1)) / (1.0 + blockSize);
-            }
-            aLists.clear();
-            blockSize++;
+//            aList.sort(Long::compare);
+//            for (int i = 0; i < A_MOD; ++i) {
+//                wLines[i] = (wLines[i] * blockSize + aList.get(i << 1)) / (1.0 + blockSize);
+//            }
+//            aList.clear();
+//            blockSize++;
 
             // 对 t & a & body 写入文件
             sizeInBuffer++;
             if (sizeInBuffer == WRITE_COMMIT_COUNT_LIMIT) {
+
+                // 抽取集合部分
+                aList.sort(Long::compare);
+                for (int i = 0; i < aList.size(); i += A_DISTANCE) {
+                    allAList.add(aList.get(i));
+                }
+                aList.clear();
+
                 try {
                     taBuffers.flip();
                     taChannels.write(taBuffers);
@@ -146,6 +155,17 @@ public class BufferHolder {
                 bChannels.close();
                 bChannels = null;
             }
+
+            allAList.sort(Long::compare);
+            int size = allAList.size();
+            int dis = size / (A_MOD - 1);
+            for (int i = 0; i < A_MOD; ++i) {
+                int pos = size - i * dis - 1;
+                pos = Math.max(pos, 0);
+                wLines[A_MOD - i - 1] = allAList.get(pos);
+            }
+            allAList.clear();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
