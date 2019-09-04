@@ -18,7 +18,7 @@ public class GlobalParams {
     /**
      * 消息总数
      */
-    private static int MSG_COUNT = (IS_DEBUG ? 160_000_000 : 2_050_000_000);
+    private static int MSG_COUNT = (IS_DEBUG ? 160_000_000 : 2_100_000_000);
 
     /**
      * 写文件拥塞队列大小
@@ -37,7 +37,7 @@ public class GlobalParams {
 
     public static final int EIGHT_K = 8 * 1024;
 
-    public static final int SMALL_REGION = 22;
+    public static final int SMALL_REGION = 18;
 
     private static boolean isStepOneFinished = false;
 
