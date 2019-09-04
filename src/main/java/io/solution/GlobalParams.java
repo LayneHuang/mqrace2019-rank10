@@ -37,7 +37,7 @@ public class GlobalParams {
 
     public static final int EIGHT_K = 8 * 1024;
 
-    public static final int SMALL_REGION = 18;
+    public static final int SMALL_REGION = 22;
 
     private static boolean isStepOneFinished = false;
 
