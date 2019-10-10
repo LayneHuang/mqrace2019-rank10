@@ -1,3 +1,5 @@
+## 赛题连接[https://tianchi.aliyun.com/competition/entrance/231714/introduction]
+
 >写在前面: 
 > 1.在开始coding前请仔细阅读以下内容
 
